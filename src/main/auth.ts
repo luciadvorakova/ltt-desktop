@@ -15,8 +15,10 @@ export async function signInWithGoogle(): Promise<void> {
     console.error('[auth] signInWithGoogle error:', error)
     return
   }
+  console.log('[AUTH] redirectTo URL:', data.url)
 
   const server = http.createServer(async (req, res) => {
+    console.log('callback received, url:', req.url)
     if (!req.url?.startsWith('/auth')) {
       res.writeHead(404)
       res.end()
@@ -24,13 +26,18 @@ export async function signInWithGoogle(): Promise<void> {
     }
     res.writeHead(200, { 'Content-Type': 'text/html' })
     res.end('<html><body><script>window.close()</script><p>Authentication complete. You can close this tab.</p></body></html>')
+    const result = await handleAuthCallback(`http://localhost:7429${req.url}`)
+    console.log('handleAuthCallback result:', result)
+    if (result) {
+      console.log('[AUTH] emitting auth-success')
+      authEmitter.emit('auth-success', result)
+      console.log('[AUTH] emitted')
+    }
     server.close()
-    const session = await handleAuthCallback(`http://localhost:7429${req.url}`)
-    if (session) authEmitter.emit('auth-success', session)
   })
 
-  server.listen(7429, '127.0.0.1', () => {
-    console.log('[auth] OAuth callback server listening on :7429')
+  server.listen(7429, () => {
+    console.log('[AUTH] starting localhost server on port 7429')
   })
   server.on('error', (err) => console.error('[auth] callback server error:', err))
 
