@@ -11,6 +11,13 @@ export default defineConfig({
       {
         // Main process entry
         entry: 'src/main/index.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ['ws', 'bufferutil', 'utf-8-validate'],
+            },
+          },
+        },
       },
       {
         // Preload script entry
