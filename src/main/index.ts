@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { handleAuthCallback, startSessionRefreshInterval } from './auth'
+import { handleAuthCallback, startSessionRefreshInterval, authEmitter } from './auth'
 import { registerIpcHandlers } from './ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -20,6 +20,8 @@ app.setAsDefaultProtocolClient('ltt')
 let win: BrowserWindow | null
 
 function createWindow() {
+  const preload = path.join(__dirname, 'preload.js')
+  console.log('preload path:', preload)
   win = new BrowserWindow({
     width: 380,
     height: 600,
@@ -31,17 +33,21 @@ function createWindow() {
     show: false,
     icon: path.join(process.env.VITE_PUBLIC || '', 'electron-vite.svg'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload,
     },
   })
 
-  win.once('ready-to-show', () => win!.show())
+  win.once('ready-to-show', () => { win!.show(); win!.focus() })
+
+  win.on('closed', () => console.log('window closed'))
 
   win.webContents.openDevTools()
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
+
+  win.webContents.on('did-fail-load', (e, code, desc) => console.log('load failed:', code, desc))
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -91,4 +97,7 @@ app.whenReady().then(() => {
   registerIpcHandlers()
   createWindow()
   startSessionRefreshInterval()
+  authEmitter.on('auth-success', (session) => {
+    win?.webContents.send('auth-success', session)
+  })
 })
