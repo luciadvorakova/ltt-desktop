@@ -24,15 +24,20 @@ function createWindow() {
     width: 380,
     height: 600,
     resizable: false,
-    frame: false,
-    transparent: true,
+    frame: true,
+    transparent: false,
     alwaysOnTop: false,
     skipTaskbar: false,
+    show: false,
     icon: path.join(process.env.VITE_PUBLIC || '', 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   })
+
+  win.once('ready-to-show', () => win!.show())
+
+  win.webContents.openDevTools()
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
