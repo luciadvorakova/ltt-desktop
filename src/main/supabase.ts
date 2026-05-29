@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import ws from 'ws'
-globalThis.WebSocket = ws as unknown as typeof WebSocket
+import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://rzjbfqgkprozguyjrxbp.supabase.co'
 const SUPABASE_ANON_KEY =
@@ -11,4 +10,5 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: false,
     persistSession: false,
   },
+  realtime: { transport: ws },
 })
