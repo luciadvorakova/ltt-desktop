@@ -1,7 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import electron from 'vite-plugin-electron'
+import renderer from 'vite-plugin-electron-renderer'
 
-// https://vitejs.dev/config/
+// https://electron-vite.org
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    electron([
+      {
+        // Main process entry
+        entry: 'src/main/index.ts',
+      },
+      {
+        // Preload script entry
+        entry: 'src/preload/index.ts',
+        onstart(options) {
+          options.reload()
+        },
+      },
+    ]),
+    renderer(),
+  ],
 })
