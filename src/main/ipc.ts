@@ -12,7 +12,7 @@ import {
   flushActiveTime,
   currentEntries,
 } from './timer'
-import type { TimeEntry, UserSettings } from '../../renderer/src/types/index'
+import type { TimeEntry, UserSettings } from '../types/index'
 
 export function registerIpcHandlers(): void {
   // ---- AUTH ----

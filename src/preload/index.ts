@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { TimeEntry, UserSettings } from '../../renderer/src/types/index'
+import type { TimeEntry, UserSettings } from '../types/index'
 
 contextBridge.exposeInMainWorld('ltt', {
   // ---- AUTH ----

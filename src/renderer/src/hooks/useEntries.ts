@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { TimeEntry } from '../types/index'
+import type { TimeEntry } from '../../../types/index'
 import { useLtt } from './useLtt'
 
 interface UseEntriesResult {

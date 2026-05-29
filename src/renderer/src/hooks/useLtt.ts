@@ -1,4 +1,4 @@
-import type { TimeEntry, UserSettings, TimerState } from '../types/index'
+import type { TimeEntry, UserSettings, TimerState } from '../../../types/index'
 
 interface LttAPI {
   // AUTH

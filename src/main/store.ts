@@ -1,5 +1,5 @@
 import Store from 'electron-store'
-import type { UserSettings, TimerState } from '../../renderer/src/types/index'
+import type { UserSettings, TimerState } from '../types/index'
 
 interface StoreSchema {
   session: { access_token: string; refresh_token: string } | null

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { TimerState } from '../types/index'
+import type { TimerState } from '../../../types/index'
 import { useLtt } from './useLtt'
 
 interface UseTimerResult {

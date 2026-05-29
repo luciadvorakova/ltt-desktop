@@ -1,6 +1,6 @@
 import { store } from './store'
 import { supabase } from './supabase'
-import type { TimeEntry, TimerState } from '../../renderer/src/types/index'
+import type { TimeEntry, TimerState } from '../types/index'
 
 let flushInterval: ReturnType<typeof setInterval> | null = null
 export let currentEntries: TimeEntry[] = []
