@@ -19,6 +19,8 @@ export function useAuth(): UseAuthResult {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!window.ltt) return
+
     ltt.getSession().then((s) => {
       setSession(s)
       setLoading(false)
