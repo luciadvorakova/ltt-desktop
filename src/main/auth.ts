@@ -19,21 +19,36 @@ export async function signInWithGoogle(): Promise<void> {
 
   const server = http.createServer(async (req, res) => {
     console.log('callback received, url:', req.url)
-    if (!req.url?.startsWith('/auth')) {
-      res.writeHead(404)
-      res.end()
+
+    // First leg: browser lands here after OAuth redirect.
+    // Hash fragment (#access_token=...) is browser-only, never sent to server.
+    // Return a page that forwards the full location (hash or search) via fetch.
+    if (req.url === '/auth' || req.url === '/auth?') {
+      res.writeHead(200, { 'Content-Type': 'text/html' })
+      res.end(`<html><body><script>
+        const params = window.location.hash.slice(1) || window.location.search.slice(1);
+        fetch('/auth/complete?' + params).then(() => window.close());
+      </script><p>Completing sign-in...</p></body></html>`)
       return
     }
-    res.writeHead(200, { 'Content-Type': 'text/html' })
-    res.end('<html><body><script>window.close()</script><p>Authentication complete. You can close this tab.</p></body></html>')
-    const result = await handleAuthCallback(`http://localhost:7429${req.url}`)
-    console.log('handleAuthCallback result:', result)
-    if (result) {
-      console.log('[AUTH] emitting auth-success')
-      authEmitter.emit('auth-success', result)
-      console.log('[AUTH] emitted')
+
+    // Second leg: browser POSTs the tokens back via fetch.
+    if (req.url?.startsWith('/auth/complete')) {
+      res.writeHead(200)
+      res.end()
+      server.close()
+      const result = await handleAuthCallback(`http://localhost:7429${req.url}`)
+      console.log('handleAuthCallback result:', result)
+      if (result) {
+        console.log('[AUTH] emitting auth-success')
+        authEmitter.emit('auth-success', result)
+        console.log('[AUTH] emitted')
+      }
+      return
     }
-    server.close()
+
+    res.writeHead(404)
+    res.end()
   })
 
   server.listen(7429, () => {
@@ -58,9 +73,8 @@ export async function handleAuthCallback(url: string): Promise<{ access_token: s
       store.set('session', session)
       return session
     }
-    // Implicit flow fallback: tokens in hash fragment
-    const hash = parsed.hash.slice(1)
-    const params = new URLSearchParams(hash)
+    // Implicit flow: tokens forwarded as query params (from hash via browser fetch)
+    const params = parsed.searchParams
     const access_token = params.get('access_token')
     const refresh_token = params.get('refresh_token')
     if (!access_token || !refresh_token) {
