@@ -14,7 +14,7 @@ export default defineConfig({
       },
       {
         // Preload script entry
-        entry: 'src/preload/index.ts',
+        entry: 'src/preload/preload.ts',
         onstart(options) {
           options.reload()
         },
