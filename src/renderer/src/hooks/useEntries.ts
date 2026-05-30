@@ -43,7 +43,7 @@ export function useEntries(): UseEntriesResult {
 
   const updateEntry = useCallback(async (entry: TimeEntry) => {
     await ltt.saveEntry(entry)
-    setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)))
+    setEntries((prev) => prev.map((e) => (Number(e.id) === Number(entry.id) ? entry : e)))
   }, [ltt])
 
   const deleteEntry = useCallback(async (id: number) => {
@@ -53,7 +53,7 @@ export function useEntries(): UseEntriesResult {
   }, [ltt])
 
   const patchEntry = useCallback((id: number, ms: number) => {
-    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, ms } : e))
+    setEntries((prev) => prev.map((e) => Number(e.id) === Number(id) ? { ...e, ms } : e))
   }, [])
 
   return { entries, addEntry, updateEntry, deleteEntry, reload, patchEntry }
