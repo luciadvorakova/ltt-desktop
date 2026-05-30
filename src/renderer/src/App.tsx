@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { TimerView } from './components/TimerView'
 import { HistoryView } from './components/HistoryView'
+import { WeeklyView } from './components/WeeklyView'
 
 type Tab = 'timer' | 'history' | 'weekly'
 
@@ -149,7 +150,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {tab === 'timer' && <TimerView />}
         {tab === 'history' && <HistoryView />}
-        {tab === 'weekly' && <div style={{ padding: 24, color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>weekly — coming soon</div>}
+        {tab === 'weekly' && <WeeklyView />}
       </div>
     </div>
   )
