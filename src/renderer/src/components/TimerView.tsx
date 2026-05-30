@@ -59,7 +59,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc }: {
   }
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}>
+    <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
       <button
         ref={btnRef}
         style={{ background: 'none', border: 'none', padding: 0, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: 16, lineHeight: 1, flexShrink: 0 }}
