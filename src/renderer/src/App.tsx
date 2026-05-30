@@ -137,12 +137,14 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                   onClick={() => { setDropdownOpen(false); setSettingsOpen(true) }}
                   style={menuItemStyle}
                 >
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center' }}>⚙</span>
                   Settings
                 </button>
                 <button
                   onClick={async () => { setDropdownOpen(false); await signOut() }}
                   style={menuItemStyle}
                 >
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center' }}>↪</span>
                   Sign out
                 </button>
               </div>
@@ -163,7 +165,9 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
 }
 
 const menuItemStyle: React.CSSProperties = {
-  display: 'block',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
   width: '100%',
   textAlign: 'left',
   padding: '8px 14px',

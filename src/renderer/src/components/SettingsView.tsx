@@ -12,7 +12,6 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   )
 }
 
-const sectionDividerStyle: React.CSSProperties = { borderBottom: '1px solid rgba(255,255,255,0.06)' }
 const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px' }
 const sectionLabelStyle: React.CSSProperties = { fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '10px 14px 4px' }
 const rowLabelStyle: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.8)' }
@@ -40,7 +39,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '7px 14px', minHeight: 34, borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
           Settings
         </span>
@@ -68,8 +67,8 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Google Calendar — last in section, gets divider */}
-        <div style={{ ...rowStyle, ...sectionDividerStyle }}>
+        {/* Google Calendar — last in section */}
+        <div style={{ ...rowStyle }}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Google Calendar</div>
             {!settings?.gcalEmail && <div style={rowSubStyle}>Import events as time entries.</div>}
@@ -83,6 +82,8 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
             <button style={connectBtnStyle}>Connect</button>
           )}
         </div>
+
+        <div style={{ height: 6 }} />
 
         {/* SLACK STANDUP */}
         <div style={sectionLabelStyle}>Slack standup</div>
@@ -100,8 +101,8 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           <button style={saveBtnStyle} onClick={() => updateSetting('slackChannel', slackChannel)}>Save</button>
         </div>
 
-        {/* Member ID — last in section, gets divider */}
-        <div style={{ ...rowStyle, ...sectionDividerStyle }}>
+        {/* Member ID — last in section */}
+        <div style={rowStyle}>
           <span style={fieldLabelStyle}>Member ID</span>
           <input
             style={inputStyle}
@@ -112,6 +113,8 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           />
           <button style={saveBtnStyle} onClick={() => updateSetting('slackUserId', slackUserId)}>Save</button>
         </div>
+
+        <div style={{ height: 6 }} />
 
         {/* TIMER */}
         <div style={sectionLabelStyle}>Timer</div>
