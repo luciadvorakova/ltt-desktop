@@ -78,8 +78,7 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
   const { error } = await supabase
     .from('time_entries')
     .upsert(row, { onConflict: 'id' })
-  console.log('[SAVE] entry id:', entry.id, 'ms:', entry.ms, 'updatedAt:', entry.updatedAt)
-  console.log('[SAVE] error:', error)
+  console.log('[SAVE] id:', entry.id, 'ms:', entry.ms, 'error:', error)
   if (error) {
     console.error('[timer] saveEntry error:', error)
     return
@@ -109,11 +108,13 @@ export async function startTimer(entryId: number): Promise<void> {
     const entry = currentEntries.find((e) => e.id === entryId)
     console.log('[START] fresh start, entry ms from currentEntries:', entry?.ms)
     // Refresh from Supabase to get the latest ms
-    const { data } = await supabase
+    await ensureSession()
+    const { data, error } = await supabase
       .from('time_entries')
       .select('ms')
       .eq('id', entryId)
       .single()
+    console.log('[START] Supabase data:', data, 'error:', error)
     const baseMs = data?.ms ?? entry?.ms ?? 0
     console.log('[START] baseMs from Supabase:', data?.ms, '→ using:', baseMs)
     store.set('timerState', {
