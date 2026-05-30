@@ -240,6 +240,7 @@ export function TimerView() {
                     borderRadius: '50%',
                     background: '#7fd89a',
                     flexShrink: 0,
+                    animation: 'ltt-pulse 1.5s ease-in-out infinite',
                   }} />
                 )}
 
