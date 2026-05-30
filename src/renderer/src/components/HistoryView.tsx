@@ -193,9 +193,6 @@ export function HistoryView() {
                     ↑ Jira
                   </button>
                 )}
-                <button style={{ fontSize: 9, padding: '3px 7px', borderRadius: 99, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-                  Standup
-                </button>
                 <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }}>
                   {formatMsShort(totalMs)}
                 </span>
@@ -228,7 +225,7 @@ export function HistoryView() {
                 </div>
 
                 {entry.jiraDesc && (
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {entry.jiraDesc}
                   </div>
                 )}
