@@ -49,7 +49,7 @@ mb.on('ready', () => {
 })
 
 mb.on('after-create-window', () => {
-  if (VITE_DEV_SERVER_URL) mb.window?.webContents.openDevTools()
+  if (VITE_DEV_SERVER_URL) mb.window?.webContents.openDevTools({ mode: 'detach' })
   mb.window?.webContents.on('did-finish-load', () => {
     mb.window?.webContents.send('main-process-message', new Date().toLocaleString())
   })
