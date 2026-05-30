@@ -5,7 +5,7 @@ import { useLtt } from './useLtt'
 interface UseTimerResult {
   timerState: TimerState | null
   elapsed: number
-  start: (entryId: number) => Promise<{prevId: number|null, prevMs: number}>
+  start: (entryId: number) => Promise<void>
   pause: () => Promise<void>
   stop: () => Promise<void>
 }
@@ -29,8 +29,7 @@ export function useTimer(): UseTimerResult {
       intervalRef.current = setInterval(() => {
         setElapsed(Date.now() - (timerState.startedAt as number))
       }, 500)
-    } else if (!timerState?.activeEntryId) {
-      // Only reset elapsed when there is truly no active entry
+    } else {
       setElapsed(0)
     }
     return () => {
@@ -43,17 +42,12 @@ export function useTimer(): UseTimerResult {
     refreshState()
   }, [refreshState])
 
-  const start = useCallback(async (entryId: number): Promise<{prevId: number|null, prevMs: number}> => {
-    const prevId = timerState?.activeEntryId ?? null
-    const prevMs = prevId ? (timerState!.baseMs + elapsed) : 0
-    setElapsed(0)
+  const start = useCallback(async (entryId: number): Promise<void> => {
     await ltt.startTimer(entryId)
     await refreshState()
-    return { prevId, prevMs }
-  }, [ltt, refreshState, timerState, elapsed])
+  }, [ltt, refreshState])
 
   const pause = useCallback(async () => {
-    setElapsed(0)
     await ltt.pauseTimer()
     await refreshState()
   }, [ltt, refreshState])

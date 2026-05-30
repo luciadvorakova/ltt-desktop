@@ -18,14 +18,17 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries, patchEntry } = useEntries()
+  const { entries, reload } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
 
   const handleStart = async (id: number) => {
-    const { prevId, prevMs } = await start(id)
-    if (prevId && prevId !== id) patchEntry(prevId, prevMs)
+    await start(id)
+    await reload()
   }
-  const handlePause = async () => { await pause() }
+  const handlePause = async () => {
+    await pause()
+    await reload()
+  }
 
   const todayKey = new Date().toDateString()
   const yesterdayKey = new Date(Date.now() - 86400000).toDateString()
