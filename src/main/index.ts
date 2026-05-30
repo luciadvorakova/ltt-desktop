@@ -1,4 +1,4 @@
-import { app, nativeImage } from 'electron'
+import { app, nativeImage, globalShortcut } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
@@ -45,6 +45,9 @@ mb.on('ready', () => {
     console.log('[AUTH] auth-success received in index.ts, win exists:', !!mb.window)
     mb.window?.webContents.send('auth-success', session)
     console.log('[AUTH] sent to renderer')
+  })
+  globalShortcut.register('CommandOrControl+Shift+I', () => {
+    mb.window?.webContents.toggleDevTools()
   })
 })
 
