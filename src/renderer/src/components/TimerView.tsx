@@ -18,10 +18,17 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries, reload } = useEntries()
+  const { entries, reload, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
 
-  const handleStart = async (id: number) => { await start(id); await reload() }
+  const handleStart = async (id: number) => {
+    if (timerState?.activeEntryId && timerState.activeEntryId !== id) {
+      const currentMs = timerState.baseMs + elapsed
+      updateEntry({ ...entries.find(e => e.id === timerState.activeEntryId)!, ms: currentMs })
+    }
+    await start(id)
+    await reload()
+  }
   const handlePause = async () => { await pause(); await reload() }
 
   const todayKey = new Date().toDateString()
