@@ -8,6 +8,7 @@ interface UseEntriesResult {
   updateEntry: (entry: TimeEntry) => Promise<void>
   deleteEntry: (id: number) => Promise<void>
   reload:      () => Promise<void>
+  setEntryMs:  (id: number, ms: number) => void
 }
 
 export function useEntries(): UseEntriesResult {
@@ -16,11 +17,12 @@ export function useEntries(): UseEntriesResult {
 
   const reload = useCallback(async () => {
     const session = await ltt.getSession()
-    if (!session) return
-    // Decode userId from the JWT access token payload
-    const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-    const userId: string = payload.sub
+    const payload = session ? JSON.parse(atob(session.access_token.split('.')[1])) : null
+    const userId: string | null = payload?.sub ?? null
+    console.log('[useEntries] session:', session ? 'present' : 'null', 'userId:', userId)
+    if (!session || !userId) return
     const loaded = await ltt.loadEntries(userId)
+    console.log('[useEntries] loaded:', loaded.length)
     setEntries(loaded)
   }, [ltt])
 
@@ -50,5 +52,9 @@ export function useEntries(): UseEntriesResult {
     setEntries((prev) => prev.filter((e) => e.id !== id))
   }, [ltt])
 
-  return { entries, addEntry, updateEntry, deleteEntry, reload }
+  const setEntryMs = useCallback((id: number, ms: number) => {
+    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, ms } : e))
+  }, [])
+
+  return { entries, addEntry, updateEntry, deleteEntry, reload, setEntryMs }
 }
