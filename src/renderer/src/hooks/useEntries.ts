@@ -8,6 +8,7 @@ interface UseEntriesResult {
   updateEntry: (entry: TimeEntry) => Promise<void>
   deleteEntry: (id: number) => Promise<void>
   reload:      () => Promise<void>
+  patchEntry:  (id: number, ms: number) => void
 }
 
 export function useEntries(): UseEntriesResult {
@@ -51,5 +52,9 @@ export function useEntries(): UseEntriesResult {
     setEntries((prev) => prev.filter((e) => e.id !== id))
   }, [ltt])
 
-  return { entries, addEntry, updateEntry, deleteEntry, reload }
+  const patchEntry = useCallback((id: number, ms: number) => {
+    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, ms } : e))
+  }, [])
+
+  return { entries, addEntry, updateEntry, deleteEntry, reload, patchEntry }
 }

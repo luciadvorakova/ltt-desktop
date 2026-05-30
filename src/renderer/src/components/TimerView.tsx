@@ -18,12 +18,12 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries, reload } = useEntries()
+  const { entries, reload, patchEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
 
   const handleStart = async (id: number) => {
-    await start(id)
-    await reload()
+    const prevSaved = await start(id)
+    if (prevSaved) patchEntry(prevSaved.id, prevSaved.ms)
   }
   const handlePause = async () => {
     await pause()
