@@ -43,7 +43,10 @@ export function useEntries(): UseEntriesResult {
 
   const updateEntry = useCallback(async (entry: TimeEntry) => {
     await ltt.saveEntry(entry)
-    setEntries((prev) => prev.map((e) => (Number(e.id) === Number(entry.id) ? entry : e)))
+    setEntries(prev => {
+      const next = prev.map(e => Number(e.id) === Number(entry.id) ? { ...entry } : e)
+      return [...next]
+    })
   }, [ltt])
 
   const deleteEntry = useCallback(async (id: number) => {
