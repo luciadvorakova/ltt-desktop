@@ -123,7 +123,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
                 <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} style={timeInputStyle}
                   onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
                 <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
+                <button style={timeBtnStyle} onMouseDown={handleAdd}>Add</button>
               </div>
             )}
             {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
@@ -132,7 +132,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
                 <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
                   onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
                 <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
+                <button style={timeBtnStyle} onMouseDown={handleEdit}>Save</button>
               </div>
             )}
           </div>
@@ -424,6 +424,8 @@ export function TimerView() {
           const isActive = activeId === entry.id
           const isActiveRunning = isActive && isRunning
           const displayMs = isActiveRunning ? liveMs : entry.ms
+
+          if (isActive) console.log('[DISPLAY] entry id:', entry.id, 'isActive:', isActive, 'isRunning:', isRunning, 'displayMs:', displayMs, 'entry.ms:', entry.ms, 'liveMs:', liveMs, 'baseMs:', timerState?.baseMs, 'elapsed:', elapsed)
 
           return (
             <div
