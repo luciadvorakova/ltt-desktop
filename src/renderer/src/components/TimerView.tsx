@@ -126,7 +126,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
                 <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
               </div>
             )}
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal(msToMin(ms)) }} />}
+            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
             {ms > 0 && expandedTime === 'edit' && (
               <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
                 <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
