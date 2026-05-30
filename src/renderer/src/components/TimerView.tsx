@@ -169,7 +169,7 @@ export function TimerView() {
               </div>
 
               {/* Row 2: description */}
-              {entry.jiraSummary && (
+              {entry.jiraDesc && (
                 <div style={{
                   fontSize: 10,
                   color: 'rgba(255,255,255,0.36)',
@@ -179,7 +179,7 @@ export function TimerView() {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}>
-                  {entry.jiraSummary}
+                  {entry.jiraDesc}
                 </div>
               )}
 
