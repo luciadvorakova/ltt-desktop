@@ -208,11 +208,6 @@ export function HistoryView() {
                   <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                     {formatMs(entry.ms)}
                   </span>
-                  {entry.jiraSent && (
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(80,180,100,0.15)', border: '1px solid rgba(80,180,100,0.28)', color: '#7fd89a', flexShrink: 0 }}>
-                      ✓ sent
-                    </span>
-                  )}
                   <EntryMenu
                     ms={entry.ms}
                     open={openMenuId === entry.id}
@@ -224,9 +219,16 @@ export function HistoryView() {
                   />
                 </div>
 
-                {entry.jiraDesc && (
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {entry.jiraDesc}
+                {(entry.jiraDesc || entry.jiraSent) && (
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}>
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {entry.jiraDesc}
+                    </span>
+                    {entry.jiraSent && (
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', flexShrink: 0, marginLeft: 6 }}>
+                        ✓ sent
+                      </span>
+                    )}
                   </div>
                 )}
 
