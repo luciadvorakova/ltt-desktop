@@ -89,7 +89,11 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
 
 // ---- Timer ----
 
-export function startTimer(entryId: number): void {
+export async function startTimer(entryId: number): Promise<void> {
+  const existing = store.get('timerState')
+  if (existing?.running && existing.activeEntryId !== entryId) {
+    await stopTimer()
+  }
   const entry = currentEntries.find((e) => e.id === entryId)
   const baseMs = entry?.ms ?? 0
   store.set('timerState', {

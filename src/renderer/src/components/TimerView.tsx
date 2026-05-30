@@ -88,6 +88,7 @@ export function TimerView() {
         )}
         {todayEntries.map((entry) => {
           const isActive = activeId === entry.id
+          const isActiveRunning = isActive && isRunning
           const displayMs = isActive ? liveMs : entry.ms
 
           return (
@@ -96,20 +97,20 @@ export function TimerView() {
               style={{
                 padding: '8px 14px',
                 borderTop: '1px solid rgba(255,255,255,0.08)',
-                background: isActive ? 'rgba(80,180,100,0.07)' : 'transparent',
+                background: isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
               }}
             >
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
                 <button
-                  onClick={() => isActive ? pause() : start(entry.id)}
+                  onClick={() => isActiveRunning ? pause() : start(entry.id)}
                   style={{
                     width: 22,
                     height: 22,
                     borderRadius: '50%',
-                    background: isActive ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
-                    border: `1px solid ${isActive ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
-                    color: isActive ? '#7fd89a' : 'rgba(255,255,255,0.6)',
+                    background: isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
+                    border: `1px solid ${isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
+                    color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -119,10 +120,10 @@ export function TimerView() {
                     padding: 0,
                   }}
                 >
-                  {isActive && isRunning ? '⏸' : '▶'}
+                  {isActiveRunning ? '⏸' : '▶'}
                 </button>
 
-                {isActive && (
+                {isActiveRunning && (
                   <div style={{
                     width: 6,
                     height: 6,
@@ -136,7 +137,7 @@ export function TimerView() {
                   fontSize: 12,
                   fontWeight: 600,
                   flex: 1,
-                  color: isActive ? '#7fd89a' : 'rgba(255,255,255,0.9)',
+                  color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -147,9 +148,11 @@ export function TimerView() {
                 <span style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: isActive ? '#7fd89a' : 'rgba(255,255,255,0.55)',
+                  color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
                   flexShrink: 0,
                   fontFamily: 'SF Mono, ui-monospace, monospace',
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '0.02em',
                 }}>
                   {formatMs(displayMs)}
                 </span>
