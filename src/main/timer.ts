@@ -1,5 +1,5 @@
 import { store } from './store'
-import { supabase } from './supabase'
+import { supabase, ensureSession } from './supabase'
 import type { TimeEntry, TimerState } from '../types/index'
 
 let flushInterval: ReturnType<typeof setInterval> | null = null
@@ -51,11 +51,14 @@ function entryToRow(entry: TimeEntry, userId: string): Record<string, unknown> {
 // ---- Entries ----
 
 export async function loadEntries(userId: string): Promise<TimeEntry[]> {
+  console.log('[TIMER] loadEntries called, userId:', userId)
+  await ensureSession()
   const { data, error } = await supabase
     .from('time_entries')
     .select('*')
     .eq('user_id', userId)
     .order('ts', { ascending: false })
+  console.log('[TIMER] query result:', data, 'error:', error)
   if (error) {
     console.error('[timer] loadEntries error:', error)
     return []
@@ -65,8 +68,8 @@ export async function loadEntries(userId: string): Promise<TimeEntry[]> {
 }
 
 export async function saveEntry(entry: TimeEntry): Promise<void> {
-  const session = store.get('session')
-  if (!session) return
+  if (!store.get('session')) return
+  await ensureSession()
   const { data: { user } } = await supabase.auth.getUser()
   const userId = user?.id
   if (!userId) return

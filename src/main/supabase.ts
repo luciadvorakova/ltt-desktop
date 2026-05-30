@@ -1,5 +1,6 @@
 import ws from 'ws'
 import { createClient } from '@supabase/supabase-js'
+import { store } from './store'
 
 const SUPABASE_URL = 'https://rzjbfqgkprozguyjrxbp.supabase.co'
 const SUPABASE_ANON_KEY =
@@ -13,3 +14,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   realtime: { transport: ws as any },
 })
+
+export async function ensureSession(): Promise<void> {
+  const session = store.get('session')
+  if (session) await supabase.auth.setSession(session)
+}

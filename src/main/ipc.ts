@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { store } from './store'
-import { supabase } from './supabase'
+import { supabase, ensureSession } from './supabase'
 import { signInWithGoogle, getSession } from './auth'
 import {
   loadEntries,
@@ -17,7 +17,10 @@ import type { TimeEntry, UserSettings } from '../types/index'
 export function registerIpcHandlers(): void {
   // ---- AUTH ----
 
-  ipcMain.handle('auth:signIn', () => signInWithGoogle())
+  ipcMain.handle('auth:signIn', () => {
+    console.log('[IPC] auth:signIn called')
+    return signInWithGoogle()
+  })
 
   ipcMain.handle('auth:getSession', () => getSession())
 
@@ -33,8 +36,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('entries:save', (_event, entry: TimeEntry) => saveEntry(entry))
 
   ipcMain.handle('entries:delete', async (_event, id: number) => {
-    const session = store.get('session')
-    if (!session) return
+    if (!store.get('session')) return
+    await ensureSession()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { error } = await supabase
@@ -70,6 +73,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('settings:push', async (_event, userId: string) => {
     const settings = store.get('settings')
     if (!settings) return
+    await ensureSession()
     const { error } = await supabase
       .from('user_settings')
       .upsert({ user_id: userId, ...settings }, { onConflict: 'user_id' })
