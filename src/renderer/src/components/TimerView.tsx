@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 
@@ -34,6 +34,78 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
 
 const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
+function EntryMenu({ onDelete }: { onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [above, setAbove] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setAbove(rect.bottom > window.innerHeight - 200)
+    }
+    setOpen(prev => !prev)
+  }
+
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        ref={btnRef}
+        style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit' }}
+        onMouseDown={handleClick}
+      >
+        …
+      </button>
+      {open && (
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            right: 0,
+            ...(above
+              ? { bottom: '100%', marginBottom: 4 }
+              : { top: '100%', marginTop: 4 }),
+            background: 'linear-gradient(145deg, #1e1850, #0e1830)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            borderRadius: 12,
+            minWidth: 180,
+            boxShadow: '0 8px 28px rgba(0,0,0,0.6)',
+            zIndex: 100,
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: '4px 0' }}>
+            <MenuItem icon="⏱" label="Add time manually" />
+            <MenuItem icon="✎" label="Edit tracked time" />
+          </div>
+          {menuDivider}
+          <div style={{ padding: '4px 0' }}>
+            <MenuItem icon="↑" label="Send to Jira" />
+          </div>
+          {menuDivider}
+          <div style={{ padding: '4px 0' }}>
+            <MenuItem icon="✏" label="Edit description" />
+            <MenuItem icon="★" label="Add to favourites" />
+            <MenuItem icon="⧉" label="Duplicate as new task" />
+          </div>
+          {menuDivider}
+          <div style={{ padding: '4px 0' }}>
+            <MenuItem icon="✕" label="Delete task" color="rgba(220,100,100,0.88)" onAction={onDelete} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -53,15 +125,6 @@ const formatMsShort = (ms: number): string => {
 export function TimerView() {
   const { entries, reload, patchEntry, deleteEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (openMenuId === null) return
-    const close = () => setOpenMenuId(null)
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [openMenuId])
-
   const handleStart = async (id: number) => {
     const prevSaved = await start(id)
     if (prevSaved) patchEntry(prevSaved.id, prevSaved.ms)
@@ -204,56 +267,7 @@ export function TimerView() {
                   {formatMs(displayMs)}
                 </span>
 
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <span
-                    style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer' }}
-                    onMouseDown={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === entry.id ? null : entry.id) }}
-                  >
-                    …
-                  </span>
-                  {openMenuId === entry.id && (
-                    <div
-                      onMouseDown={(e) => e.stopPropagation()}
-                      style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: '100%',
-                        marginTop: 4,
-                        background: 'linear-gradient(145deg, #1e1850, #0e1830)',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        borderRadius: 12,
-                        minWidth: 180,
-                        boxShadow: '0 8px 28px rgba(0,0,0,0.6)',
-                        zIndex: 100,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div style={{ padding: '4px 0' }}>
-                        <MenuItem icon="⏱" label="Add time manually" />
-                        <MenuItem icon="✎" label="Edit tracked time" />
-                      </div>
-                      {menuDivider}
-                      <div style={{ padding: '4px 0' }}>
-                        <MenuItem icon="↑" label="Send to Jira" />
-                      </div>
-                      {menuDivider}
-                      <div style={{ padding: '4px 0' }}>
-                        <MenuItem icon="✏" label="Edit description" />
-                        <MenuItem icon="★" label="Add to favourites" />
-                        <MenuItem icon="⧉" label="Duplicate as new task" />
-                      </div>
-                      {menuDivider}
-                      <div style={{ padding: '4px 0' }}>
-                        <MenuItem
-                          icon="✕"
-                          label="Delete task"
-                          color="rgba(220,100,100,0.88)"
-                          onAction={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <EntryMenu onDelete={async () => { await deleteEntry(entry.id) }} />
               </div>
 
               {/* Row 2: description */}
