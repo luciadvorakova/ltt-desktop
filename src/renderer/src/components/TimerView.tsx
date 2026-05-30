@@ -10,6 +10,15 @@ const formatMs = (ms: number): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+const formatMsShort = (ms: number): string => {
+  const totalMins = Math.floor(ms / 60000)
+  const h = Math.floor(totalMins / 60)
+  const m = totalMins % 60
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
 export function TimerView() {
   const { entries } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
@@ -243,9 +252,9 @@ export function TimerView() {
             fontSize: 13,
             fontWeight: 700,
             color: 'white',
-            fontFamily: 'SF Mono, ui-monospace, monospace',
+            fontVariantNumeric: 'tabular-nums',
           }}>
-            {formatMs(totalMs)}
+            {formatMsShort(totalMs)}
           </span>
         </div>
       </div>
