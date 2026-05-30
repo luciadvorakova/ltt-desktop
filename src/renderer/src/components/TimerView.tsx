@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 
@@ -18,8 +19,16 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries, reload, patchEntry } = useEntries()
+  const { entries, reload, patchEntry, deleteEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (openMenuId === null) return
+    const close = () => setOpenMenuId(null)
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [openMenuId])
 
   const handleStart = async (id: number) => {
     const prevSaved = await start(id)
@@ -163,9 +172,39 @@ export function TimerView() {
                   {formatMs(displayMs)}
                 </span>
 
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer' }}>
-                  …
-                </span>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <span
+                    style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer' }}
+                    onMouseDown={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === entry.id ? null : entry.id) }}
+                  >
+                    …
+                  </span>
+                  {openMenuId === entry.id && (
+                    <div
+                      onMouseDown={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: '100%',
+                        marginTop: 4,
+                        background: 'linear-gradient(145deg, #1e1850, #0e1830)',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        borderRadius: 12,
+                        minWidth: 180,
+                        boxShadow: '0 8px 28px rgba(0,0,0,0.6)',
+                        zIndex: 100,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{ padding: '7px 13px', fontSize: 11, color: 'rgba(220,100,100,0.88)', cursor: 'pointer' }}
+                        onMouseDown={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
+                      >
+                        Delete task
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Row 2: description */}
