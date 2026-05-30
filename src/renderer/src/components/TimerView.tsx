@@ -23,6 +23,7 @@ export function TimerView() {
 
   const handleStart = async (id: number) => {
     await start(id)
+    await new Promise(resolve => setTimeout(resolve, 300))
     await reload()
   }
   const handlePause = async () => { await pause(); await reload() }

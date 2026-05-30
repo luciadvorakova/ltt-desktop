@@ -157,7 +157,7 @@ export async function stopTimer(): Promise<void> {
       currentEntries[idx] = updated
     }
   }
-  await new Promise(resolve => setTimeout(resolve, 200))
+  await new Promise(resolve => setTimeout(resolve, 500))
   store.set('timerState', null)
   if (flushInterval) {
     clearInterval(flushInterval)
