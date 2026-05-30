@@ -83,7 +83,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div style={{ height: 6 }} />
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '6px 0' }} />
 
         {/* SLACK STANDUP */}
         <div style={sectionLabelStyle}>Slack standup</div>
@@ -114,7 +114,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           <button style={saveBtnStyle} onClick={() => updateSetting('slackUserId', slackUserId)}>Save</button>
         </div>
 
-        <div style={{ height: 6 }} />
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '6px 0' }} />
 
         {/* TIMER */}
         <div style={sectionLabelStyle}>Timer</div>
