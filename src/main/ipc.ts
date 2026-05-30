@@ -33,7 +33,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('entries:load', (_event, userId: string) => loadEntries(userId))
 
-  ipcMain.handle('entries:save', (_event, entry: TimeEntry) => saveEntry(entry))
+  ipcMain.handle('entries:save', async (_event, entry: TimeEntry) => {
+    console.log('[IPC] entries:save called, id:', entry.id, 'ms:', entry.ms)
+    await saveEntry(entry)
+    console.log('[IPC] entries:save done')
+  })
 
   ipcMain.handle('entries:delete', async (_event, id: number) => {
     if (!store.get('session')) return
@@ -52,7 +56,10 @@ export function registerIpcHandlers(): void {
 
   // ---- TIMER ----
 
-  ipcMain.handle('timer:start', (_event, entryId: number) => startTimer(entryId))
+  ipcMain.handle('timer:start', (_event, entryId: number) => {
+    console.log('[IPC] timer:start called, entryId:', entryId)
+    return startTimer(entryId)
+  })
 
   ipcMain.handle('timer:pause', () => pauseTimer())
 
