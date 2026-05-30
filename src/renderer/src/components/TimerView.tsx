@@ -80,7 +80,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
   const timeInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'white', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
   const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.25)' }
-  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
+  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
   const handleAdd = () => {
     const parsed = parseMin(addVal)
@@ -499,8 +499,8 @@ export function TimerView() {
                   onClose={() => setOpenMenuId(null)}
                   onDelete={async () => { await deleteEntry(entry.id) }}
                   onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
-                  onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added }) }}
-                  onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs }) }}
+                  onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
+                  onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
                 />
               </div>
 
