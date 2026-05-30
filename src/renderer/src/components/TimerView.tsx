@@ -36,32 +36,6 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
 
 const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
-function TimeInlinePanel({ label, value, placeholder, onSave, onCancel }: {
-  label: string; value: string; placeholder?: string;
-  onSave: (val: string) => void; onCancel: () => void
-}) {
-  const [val, setVal] = useState(value)
-  return (
-    <div style={{ paddingLeft: 29, marginBottom: 5 }}>
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <input
-          autoFocus
-          value={val}
-          onChange={e => setVal(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') onSave(val); if (e.key === 'Escape') onCancel() }}
-          placeholder={placeholder}
-          style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, padding: '6px 10px', fontSize: 13, color: 'white', outline: 'none', fontFamily: 'inherit', fontVariantNumeric: 'tabular-nums' }}
-        />
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>h:mm</span>
-      </div>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={() => onSave(val)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
-        <button onClick={onCancel} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-      </div>
-    </div>
-  )
-}
 
 function parseHMM(input: string): number | null {
   const trimmed = input.trim().replace(/^[+]/, '')
@@ -80,12 +54,20 @@ function msToHMM(ms: number): string {
   return `${h}:${String(m).padStart(2, '0')}`
 }
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onEditTime, onAddTime }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
-  onDelete: () => void; onEditDesc: () => void; onEditTime: () => void; onAddTime: () => void
+  onDelete: () => void; onEditDesc: () => void;
+  onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
 }) {
   const [above, setAbove] = useState(false)
+  const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
+  const [addVal, setAddVal] = useState('')
+  const [editVal, setEditVal] = useState('')
   const btnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) setExpandedTime(null)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -100,6 +82,20 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onEditTime
       setAbove(rect.bottom > window.innerHeight - 200)
     }
     open ? onClose() : onOpen()
+  }
+
+  const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
+  const timeInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'white', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
+  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.25)' }
+  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '2px 8px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
+
+  const handleAdd = () => {
+    const parsed = parseHMM(addVal)
+    if (parsed !== null) { onAddTime(parsed); onClose() }
+  }
+  const handleEdit = () => {
+    const parsed = parseHMM(editVal)
+    if (parsed !== null) { onEditTime(parsed); onClose() }
   }
 
   return (
@@ -117,9 +113,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onEditTime
           style={{
             position: 'absolute',
             right: 0,
-            ...(above
-              ? { bottom: '100%', marginBottom: 4 }
-              : { top: '100%', marginTop: 4 }),
+            ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
             background: 'linear-gradient(145deg, #1e1850, #0e1830)',
             border: '1px solid rgba(255,255,255,0.14)',
             borderRadius: 12,
@@ -130,8 +124,24 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onEditTime
           }}
         >
           <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="⏱" label="Add time manually" onAction={() => { onClose(); onAddTime() }} />
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { onClose(); onEditTime() }} />}
+            <MenuItem icon="⏱" label="Add time manually" onAction={() => setExpandedTime(prev => prev === 'add' ? null : 'add')} />
+            {expandedTime === 'add' && (
+              <div style={timeRowStyle}>
+                <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} placeholder="0:30" style={timeInputStyle}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
+                <span style={timeHintStyle}>+ h:mm</span>
+                <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
+              </div>
+            )}
+            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal(msToHMM(ms)) }} />}
+            {ms > 0 && expandedTime === 'edit' && (
+              <div style={timeRowStyle}>
+                <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
+                  onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
+                <span style={timeHintStyle}>h:mm</span>
+                <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
+              </div>
+            )}
           </div>
           {ms > 0 && menuDivider}
           {ms > 0 && (
@@ -200,10 +210,6 @@ export function TimerView() {
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
-  const [editingTimeId, setEditingTimeId] = useState<number | null>(null)
-  const [editingTimeValue, setEditingTimeValue] = useState('')
-  const [addingTimeId, setAddingTimeId] = useState<number | null>(null)
-  const [addingTimeValue, setAddingTimeValue] = useState('')
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -500,8 +506,8 @@ export function TimerView() {
                   onClose={() => setOpenMenuId(null)}
                   onDelete={async () => { await deleteEntry(entry.id) }}
                   onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
-                  onEditTime={() => { setEditingTimeId(entry.id); setEditingTimeValue(msToHMM(entry.ms)); setOpenMenuId(null) }}
-                  onAddTime={() => { setAddingTimeId(entry.id); setAddingTimeValue(''); setOpenMenuId(null) }}
+                  onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added }) }}
+                  onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs }) }}
                 />
               </div>
 
@@ -531,35 +537,6 @@ export function TimerView() {
               >
                 {editingDescId === entry.id ? entry.jiraDesc : (entry.jiraDesc || 'Add description...')}
               </div>
-
-              {/* Edit tracked time panel */}
-              {editingTimeId === entry.id && (
-                <TimeInlinePanel
-                  label="Edit tracked time"
-                  value={editingTimeValue}
-                  onSave={async (val) => {
-                    const ms = parseHMM(val)
-                    if (ms !== null) await updateEntry({ ...entry, ms })
-                    setEditingTimeId(null)
-                  }}
-                  onCancel={() => setEditingTimeId(null)}
-                />
-              )}
-
-              {/* Add time manually panel */}
-              {addingTimeId === entry.id && (
-                <TimeInlinePanel
-                  label="Add time manually"
-                  value={addingTimeValue}
-                  placeholder="+0:30"
-                  onSave={async (val) => {
-                    const added = parseHMM(val)
-                    if (added !== null) await updateEntry({ ...entry, ms: entry.ms + added })
-                    setAddingTimeId(null)
-                  }}
-                  onCancel={() => setAddingTimeId(null)}
-                />
-              )}
 
               {/* Row 3: pills */}
               {(entry.clientName || entry.jiraKey) && (
