@@ -30,16 +30,13 @@ export function TimerView() {
     await reload()
   }
 
-  const todayKey = new Date().toDateString()
-  const yesterdayKey = new Date(Date.now() - 86400000).toDateString()
-
   const todayEntries = entries.filter(e => {
-    const entryDay = new Date(e.ts).toDateString()
-    if (entryDay === todayKey) return true
-    if (e.ms === 0 && !e.jiraSent) return true
-    if (e.ms > 0 && !e.jiraSent && entryDay === yesterdayKey) return true
-    return false
+    if (e.jiraSent) return false
+    if (e.removedFromTimer) return false
+    return true
   })
+
+  console.log('[TIMER_VIEW] todayEntries ids:', todayEntries.map(e => e.id))
 
   const activeId = timerState?.activeEntryId ?? null
   const isRunning = timerState?.running ?? false
