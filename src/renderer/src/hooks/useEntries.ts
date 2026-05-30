@@ -45,8 +45,8 @@ export function useEntries(): UseEntriesResult {
     console.log('[UPDATE_ENTRY] called, id:', entry.id, 'ms:', entry.ms)
     console.log('[UPDATE_ENTRY] about to call ltt.saveEntry, entry keys:', Object.keys(entry))
     try {
-      await ltt.saveEntry(entry)
-      console.log('[UPDATE_ENTRY] ltt.saveEntry completed')
+      const result = await window.ltt.saveEntry(entry)
+      console.log('[UPDATE_ENTRY] direct saveEntry result:', result)
     } catch (e) {
       console.error('[UPDATE_ENTRY] ltt.saveEntry error:', e)
     }
