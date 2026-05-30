@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import { TimerView } from './components/TimerView'
 import { HistoryView } from './components/HistoryView'
 import { WeeklyView } from './components/WeeklyView'
+import { SettingsView } from './components/SettingsView'
 
 type Tab = 'timer' | 'history' | 'weekly'
 
@@ -36,6 +37,7 @@ function getUserInfo(accessToken: string): { name: string; email: string } {
 function AppShell({ session, signOut }: { session: Session; signOut: () => Promise<void> }) {
   const [tab, setTab] = useState<Tab>('timer')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const initials = getInitials(session.access_token)
@@ -53,7 +55,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
   }, [dropdownOpen])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative' }}>
 
       {/* Top nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -131,7 +133,10 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
               </div>
               {/* Menu items */}
               <div style={{ padding: '4px 0' }}>
-                <button style={menuItemStyle}>
+                <button
+                  onClick={() => { setDropdownOpen(false); setSettingsOpen(true) }}
+                  style={menuItemStyle}
+                >
                   Settings
                 </button>
                 <button
@@ -152,6 +157,9 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
         {tab === 'history' && <HistoryView />}
         {tab === 'weekly' && <WeeklyView />}
       </div>
+
+      {/* Settings overlay */}
+      {settingsOpen && <SettingsView onClose={() => setSettingsOpen(false)} />}
     </div>
   )
 }
