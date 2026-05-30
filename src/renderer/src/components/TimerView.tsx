@@ -2,25 +2,37 @@ import { useState, useEffect } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 
-function MenuItem({ label, color, onAction }: { label: string; color?: string; onAction?: () => void }) {
+function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <div
+    <button
       style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
         padding: '7px 13px',
         fontSize: 11,
         color: color ?? 'rgba(255,255,255,0.7)',
         cursor: 'pointer',
-        background: hovered ? 'rgba(255,255,255,0.07)' : 'transparent',
+        background: hovered ? 'rgba(255,255,255,0.07)' : 'none',
+        border: 'none',
+        width: '100%',
+        textAlign: 'left',
+        fontFamily: 'inherit',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onMouseDown={onAction}
     >
+      <span style={{ fontSize: 12, color: color ? color : 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center', flexShrink: 0 }}>
+        {icon}
+      </span>
       {label}
-    </div>
+    </button>
   )
 }
+
+const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
@@ -216,18 +228,29 @@ export function TimerView() {
                         overflow: 'hidden',
                       }}
                     >
-                      <MenuItem label="Add time manually" />
-                      <MenuItem label="Edit tracked time" />
-                      <MenuItem label="Send to Jira" />
-                      <MenuItem label="Edit description" />
-                      <MenuItem label="Add to favourites" />
-                      <MenuItem label="Duplicate as new task" />
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
-                      <MenuItem
-                        label="Delete task"
-                        color="rgba(220,100,100,0.88)"
-                        onAction={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
-                      />
+                      <div style={{ padding: '4px 0' }}>
+                        <MenuItem icon="⏱" label="Add time manually" />
+                        <MenuItem icon="✎" label="Edit tracked time" />
+                      </div>
+                      {menuDivider}
+                      <div style={{ padding: '4px 0' }}>
+                        <MenuItem icon="↑" label="Send to Jira" />
+                      </div>
+                      {menuDivider}
+                      <div style={{ padding: '4px 0' }}>
+                        <MenuItem icon="✏" label="Edit description" />
+                        <MenuItem icon="★" label="Add to favourites" />
+                        <MenuItem icon="⧉" label="Duplicate as new task" />
+                      </div>
+                      {menuDivider}
+                      <div style={{ padding: '4px 0' }}>
+                        <MenuItem
+                          icon="✕"
+                          label="Delete task"
+                          color="rgba(220,100,100,0.88)"
+                          onAction={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
