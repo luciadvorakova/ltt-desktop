@@ -260,7 +260,7 @@ export function TimerView() {
                   fontWeight: 600,
                   color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
                   flexShrink: 0,
-                  fontFamily: 'SF Mono, ui-monospace, monospace',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
                   fontVariantNumeric: 'tabular-nums',
                   letterSpacing: '0.02em',
                 }}>
@@ -276,7 +276,7 @@ export function TimerView() {
                   fontSize: 10,
                   color: 'rgba(255,255,255,0.36)',
                   paddingLeft: 29,
-                  marginBottom: 3,
+                  marginBottom: 5,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
