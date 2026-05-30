@@ -36,9 +36,53 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
 
 const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc }: {
+function TimeInlinePanel({ label, value, placeholder, onSave, onCancel }: {
+  label: string; value: string; placeholder?: string;
+  onSave: (val: string) => void; onCancel: () => void
+}) {
+  const [val, setVal] = useState(value)
+  return (
+    <div style={{ paddingLeft: 29, marginBottom: 5 }}>
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <input
+          autoFocus
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') onSave(val); if (e.key === 'Escape') onCancel() }}
+          placeholder={placeholder}
+          style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 8, padding: '6px 10px', fontSize: 13, color: 'white', outline: 'none', fontFamily: 'inherit', fontVariantNumeric: 'tabular-nums' }}
+        />
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>h:mm</span>
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button onClick={() => onSave(val)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+        <button onClick={onCancel} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+function parseHMM(input: string): number | null {
+  const trimmed = input.trim().replace(/^[+]/, '')
+  const parts = trimmed.split(':')
+  if (parts.length !== 2) return null
+  const h = parseInt(parts[0], 10)
+  const m = parseInt(parts[1], 10)
+  if (isNaN(h) || isNaN(m) || m < 0 || m > 59) return null
+  return (h * 60 + m) * 60000
+}
+
+function msToHMM(ms: number): string {
+  const totalMins = Math.floor(ms / 60000)
+  const h = Math.floor(totalMins / 60)
+  const m = totalMins % 60
+  return `${h}:${String(m).padStart(2, '0')}`
+}
+
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onEditTime, onAddTime }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
-  onDelete: () => void; onEditDesc: () => void
+  onDelete: () => void; onEditDesc: () => void; onEditTime: () => void; onAddTime: () => void
 }) {
   const [above, setAbove] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -86,8 +130,8 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc }: {
           }}
         >
           <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="⏱" label="Add time manually" />
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" />}
+            <MenuItem icon="⏱" label="Add time manually" onAction={() => { onClose(); onAddTime() }} />
+            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { onClose(); onEditTime() }} />}
           </div>
           {ms > 0 && menuDivider}
           {ms > 0 && (
@@ -156,6 +200,10 @@ export function TimerView() {
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
+  const [editingTimeId, setEditingTimeId] = useState<number | null>(null)
+  const [editingTimeValue, setEditingTimeValue] = useState('')
+  const [addingTimeId, setAddingTimeId] = useState<number | null>(null)
+  const [addingTimeValue, setAddingTimeValue] = useState('')
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -452,6 +500,8 @@ export function TimerView() {
                   onClose={() => setOpenMenuId(null)}
                   onDelete={async () => { await deleteEntry(entry.id) }}
                   onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
+                  onEditTime={() => { setEditingTimeId(entry.id); setEditingTimeValue(msToHMM(entry.ms)); setOpenMenuId(null) }}
+                  onAddTime={() => { setAddingTimeId(entry.id); setAddingTimeValue(''); setOpenMenuId(null) }}
                 />
               </div>
 
@@ -481,6 +531,35 @@ export function TimerView() {
               >
                 {editingDescId === entry.id ? entry.jiraDesc : (entry.jiraDesc || 'Add description...')}
               </div>
+
+              {/* Edit tracked time panel */}
+              {editingTimeId === entry.id && (
+                <TimeInlinePanel
+                  label="Edit tracked time"
+                  value={editingTimeValue}
+                  onSave={async (val) => {
+                    const ms = parseHMM(val)
+                    if (ms !== null) await updateEntry({ ...entry, ms })
+                    setEditingTimeId(null)
+                  }}
+                  onCancel={() => setEditingTimeId(null)}
+                />
+              )}
+
+              {/* Add time manually panel */}
+              {addingTimeId === entry.id && (
+                <TimeInlinePanel
+                  label="Add time manually"
+                  value={addingTimeValue}
+                  placeholder="+0:30"
+                  onSave={async (val) => {
+                    const added = parseHMM(val)
+                    if (added !== null) await updateEntry({ ...entry, ms: entry.ms + added })
+                    setAddingTimeId(null)
+                  }}
+                  onCancel={() => setAddingTimeId(null)}
+                />
+              )}
 
               {/* Row 3: pills */}
               {(entry.clientName || entry.jiraKey) && (
