@@ -36,17 +36,18 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
 
 const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
-function EntryMenu({ ms, onDelete, onEditDesc }: { ms: number; onDelete: () => void; onEditDesc: () => void }) {
-  const [open, setOpen] = useState(false)
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc }: {
+  ms: number; open: boolean; onOpen: () => void; onClose: () => void;
+  onDelete: () => void; onEditDesc: () => void
+}) {
   const [above, setAbove] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
-    const close = () => setOpen(false)
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [open])
+    document.addEventListener('mousedown', onClose)
+    return () => document.removeEventListener('mousedown', onClose)
+  }, [open, onClose])
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -54,14 +55,14 @@ function EntryMenu({ ms, onDelete, onEditDesc }: { ms: number; onDelete: () => v
       const rect = btnRef.current.getBoundingClientRect()
       setAbove(rect.bottom > window.innerHeight - 200)
     }
-    setOpen(prev => !prev)
+    open ? onClose() : onOpen()
   }
 
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       <button
         ref={btnRef}
-        style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 22, fontSize: 13, color: 'rgba(255,255,255,0.2)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit' }}
         onMouseDown={handleClick}
       >
         …
@@ -96,7 +97,7 @@ function EntryMenu({ ms, onDelete, onEditDesc }: { ms: number; onDelete: () => v
           )}
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="✏" label="Edit description" onAction={() => { setOpen(false); onEditDesc() }} />
+            <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" />
             <MenuItem icon="⧉" label="Duplicate as new task" />
           </div>
@@ -153,8 +154,8 @@ export function TimerView() {
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
-  const [editingDescValue, setEditingDescValue] = useState('')
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -446,52 +447,40 @@ export function TimerView() {
 
                 <EntryMenu
                   ms={entry.ms}
+                  open={openMenuId === entry.id}
+                  onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
+                  onClose={() => setOpenMenuId(null)}
                   onDelete={async () => { await deleteEntry(entry.id) }}
-                  onEditDesc={() => { setEditingDescId(entry.id); setEditingDescValue(entry.jiraDesc ?? '') }}
+                  onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
                 />
               </div>
 
-              {/* Row 2: description / inline edit */}
-              {editingDescId === entry.id ? (
-                <div style={{ paddingLeft: 29, paddingRight: 0, marginBottom: 5 }}>
-                  <input
-                    autoFocus
-                    value={editingDescValue}
-                    onChange={e => setEditingDescValue(e.target.value)}
-                    onKeyDown={async e => {
-                      if (e.key === 'Enter') { await updateEntry({ ...entry, jiraDesc: editingDescValue }); setEditingDescId(null) }
-                      if (e.key === 'Escape') setEditingDescId(null)
-                    }}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, padding: '5px 10px', fontSize: 11, color: 'rgba(255,255,255,0.85)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                  />
-                  <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
-                    <button
-                      onClick={async () => { await updateEntry({ ...entry, jiraDesc: editingDescValue }); setEditingDescId(null) }}
-                      style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingDescId(null)}
-                      style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : entry.jiraDesc ? (
-                <div style={{
+              {/* Row 2: description — always editable on click */}
+              <div
+                contentEditable
+                suppressContentEditableWarning
+                onFocus={() => setEditingDescId(entry.id)}
+                onBlur={async (e) => {
+                  const text = e.currentTarget.textContent?.trim() ?? ''
+                  await updateEntry({ ...entry, jiraDesc: text })
+                  setEditingDescId(null)
+                }}
+                onKeyDown={(e) => { if (e.key === 'Escape') { (e.currentTarget as HTMLElement).blur() } }}
+                style={{
                   fontSize: 10,
-                  color: 'rgba(255,255,255,0.36)',
+                  color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
                   paddingLeft: 29,
                   marginBottom: 5,
+                  outline: 'none',
+                  cursor: 'text',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  textOverflow: editingDescId === entry.id ? 'unset' : 'ellipsis',
                   whiteSpace: 'nowrap',
-                }}>
-                  {entry.jiraDesc}
-                </div>
-              ) : null}
+                  minHeight: '1.2em',
+                }}
+              >
+                {editingDescId === entry.id ? entry.jiraDesc : (entry.jiraDesc || 'Add description...')}
+              </div>
 
               {/* Row 3: pills */}
               {(entry.clientName || entry.jiraKey) && (
