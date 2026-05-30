@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, nativeImage } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
@@ -18,9 +18,13 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 app.setAsDefaultProtocolClient('ltt')
 
+const trayIcon = nativeImage.createFromDataURL(
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAPElEQVR42mNgGHbgPw5AdQMpsuA/iYAmhhJl+H8KAX0N/k8lMGrwcDJ46KVjmmZpmhZCNC02aVrQD1oAAKA5/C5Hrur7AAAAAElFTkSuQmCC'
+)
+
 const mb = menubar({
   index: VITE_DEV_SERVER_URL || `file://${path.join(RENDERER_DIST, 'index.html')}`,
-  icon: path.join(process.env.VITE_PUBLIC || '', 'tray-icon.png'),
+  icon: trayIcon,
   browserWindow: {
     width: 380,
     height: 600,
