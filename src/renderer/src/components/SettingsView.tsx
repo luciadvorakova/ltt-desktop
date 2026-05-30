@@ -12,7 +12,8 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   )
 }
 
-const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }
+const sectionDividerStyle: React.CSSProperties = { borderBottom: '1px solid rgba(255,255,255,0.06)' }
+const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px' }
 const sectionLabelStyle: React.CSSProperties = { fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '10px 14px 4px' }
 const rowLabelStyle: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.8)' }
 const rowSubStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }
@@ -21,8 +22,9 @@ const saveBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', bor
 const connectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 const disconnectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 const connectedStyle: React.CSSProperties = { fontSize: 10, color: '#7fd89a', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+const fieldLabelStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', width: 56, flexShrink: 0 }
 
-export function SettingsView({ onClose }: { onClose: () => void }) {
+export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
   const { settings, updateSetting } = useSettings()
   const [slackChannel, setSlackChannel] = useState('')
   const [slackUserId, setSlackUserId] = useState('')
@@ -38,13 +40,7 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
-        <span
-          onClick={onClose}
-          style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', cursor: 'pointer' }}
-        >
-          ‹ Timer
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
           Settings
         </span>
@@ -72,8 +68,8 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Google Calendar */}
-        <div style={rowStyle}>
+        {/* Google Calendar — last in section, gets divider */}
+        <div style={{ ...rowStyle, ...sectionDividerStyle }}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Google Calendar</div>
             {!settings?.gcalEmail && <div style={rowSubStyle}>Import events as time entries.</div>}
@@ -93,6 +89,7 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
 
         {/* Channel */}
         <div style={rowStyle}>
+          <span style={fieldLabelStyle}>Channel</span>
           <input
             style={inputStyle}
             placeholder="#channel"
@@ -103,11 +100,12 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
           <button style={saveBtnStyle} onClick={() => updateSetting('slackChannel', slackChannel)}>Save</button>
         </div>
 
-        {/* Member ID */}
-        <div style={rowStyle}>
+        {/* Member ID — last in section, gets divider */}
+        <div style={{ ...rowStyle, ...sectionDividerStyle }}>
+          <span style={fieldLabelStyle}>Member ID</span>
           <input
             style={inputStyle}
-            placeholder="Member ID"
+            placeholder="U0123456"
             value={slackUserId}
             onChange={e => setSlackUserId(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') updateSetting('slackUserId', slackUserId) }}

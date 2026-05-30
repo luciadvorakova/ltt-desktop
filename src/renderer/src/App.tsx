@@ -71,7 +71,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
           {(['timer', 'history', 'weekly'] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); setSettingsOpen(false) }}
               style={{
                 fontSize: 10,
                 padding: '3px 10px',
