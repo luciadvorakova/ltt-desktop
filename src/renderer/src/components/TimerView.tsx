@@ -2,6 +2,26 @@ import { useState, useEffect } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 
+function MenuItem({ label, color, onAction }: { label: string; color?: string; onAction?: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      style={{
+        padding: '7px 13px',
+        fontSize: 11,
+        color: color ?? 'rgba(255,255,255,0.7)',
+        cursor: 'pointer',
+        background: hovered ? 'rgba(255,255,255,0.07)' : 'transparent',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onMouseDown={onAction}
+    >
+      {label}
+    </div>
+  )
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -196,12 +216,18 @@ export function TimerView() {
                         overflow: 'hidden',
                       }}
                     >
-                      <div
-                        style={{ padding: '7px 13px', fontSize: 11, color: 'rgba(220,100,100,0.88)', cursor: 'pointer' }}
-                        onMouseDown={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
-                      >
-                        Delete task
-                      </div>
+                      <MenuItem label="Add time manually" />
+                      <MenuItem label="Edit tracked time" />
+                      <MenuItem label="Send to Jira" />
+                      <MenuItem label="Edit description" />
+                      <MenuItem label="Add to favourites" />
+                      <MenuItem label="Duplicate as new task" />
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+                      <MenuItem
+                        label="Delete task"
+                        color="rgba(220,100,100,0.88)"
+                        onAction={async () => { await deleteEntry(entry.id); setOpenMenuId(null) }}
+                      />
                     </div>
                   )}
                 </div>
