@@ -1,8 +1,6 @@
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 
-const dayKey = (ts: number) => new Date(ts).toDateString()
-
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -23,8 +21,16 @@ export function TimerView() {
   const { entries } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
 
-  const today = dayKey(Date.now())
-  const todayEntries = entries.filter((e) => dayKey(e.ts) === today)
+  const todayKey = new Date().toDateString()
+  const yesterdayKey = new Date(Date.now() - 86400000).toDateString()
+
+  const todayEntries = entries.filter(e => {
+    const entryDay = new Date(e.ts).toDateString()
+    if (entryDay === todayKey) return true
+    if (e.ms === 0 && !e.jiraSent) return true
+    if (e.ms > 0 && !e.jiraSent && entryDay === yesterdayKey) return true
+    return false
+  })
 
   const activeId = timerState?.activeEntryId ?? null
   const isRunning = timerState?.running ?? false
