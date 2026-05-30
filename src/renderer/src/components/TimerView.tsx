@@ -62,10 +62,10 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc }: {
     <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
       <button
         ref={btnRef}
-        style={{ background: 'none', border: 'none', padding: 0, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: 16, lineHeight: 1, flexShrink: 0 }}
+        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 3, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: 13, lineHeight: 1, flexShrink: 0, letterSpacing: 2 }}
         onMouseDown={handleClick}
       >
-        …
+        •••
       </button>
       {open && (
         <div
