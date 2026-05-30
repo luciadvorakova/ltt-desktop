@@ -37,21 +37,14 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
 const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
 
-function parseHMM(input: string): number | null {
-  const trimmed = input.trim().replace(/^[+]/, '')
-  const parts = trimmed.split(':')
-  if (parts.length !== 2) return null
-  const h = parseInt(parts[0], 10)
-  const m = parseInt(parts[1], 10)
-  if (isNaN(h) || isNaN(m) || m < 0 || m > 59) return null
-  return (h * 60 + m) * 60000
+function parseMin(input: string): number | null {
+  const n = parseInt(input.trim(), 10)
+  if (isNaN(n) || n < 0) return null
+  return n * 60000
 }
 
-function msToHMM(ms: number): string {
-  const totalMins = Math.floor(ms / 60000)
-  const h = Math.floor(totalMins / 60)
-  const m = totalMins % 60
-  return `${h}:${String(m).padStart(2, '0')}`
+function msToMin(ms: number): string {
+  return String(Math.floor(ms / 60000))
 }
 
 function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime }: {
@@ -87,14 +80,14 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
   const timeInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'white', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
   const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.25)' }
-  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '2px 8px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
+  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
   const handleAdd = () => {
-    const parsed = parseHMM(addVal)
+    const parsed = parseMin(addVal)
     if (parsed !== null) { onAddTime(parsed); onClose() }
   }
   const handleEdit = () => {
-    const parsed = parseHMM(editVal)
+    const parsed = parseMin(editVal)
     if (parsed !== null) { onEditTime(parsed); onClose() }
   }
 
@@ -127,18 +120,18 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             <MenuItem icon="⏱" label="Add time manually" onAction={() => setExpandedTime(prev => prev === 'add' ? null : 'add')} />
             {expandedTime === 'add' && (
               <div style={timeRowStyle}>
-                <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} placeholder="0:30" style={timeInputStyle}
+                <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} placeholder="30" style={timeInputStyle}
                   onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>+ h:mm</span>
+                <span style={timeHintStyle}>min</span>
                 <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
               </div>
             )}
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal(msToHMM(ms)) }} />}
+            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal(msToMin(ms)) }} />}
             {ms > 0 && expandedTime === 'edit' && (
               <div style={timeRowStyle}>
                 <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
                   onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>h:mm</span>
+                <span style={timeHintStyle}>min</span>
                 <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
               </div>
             )}
