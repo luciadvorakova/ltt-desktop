@@ -78,6 +78,8 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
   const { error } = await supabase
     .from('time_entries')
     .upsert(row, { onConflict: 'id' })
+  console.log('[SAVE] entry id:', entry.id, 'ms:', entry.ms, 'updatedAt:', entry.updatedAt)
+  console.log('[SAVE] error:', error)
   if (error) {
     console.error('[timer] saveEntry error:', error)
     return
