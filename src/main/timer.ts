@@ -107,7 +107,15 @@ export async function startTimer(entryId: number): Promise<void> {
   } else {
     // Starting a fresh entry (or after stopTimer cleared existing state)
     const entry = currentEntries.find((e) => e.id === entryId)
-    const baseMs = entry?.ms ?? 0
+    console.log('[START] fresh start, entry ms from currentEntries:', entry?.ms)
+    // Refresh from Supabase to get the latest ms
+    const { data } = await supabase
+      .from('time_entries')
+      .select('ms')
+      .eq('id', entryId)
+      .single()
+    const baseMs = data?.ms ?? entry?.ms ?? 0
+    console.log('[START] baseMs from Supabase:', data?.ms, '→ using:', baseMs)
     store.set('timerState', {
       activeEntryId: entryId,
       startedAt: Date.now(),
