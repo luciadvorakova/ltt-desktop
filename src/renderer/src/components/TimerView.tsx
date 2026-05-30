@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
+import { useSettings } from '../hooks/useSettings'
+import type { TimeEntry } from '../../../types/index'
 
 function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
   const [hovered, setHovered] = useState(false)
@@ -106,6 +108,26 @@ function EntryMenu({ onDelete }: { onDelete: () => void }) {
   )
 }
 
+function JiraRow({ icon, jiraKey, name, onClick }: { icon: string; jiraKey: string; name: string; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+    >
+      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+        {jiraKey}
+      </span>
+      <span style={{ fontSize: 11, flex: 1, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {name}
+      </span>
+    </div>
+  )
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -123,8 +145,33 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries, reload, patchEntry, deleteEntry } = useEntries()
+  const { entries, reload, patchEntry, deleteEntry, addEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
+  const { settings } = useSettings()
+  const [addPanelOpen, setAddPanelOpen] = useState(false)
+  const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
+  const [manualInput, setManualInput] = useState('')
+
+  const handleAddEntry = async () => {
+    const name = manualInput.trim()
+    if (!name) return
+    const entry: TimeEntry = {
+      id: Date.now(),
+      name,
+      ms: 0,
+      ts: Date.now(),
+      jiraSent: false,
+      untracked: false,
+      carriedOver: false,
+      removedFromTimer: false,
+      deletedFromBulk: false,
+      updatedAt: new Date().toISOString(),
+    }
+    await addEntry(entry)
+    setManualInput('')
+    setAddPanelOpen(false)
+  }
+
   const handleStart = async (id: number) => {
     const prevSaved = await start(id)
     if (prevSaved) patchEntry(prevSaved.id, prevSaved.ms)
@@ -170,24 +217,149 @@ export function TimerView() {
         }}>
           Today's Tasks
         </span>
-        <button style={{
-          width: 20,
-          height: 20,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.1)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          fontSize: 15,
-          color: 'rgba(255,255,255,0.7)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 0,
-          lineHeight: 1,
-        }}>
+        <button
+          onClick={() => setAddPanelOpen(v => !v)}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: addPanelOpen ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            fontSize: 15,
+            color: 'rgba(255,255,255,0.7)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            lineHeight: 1,
+            fontFamily: 'inherit',
+          }}
+        >
           +
         </button>
       </div>
+
+      {/* Add panel */}
+      {addPanelOpen && (
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          {/* Panel header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+              Add Task
+            </span>
+            <button
+              onClick={() => setAddPanelOpen(false)}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Mode buttons */}
+          <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px' }}>
+            {(['jira', 'manual', 'recent'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setAddMode(mode)}
+                style={{
+                  fontSize: 10,
+                  padding: '3px 10px',
+                  borderRadius: 99,
+                  background: addMode === mode ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.07)',
+                  border: `1px solid ${addMode === mode ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.12)'}`,
+                  color: addMode === mode ? 'white' : 'rgba(255,255,255,0.45)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {mode === 'jira' ? 'Jira task' : mode === 'manual' ? 'Manual' : 'Recent'}
+              </button>
+            ))}
+          </div>
+
+          {/* Jira mode */}
+          {addMode === 'jira' && (
+            <div>
+              <div style={{ display: 'flex', gap: 6, padding: '4px 14px 8px' }}>
+                <input
+                  placeholder="Search Jira issues…"
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
+                />
+                <button style={{ fontSize: 10, padding: '6px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Browse
+                </button>
+              </div>
+              {settings?.jiraFavourites && settings.jiraFavourites.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
+                    ★ Favourites
+                  </div>
+                  {settings.jiraFavourites.map(key => {
+                    const entry = entries.find(e => e.jiraKey === key)
+                    if (!entry) return null
+                    return (
+                      <JiraRow
+                        key={key}
+                        icon="★"
+                        jiraKey={key}
+                        name={entry.jiraSummary ?? entry.name}
+                        onClick={async () => { await handleStart(entry.id); setAddPanelOpen(false) }}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+              {settings?.jiraRecent && settings.jiraRecent.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
+                    🕐 Recently Used
+                  </div>
+                  {settings.jiraRecent.map(key => {
+                    const entry = entries.find(e => e.jiraKey === key)
+                    if (!entry) return null
+                    return (
+                      <JiraRow
+                        key={key}
+                        icon="🕐"
+                        jiraKey={key}
+                        name={entry.jiraSummary ?? entry.name}
+                        onClick={async () => { await handleStart(entry.id); setAddPanelOpen(false) }}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Manual mode */}
+          {addMode === 'manual' && (
+            <div style={{ display: 'flex', gap: 6, padding: '4px 14px 8px' }}>
+              <input
+                value={manualInput}
+                onChange={e => setManualInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddEntry() }}
+                placeholder="Task name…"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
+              />
+              <button
+                onClick={handleAddEntry}
+                style={{ fontSize: 10, padding: '6px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+
+          {/* Recent mode */}
+          {addMode === 'recent' && (
+            <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
+              Coming soon
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Entry list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
