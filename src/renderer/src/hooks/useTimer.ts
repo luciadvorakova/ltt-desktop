@@ -44,11 +44,13 @@ export function useTimer(): UseTimerResult {
   }, [refreshState])
 
   const start = useCallback(async (entryId: number) => {
+    setElapsed(0)
     await ltt.startTimer(entryId)
     await refreshState()
   }, [ltt, refreshState])
 
   const pause = useCallback(async () => {
+    setElapsed(0)
     await ltt.pauseTimer()
     await refreshState()
   }, [ltt, refreshState])
