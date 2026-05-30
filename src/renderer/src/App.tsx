@@ -152,14 +152,12 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         {tab === 'timer' && <TimerView />}
         {tab === 'history' && <HistoryView />}
         {tab === 'weekly' && <WeeklyView />}
+        {settingsOpen && <SettingsView onClose={() => setSettingsOpen(false)} />}
       </div>
-
-      {/* Settings overlay */}
-      {settingsOpen && <SettingsView onClose={() => setSettingsOpen(false)} />}
     </div>
   )
 }
