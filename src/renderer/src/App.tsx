@@ -80,7 +80,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                 cursor: 'pointer',
               }}
             >
-              {t}
+              {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
         </div>
