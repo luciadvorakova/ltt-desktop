@@ -127,6 +127,7 @@ export function pauseTimer(): void {
 
 export async function stopTimer(): Promise<void> {
   await flushActiveTime()
+  await new Promise(resolve => setTimeout(resolve, 200))
   store.set('timerState', null)
   if (flushInterval) {
     clearInterval(flushInterval)
@@ -149,6 +150,7 @@ export async function flushActiveTime(): Promise<void> {
     updatedAt: new Date(now).toISOString(),
   }
   await saveEntry(updated)
+  currentEntries[idx] = updated
 
   // Reset startedAt so next flush measures from now
   store.set('timerState', { ...state, startedAt: now })
