@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
+import { TimerView } from './components/TimerView'
 
 type Tab = 'timer' | 'history' | 'weekly'
 
@@ -42,12 +43,9 @@ function AppShell() {
 
       {/* Content area */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        {/* {tab === 'timer' && <TimerView />} */}
-        {/* {tab === 'history' && <HistoryView />} */}
-        {/* {tab === 'weekly' && <WeeklyView />} */}
-        <div style={{ padding: 24, color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
-          {tab} — coming soon
-        </div>
+        {tab === 'timer' && <TimerView />}
+        {tab === 'history' && <div style={{ padding: 24, color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>history — coming soon</div>}
+        {tab === 'weekly' && <div style={{ padding: 24, color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>weekly — coming soon</div>}
       </div>
     </div>
   )

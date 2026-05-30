@@ -47,7 +47,7 @@ function createWindow() {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
-  win.webContents.on('did-fail-load', (e, code, desc) => console.log('load failed:', code, desc))
+  win.webContents.on('did-fail-load', (_e, code, desc) => console.log('load failed:', code, desc))
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -98,6 +98,8 @@ app.whenReady().then(() => {
   createWindow()
   startSessionRefreshInterval()
   authEmitter.on('auth-success', (session) => {
+    console.log('[AUTH] auth-success received in index.ts, win exists:', !!win)
     win?.webContents.send('auth-success', session)
+    console.log('[AUTH] sent to renderer')
   })
 })
