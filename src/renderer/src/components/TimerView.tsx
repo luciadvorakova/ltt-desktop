@@ -18,8 +18,11 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
-  const { entries } = useEntries()
+  const { entries, reload } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
+
+  const handleStart = async (id: number) => { await start(id); await reload() }
+  const handlePause = async () => { await pause(); await reload() }
 
   const todayKey = new Date().toDateString()
   const yesterdayKey = new Date(Date.now() - 86400000).toDateString()
@@ -103,7 +106,7 @@ export function TimerView() {
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
                 <button
-                  onClick={() => isActiveRunning ? pause() : start(entry.id)}
+                  onClick={() => isActiveRunning ? handlePause() : handleStart(entry.id)}
                   style={{
                     width: 22,
                     height: 22,
