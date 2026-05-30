@@ -92,18 +92,34 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
 export async function startTimer(entryId: number): Promise<void> {
   const existing = store.get('timerState')
   console.log('[START] entryId:', entryId, 'existing state:', existing)
-  if (existing?.activeEntryId != null && existing.activeEntryId !== entryId) {
+
+  // Switching from a different running entry — stop it first
+  if (existing?.running && existing.activeEntryId !== entryId) {
     await stopTimer()
   }
-  const entry = currentEntries.find((e) => e.id === entryId)
-  const baseMs = entry?.ms ?? 0
-  store.set('timerState', {
-    activeEntryId: entryId,
-    startedAt: Date.now(),
-    baseMs,
-    running: true,
-    paused: false,
-  })
+
+  // Resuming the same paused entry — use stored baseMs
+  if (existing?.paused && existing.activeEntryId === entryId) {
+    store.set('timerState', {
+      activeEntryId: entryId,
+      startedAt: Date.now(),
+      baseMs: existing.baseMs,
+      running: true,
+      paused: false,
+    })
+  } else {
+    // Starting a fresh entry (or after stopTimer cleared existing state)
+    const entry = currentEntries.find((e) => e.id === entryId)
+    const baseMs = entry?.ms ?? 0
+    store.set('timerState', {
+      activeEntryId: entryId,
+      startedAt: Date.now(),
+      baseMs,
+      running: true,
+      paused: false,
+    })
+  }
+
   if (!flushInterval) {
     flushInterval = setInterval(() => { flushActiveTime() }, 60_000)
   }
