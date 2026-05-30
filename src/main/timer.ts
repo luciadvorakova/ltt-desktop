@@ -91,7 +91,8 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
 
 export async function startTimer(entryId: number): Promise<void> {
   const existing = store.get('timerState')
-  if (existing?.running && existing.activeEntryId !== entryId) {
+  console.log('[START] entryId:', entryId, 'existing state:', existing)
+  if (existing?.activeEntryId != null && existing.activeEntryId !== entryId) {
     await stopTimer()
   }
   const entry = currentEntries.find((e) => e.id === entryId)
@@ -126,7 +127,20 @@ export function pauseTimer(): void {
 }
 
 export async function stopTimer(): Promise<void> {
-  await flushActiveTime()
+  console.log('[STOP] called, timerState:', store.get('timerState'))
+  const state = store.get('timerState') as TimerState | null
+  if (state?.running) {
+    await flushActiveTime()
+  } else if (state?.paused && state.activeEntryId !== null) {
+    // Timer was paused — baseMs holds all accumulated time; save it directly
+    const idx = currentEntries.findIndex((e) => e.id === state.activeEntryId)
+    if (idx !== -1) {
+      const updated: TimeEntry = { ...currentEntries[idx], ms: state.baseMs, updatedAt: new Date().toISOString() }
+      console.log('[STOP] saving paused entry id:', state.activeEntryId, 'ms:', state.baseMs)
+      await saveEntry(updated)
+      currentEntries[idx] = updated
+    }
+  }
   await new Promise(resolve => setTimeout(resolve, 200))
   store.set('timerState', null)
   if (flushInterval) {
@@ -143,6 +157,8 @@ export async function flushActiveTime(): Promise<void> {
   const elapsed = now - state.startedAt
   const idx = currentEntries.findIndex((e) => e.id === state.activeEntryId)
   if (idx === -1) return
+
+  console.log('[FLUSH] entry id:', state.activeEntryId, 'elapsed:', elapsed, 'old ms:', currentEntries[idx].ms, 'new ms:', currentEntries[idx].ms + elapsed)
 
   const updated: TimeEntry = {
     ...currentEntries[idx],
