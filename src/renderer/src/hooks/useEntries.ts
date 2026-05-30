@@ -42,7 +42,14 @@ export function useEntries(): UseEntriesResult {
   }, [ltt])
 
   const updateEntry = useCallback(async (entry: TimeEntry) => {
-    await ltt.saveEntry(entry)
+    console.log('[UPDATE_ENTRY] called, id:', entry.id, 'ms:', entry.ms)
+    console.log('[UPDATE_ENTRY] about to call ltt.saveEntry, entry keys:', Object.keys(entry))
+    try {
+      await ltt.saveEntry(entry)
+      console.log('[UPDATE_ENTRY] ltt.saveEntry completed')
+    } catch (e) {
+      console.error('[UPDATE_ENTRY] ltt.saveEntry error:', e)
+    }
     setEntries(prev => {
       const next = prev.map(e => Number(e.id) === Number(entry.id) ? { ...entry } : e)
       return [...next]
