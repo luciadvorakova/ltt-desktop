@@ -117,7 +117,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
           }}
         >
           <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="⏱" label="Add time manually" onAction={() => setExpandedTime(prev => prev === 'add' ? null : 'add')} />
+            <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
             {expandedTime === 'add' && (
               <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
                 <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} placeholder="30" style={timeInputStyle}
@@ -129,7 +129,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
             {ms > 0 && expandedTime === 'edit' && (
               <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
+                <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} placeholder="30" style={timeInputStyle}
                   onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
                 <span style={timeHintStyle}>min</span>
                 <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
