@@ -239,7 +239,7 @@ export function TimerView() {
     return true
   })
 
-  console.log('[TIMER_VIEW] todayEntries ids:', todayEntries.map(e => e.id))
+  console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
 
   const activeId = timerState?.activeEntryId ?? null
   const isRunning = timerState?.running ?? false
@@ -423,7 +423,7 @@ export function TimerView() {
         {todayEntries.map((entry) => {
           const isActive = activeId === entry.id
           const isActiveRunning = isActive && isRunning
-          const displayMs = isActive ? liveMs : entry.ms
+          const displayMs = isActiveRunning ? liveMs : entry.ms
 
           return (
             <div
