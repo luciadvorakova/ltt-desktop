@@ -29,7 +29,8 @@ export function useTimer(): UseTimerResult {
       intervalRef.current = setInterval(() => {
         setElapsed(Date.now() - (timerState.startedAt as number))
       }, 500)
-    } else {
+    } else if (!timerState?.activeEntryId) {
+      // Only reset elapsed when there is truly no active entry
       setElapsed(0)
     }
     return () => {
