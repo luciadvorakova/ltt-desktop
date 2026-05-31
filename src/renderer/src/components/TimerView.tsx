@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 import { useSettings } from '../hooks/useSettings'
+import { useLtt } from '../hooks/useLtt'
 import type { TimeEntry } from '../../../types/index'
 
 function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
@@ -195,6 +196,7 @@ const formatMsShort = (ms: number): string => {
 }
 
 export function TimerView() {
+  const ltt = useLtt()
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause, stop } = useTimer()
   const { settings } = useSettings()
@@ -203,6 +205,10 @@ export function TimerView() {
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
+  const [jiraQuery, setJiraQuery] = useState('')
+  const [jiraResults, setJiraResults] = useState<{ key: string; summary: string }[]>([])
+  const [jiraSearching, setJiraSearching] = useState(false)
+  const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -340,16 +346,70 @@ export function TimerView() {
           {/* Jira mode */}
           {addMode === 'jira' && (
             <div>
-              <div style={{ display: 'flex', gap: 6, padding: '4px 14px 8px' }}>
+              <div style={{ padding: '4px 14px 8px' }}>
                 <input
+                  autoFocus
                   placeholder="Search Jira issues…"
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
+                  value={jiraQuery}
+                  onChange={e => {
+                    const q = e.target.value
+                    setJiraQuery(q)
+                    if (jiraDebounceRef.current) clearTimeout(jiraDebounceRef.current)
+                    if (!q.trim()) { setJiraResults([]); setJiraSearching(false); return }
+                    setJiraSearching(true)
+                    jiraDebounceRef.current = setTimeout(async () => {
+                      const results = await ltt.jiraSearch(q)
+                      setJiraResults(results)
+                      setJiraSearching(false)
+                    }, 300)
+                  }}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
                 />
-                <button style={{ fontSize: 10, padding: '6px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Browse
-                </button>
               </div>
-              {settings?.jiraFavourites && settings.jiraFavourites.length > 0 && (
+              {jiraSearching && (
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>
+                  Searching…
+                </div>
+              )}
+              {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && (
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>
+                  No results
+                </div>
+              )}
+              {jiraResults.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  {jiraResults.map(issue => (
+                    <JiraRow
+                      key={issue.key}
+                      icon="◈"
+                      jiraKey={issue.key}
+                      name={issue.summary}
+                      onClick={async () => {
+                        const entry: TimeEntry = {
+                          id: Date.now(),
+                          name: issue.summary,
+                          ms: 0,
+                          ts: Date.now(),
+                          jiraKey: issue.key,
+                          jiraSummary: issue.summary,
+                          jiraSent: false,
+                          untracked: false,
+                          carriedOver: false,
+                          removedFromTimer: false,
+                          deletedFromBulk: false,
+                          updatedAt: new Date().toISOString(),
+                        }
+                        await addEntry(entry)
+                        await handleStart(entry.id)
+                        setJiraQuery('')
+                        setJiraResults([])
+                        setAddPanelOpen(false)
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+              {!jiraQuery.trim() && settings?.jiraFavourites && settings.jiraFavourites.length > 0 && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
                     ★ Favourites
@@ -369,10 +429,10 @@ export function TimerView() {
                   })}
                 </div>
               )}
-              {settings?.jiraRecent && settings.jiraRecent.length > 0 && (
+              {!jiraQuery.trim() && settings?.jiraRecent && settings.jiraRecent.length > 0 && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
-                    🕐 Recently Used
+                    Recently Used
                   </div>
                   {settings.jiraRecent.map(key => {
                     const entry = entries.find(e => e.jiraKey === key)
