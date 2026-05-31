@@ -22,6 +22,9 @@ const trayIcon = nativeImage.createFromDataURL(
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAPElEQVR42mNgGHbgPw5AdQMpsuA/iYAmhhJl+H8KAX0N/k8lMGrwcDJ46KVjmmZpmhZCNC02aVrQD1oAAKA5/C5Hrur7AAAAAElFTkSuQmCC'
 )
 
+const preloadPath = path.join(__dirname, 'preload.js')
+console.log('[MAIN] preload path:', preloadPath)
+
 const mb = menubar({
   index: VITE_DEV_SERVER_URL || `file://${path.join(RENDERER_DIST, 'index.html')}`,
   icon: trayIcon,
@@ -30,16 +33,23 @@ const mb = menubar({
     height: 600,
     resizable: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath,
+      contextIsolation: true,
+      sandbox: false,
     },
   },
   preloadWindow: true,
   showDockIcon: false,
 })
 
+app.on('web-contents-created', (_event, contents) => {
+  contents.session.setPreloads([preloadPath])
+})
+
+let ipcRegistered = false
+
 mb.on('ready', () => {
-  console.log('Menubar app is ready')
-  registerIpcHandlers()
+  console.log('[MAIN] menubar ready')
   startSessionRefreshInterval()
   authEmitter.on('auth-success', (session) => {
     console.log('[AUTH] auth-success received in index.ts, win exists:', !!mb.window)
@@ -52,9 +62,18 @@ mb.on('ready', () => {
 })
 
 mb.on('after-create-window', () => {
+  if (!ipcRegistered) {
+    registerIpcHandlers()
+    ipcRegistered = true
+    console.log('[MAIN] IPC registered')
+  }
+  console.log('[MAIN] window created, preload:', mb.window?.webContents.getURL())
   if (VITE_DEV_SERVER_URL) mb.window?.webContents.openDevTools({ mode: 'detach' })
   mb.window?.webContents.on('did-finish-load', () => {
     mb.window?.webContents.send('main-process-message', new Date().toLocaleString())
+    mb.window?.webContents.executeJavaScript('window.ltt').then(result => {
+      console.log('[MAIN] window.ltt from main:', result)
+    })
   })
 })
 

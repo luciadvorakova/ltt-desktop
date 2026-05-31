@@ -1,3 +1,4 @@
+console.log('PRELOAD RUNNING')
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimeEntry, UserSettings } from '../types/index'
 
