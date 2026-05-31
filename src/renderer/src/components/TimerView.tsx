@@ -445,11 +445,7 @@ export function TimerView() {
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
                 <button
-                  onClick={() => {
-                    if (isActiveRunning) handlePause()
-                    else if (isActive && !isRunning) handleStop()
-                    else handleStart(entry.id)
-                  }}
+                  onClick={() => isActiveRunning ? handlePause() : handleStart(entry.id)}
                   style={{
                     width: 22,
                     height: 22,
