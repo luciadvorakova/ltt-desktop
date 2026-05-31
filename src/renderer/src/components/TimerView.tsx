@@ -270,7 +270,7 @@ export function TimerView() {
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEntries = entries.filter(e => {
     if (e.removedFromTimer) return false
-    if (e.ts < todayStart.getTime()) return false
+    if (e.jiraSent) return e.ts >= todayStart.getTime()
     return true
   })
 
