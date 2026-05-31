@@ -1,5 +1,6 @@
 import { store } from './store'
-import { supabase, ensureSession } from './supabase'
+import { supabase } from './supabase'
+import { ensureSession } from './auth'
 import { currentEntries } from './timer'
 import { ensureGCalToken } from './gcal-auth'
 import type { TimeEntry } from '../types/index'

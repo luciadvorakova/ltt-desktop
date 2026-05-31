@@ -1,5 +1,6 @@
 import { store } from './store'
-import { supabase, ensureSession } from './supabase'
+import { supabase } from './supabase'
+import { ensureSession } from './auth'
 import type { TimeEntry, TimerState } from '../types/index'
 
 let flushInterval: ReturnType<typeof setInterval> | null = null

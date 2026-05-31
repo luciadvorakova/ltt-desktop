@@ -3,7 +3,7 @@ import { app, nativeImage, globalShortcut } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
-import { handleAuthCallback, startSessionRefreshInterval, authEmitter } from './auth'
+import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter } from './auth'
 import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
 import { handleGCalCallback, gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
@@ -54,6 +54,7 @@ let ipcRegistered = false
 
 mb.on('ready', () => {
   console.log('[MAIN] menubar ready')
+  refreshSession()
   startSessionRefreshInterval()
   startJiraRefreshInterval()
   authEmitter.on('auth-success', (session) => {

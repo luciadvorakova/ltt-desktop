@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { store } from './store'
-import { supabase, ensureSession } from './supabase'
+import { supabase } from './supabase'
+import { ensureSession } from './auth'
 import { signInWithGoogle, getSession } from './auth'
 import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira } from './jira-auth'
 import { signInWithGCal } from './gcal-auth'

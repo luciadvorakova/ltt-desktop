@@ -95,14 +95,12 @@ export async function handleAuthCallback(url: string): Promise<{ access_token: s
   }
 }
 
-export async function refreshSession(): Promise<{ access_token: string; refresh_token: string } | null> {
+async function attemptRefresh(): Promise<{ access_token: string; refresh_token: string } | null> {
   const stored = store.get('session')
   if (!stored) return null
-
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: stored.refresh_token })
   if (error || !data.session) {
-    console.error('[auth] refreshSession error:', error)
-    store.set('session', null)
+    console.error('[auth] refreshSession attempt failed:', error)
     return null
   }
   const session = {
@@ -114,12 +112,47 @@ export async function refreshSession(): Promise<{ access_token: string; refresh_
   return session
 }
 
+export async function refreshSession(): Promise<{ access_token: string; refresh_token: string } | null> {
+  const result = await attemptRefresh()
+  if (result) return result
+
+  console.error('[auth] refreshSession failed, retrying in 5s')
+  await new Promise(resolve => setTimeout(resolve, 5000))
+  const retry = await attemptRefresh()
+  if (retry) return retry
+
+  console.error('[auth] refreshSession failed after retry — session cleared')
+  store.set('session', null)
+  return null
+}
+
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
 export function startSessionRefreshInterval(): ReturnType<typeof setInterval> {
-  return setInterval(() => {
-    refreshSession()
-  }, 55 * 60 * 1000)
+  if (refreshInterval) clearInterval(refreshInterval)
+  refreshInterval = setInterval(() => { refreshSession() }, 55 * 60 * 1000)
+  return refreshInterval
 }
 
 export function getSession(): { access_token: string; refresh_token: string } | null {
   return store.get('session') ?? null
+}
+
+function isTokenExpiringSoon(accessToken: string): boolean {
+  try {
+    const payload = JSON.parse(atob(accessToken.split('.')[1])) as { exp?: number }
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now() + 60_000
+  } catch {
+    return true
+  }
+}
+
+export async function ensureSession(): Promise<void> {
+  const session = store.get('session')
+  if (!session) return
+  if (isTokenExpiringSoon(session.access_token)) {
+    await refreshSession()
+    return
+  }
+  await supabase.auth.setSession(session)
 }
