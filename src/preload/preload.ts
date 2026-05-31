@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('ltt', {
   getSettings:   ()                       => ipcRenderer.invoke('settings:get'),
   setSettings:   (settings: UserSettings) => ipcRenderer.invoke('settings:set', settings),
   pushSettings:  (userId: string)         => ipcRenderer.invoke('settings:push', userId),
+  pullSettings:  (userId: string)         => ipcRenderer.invoke('settings:pull', userId),
 
   // ---- JIRA ----
   jiraSignIn:       ()                       => ipcRenderer.invoke('jira:signIn'),

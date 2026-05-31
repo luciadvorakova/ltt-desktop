@@ -15,10 +15,25 @@ export function useSettings(): UseSettingsResult {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ltt.getSettings().then((s) => {
-      setSettings(s)
+    const load = async () => {
+      const local = await ltt.getSettings()
+      setSettings(local)
       setLoading(false)
-    })
+
+      const session = await ltt.getSession()
+      if (!session) return
+      let userId: string | null = null
+      try { userId = JSON.parse(atob(session.access_token.split('.')[1])).sub as string } catch { /* ignore */ }
+
+      if (!userId) return
+
+      const remote = await ltt.pullSettings(userId)
+      if (!remote) return
+      const merged = { ...(local ?? {}), ...remote } as import('../../../types/index').UserSettings
+      setSettings(merged)
+      await ltt.setSettings(merged)
+    }
+    load()
   }, [ltt])
 
   const updateSetting = useCallback(

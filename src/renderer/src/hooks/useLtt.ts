@@ -22,6 +22,7 @@ interface LttAPI {
   getSettings:  () => Promise<UserSettings | null>
   setSettings:  (settings: UserSettings) => Promise<void>
   pushSettings: (userId: string) => Promise<void>
+  pullSettings: (userId: string) => Promise<UserSettings | null>
 
   // JIRA
   jiraSignIn:       () => Promise<void>

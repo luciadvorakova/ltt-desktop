@@ -91,6 +91,17 @@ export function registerIpcHandlers(): void {
     if (error) console.error('[ipc] settings:push error:', error)
   })
 
+  ipcMain.handle('settings:pull', async (_event, userId: string) => {
+    await ensureSession()
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+    if (error) { console.error('[ipc] settings:pull error:', error); return null }
+    return data as UserSettings | null
+  })
+
   // ---- JIRA ----
 
   ipcMain.handle('jira:signIn', () => signInWithJira())
