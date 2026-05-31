@@ -34,6 +34,10 @@ contextBridge.exposeInMainWorld('ltt', {
   jiraGetProjects:  ()                       => ipcRenderer.invoke('jira:getProjects'),
   jiraLogTime:      (issueKey: string, ms: number, comment?: string) => ipcRenderer.invoke('jira:logTime', issueKey, ms, comment),
 
+  // ---- SLACK ----
+  slackSendStandup: (payload: { channel: string; userId: string; accomplished: string; workingOn: string; problems: string; share: string }) =>
+    ipcRenderer.invoke('slack:sendStandup', payload),
+
   // ---- APP ----
   getDeletedIds: ()                       => ipcRenderer.invoke('app:getDeletedIds'),
   addDeletedId:  (id: number)             => ipcRenderer.invoke('app:addDeletedId', id),

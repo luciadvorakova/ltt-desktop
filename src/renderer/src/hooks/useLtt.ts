@@ -32,6 +32,9 @@ interface LttAPI {
   jiraGetProjects:  () => Promise<{ key: string; name: string }[]>
   jiraLogTime:      (issueKey: string, ms: number, comment?: string) => Promise<{ success: boolean; error?: string }>
 
+  // SLACK
+  slackSendStandup: (payload: { channel: string; userId: string; accomplished: string; workingOn: string; problems: string; share: string }) => Promise<{ success: boolean; error?: string }>
+
   // APP
   getDeletedIds: () => Promise<number[]>
   addDeletedId:  (id: number) => Promise<void>

@@ -4,6 +4,7 @@ import { useTimer } from '../hooks/useTimer'
 import { useSettings } from '../hooks/useSettings'
 import { useLtt } from '../hooks/useLtt'
 import { BulkSendView } from './BulkSendView'
+import { StandupView } from './StandupView'
 import type { TimeEntry } from '../../../types/index'
 
 function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
@@ -212,6 +213,7 @@ export function TimerView() {
   const { timerState, elapsed, start, pause, stop } = useTimer()
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
+  const [standupOpen, setStandupOpen] = useState(false)
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
@@ -290,6 +292,14 @@ export function TimerView() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <BulkSendView entries={entries} updateEntry={updateEntry} onBack={() => setBulkSendOpen(false)} />
+      </div>
+    )
+  }
+
+  if (standupOpen) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <StandupView entries={entries} onBack={() => setStandupOpen(false)} />
       </div>
     )
   }
@@ -760,17 +770,19 @@ export function TimerView() {
             }}>
             Send to Jira
           </button>
-          <button style={{
-            fontSize: 9,
-            padding: '3px 7px',
-            borderRadius: 99,
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.13)',
-            color: 'rgba(255,255,255,0.5)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontWeight: 600,
-          }}>
+          <button
+            onClick={() => setStandupOpen(true)}
+            style={{
+              fontSize: 9,
+              padding: '3px 7px',
+              borderRadius: 99,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.13)',
+              color: 'rgba(255,255,255,0.5)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontWeight: 600,
+            }}>
             Standup
           </button>
           <span style={{

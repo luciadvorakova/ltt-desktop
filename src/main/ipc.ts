@@ -145,6 +145,31 @@ export function registerIpcHandlers(): void {
     logTimeToJira(issueKey, ms, comment)
   )
 
+  // ---- SLACK ----
+
+  ipcMain.handle('slack:sendStandup', async (_event, payload: {
+    channel: string; userId: string;
+    accomplished: string; workingOn: string; problems: string; share: string;
+  }) => {
+    const sections: string[] = []
+    if (payload.accomplished.trim()) sections.push(`🚀 *I accomplished:*\n${payload.accomplished.trim()}`)
+    if (payload.workingOn.trim())   sections.push(`➡️ *I will work on:*\n${payload.workingOn.trim()}`)
+    if (payload.problems.trim())    sections.push(`🚨 *Possible problems:*\n${payload.problems.trim()}`)
+    if (payload.share.trim())       sections.push(`🙋 *I would like to share:*\n${payload.share.trim()}`)
+    const text = sections.join('\n\n')
+    try {
+      const res = await fetch('https://ltt-proxy.onrender.com/slack/standup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, text }),
+      })
+      if (!res.ok) { const body = await res.text(); return { success: false, error: `HTTP ${res.status}: ${body}` } }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
   // ---- APP ----
 
   ipcMain.handle('app:getDeletedIds', () => store.get('deletedIds') ?? [])
