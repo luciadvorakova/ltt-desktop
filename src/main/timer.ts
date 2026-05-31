@@ -181,18 +181,18 @@ export async function flushActiveTime(): Promise<void> {
   const idx = currentEntries.findIndex((e) => e.id === state.activeEntryId)
   if (idx === -1) return
 
-  console.log('[FLUSH] entry id:', state.activeEntryId, 'elapsed:', elapsed, 'old ms:', currentEntries[idx].ms, 'new ms:', currentEntries[idx].ms + elapsed)
+  console.log('[FLUSH] entry id:', state.activeEntryId, 'elapsed:', elapsed, 'baseMs:', state.baseMs, 'new ms:', state.baseMs + elapsed)
 
   const updated: TimeEntry = {
     ...currentEntries[idx],
-    ms: currentEntries[idx].ms + elapsed,
+    ms: state.baseMs + elapsed,
     updatedAt: new Date(now).toISOString(),
   }
   await saveEntry(updated)
   currentEntries[idx] = updated
 
-  // Reset startedAt so next flush measures from now
-  store.set('timerState', { ...state, startedAt: now })
+  // Reset startedAt and advance baseMs so next flush measures from now
+  store.set('timerState', { ...state, startedAt: now, baseMs: state.baseMs + elapsed })
 }
 
 export function getTimerState(): TimerState | null {
