@@ -26,9 +26,11 @@ contextBridge.exposeInMainWorld('ltt', {
   pushSettings:  (userId: string)         => ipcRenderer.invoke('settings:push', userId),
 
   // ---- JIRA ----
-  jiraSignIn:    ()                          => ipcRenderer.invoke('jira:signIn'),
-  jiraSignOut:   ()                          => ipcRenderer.invoke('jira:signOut'),
-  jiraGetStatus: ()                          => ipcRenderer.invoke('jira:getStatus'),
+  jiraSignIn:       ()                       => ipcRenderer.invoke('jira:signIn'),
+  jiraSignOut:      ()                       => ipcRenderer.invoke('jira:signOut'),
+  jiraGetStatus:    ()                       => ipcRenderer.invoke('jira:getStatus'),
+  jiraSearch:       (query: string)          => ipcRenderer.invoke('jira:search', query),
+  jiraGetProjects:  ()                       => ipcRenderer.invoke('jira:getProjects'),
 
   // ---- APP ----
   getDeletedIds: ()                       => ipcRenderer.invoke('app:getDeletedIds'),

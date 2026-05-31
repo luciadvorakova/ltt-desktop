@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { store } from './store'
 import { supabase, ensureSession } from './supabase'
 import { signInWithGoogle, getSession } from './auth'
-import { signInWithJira, signOutJira, getJiraStatus } from './jira-auth'
+import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects } from './jira-auth'
 import {
   loadEntries,
   saveEntry,
@@ -98,6 +98,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('jira:signOut', () => signOutJira())
 
   ipcMain.handle('jira:getStatus', () => getJiraStatus())
+
+  ipcMain.handle('jira:search', (_event, query: string) => searchJiraIssues(query))
+
+  ipcMain.handle('jira:getProjects', () => getJiraProjects())
 
   // ---- APP ----
 

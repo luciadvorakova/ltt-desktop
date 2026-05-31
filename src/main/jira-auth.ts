@@ -135,6 +135,60 @@ export function getJiraStatus(): { connected: boolean; email?: string; cloudId?:
   }
 }
 
+export async function searchJiraIssues(query: string): Promise<{ key: string; summary: string }[]> {
+  const accessToken = await ensureJiraToken()
+  if (!accessToken) return []
+  const cloudId = store.get('jiraCloudId')
+  if (!cloudId) return []
+
+  try {
+    const params = new URLSearchParams({
+      query,
+      currentJQL: 'assignee=currentUser()',
+      showSubTasks: 'true',
+      limit: '10',
+    })
+    const res = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?${params}`,
+      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
+    )
+    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+    const seen = new Set<string>()
+    const issues: { key: string; summary: string }[] = []
+    for (const section of data.sections ?? []) {
+      for (const issue of section.issues ?? []) {
+        if (!seen.has(issue.key)) {
+          seen.add(issue.key)
+          issues.push({ key: issue.key, summary: issue.summaryText })
+        }
+      }
+    }
+    return issues
+  } catch (err) {
+    console.error('[jira] searchJiraIssues error:', err)
+    return []
+  }
+}
+
+export async function getJiraProjects(): Promise<{ key: string; name: string }[]> {
+  const accessToken = await ensureJiraToken()
+  if (!accessToken) return []
+  const cloudId = store.get('jiraCloudId')
+  if (!cloudId) return []
+
+  try {
+    const res = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/project/search?maxResults=100`,
+      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
+    )
+    const data = await res.json() as { values?: { key: string; name: string }[] }
+    return (data.values ?? []).map(p => ({ key: p.key, name: p.name }))
+  } catch (err) {
+    console.error('[jira] getJiraProjects error:', err)
+    return []
+  }
+}
+
 export function signOutJira(): void {
   store.set('jiraAccessToken', null)
   store.set('jiraRefreshToken', null)

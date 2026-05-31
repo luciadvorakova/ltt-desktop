@@ -24,9 +24,11 @@ interface LttAPI {
   pushSettings: (userId: string) => Promise<void>
 
   // JIRA
-  jiraSignIn:    () => Promise<void>
-  jiraSignOut:   () => Promise<void>
-  jiraGetStatus: () => Promise<{ connected: boolean; email?: string; cloudId?: string }>
+  jiraSignIn:       () => Promise<void>
+  jiraSignOut:      () => Promise<void>
+  jiraGetStatus:    () => Promise<{ connected: boolean; email?: string; cloudId?: string }>
+  jiraSearch:       (query: string) => Promise<{ key: string; summary: string }[]>
+  jiraGetProjects:  () => Promise<{ key: string; name: string }[]>
 
   // APP
   getDeletedIds: () => Promise<number[]>

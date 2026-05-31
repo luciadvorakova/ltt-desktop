@@ -209,6 +209,17 @@ export function TimerView() {
   const [jiraResults, setJiraResults] = useState<{ key: string; summary: string }[]>([])
   const [jiraSearching, setJiraSearching] = useState(false)
   const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const jiraProjectsRef = useRef<Map<string, string>>(new Map())
+
+  useEffect(() => {
+    if (addPanelOpen && addMode === 'jira' && jiraProjectsRef.current.size === 0) {
+      ltt.jiraGetProjects().then(projects => {
+        const map = new Map<string, string>()
+        for (const p of projects) map.set(p.key, p.name)
+        jiraProjectsRef.current = map
+      })
+    }
+  }, [addPanelOpen, addMode, ltt])
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -385,6 +396,8 @@ export function TimerView() {
                       jiraKey={issue.key}
                       name={issue.summary}
                       onClick={async () => {
+                        const projectKey = issue.key.split('-')[0]
+                        const clientName = jiraProjectsRef.current.get(projectKey)
                         const entry: TimeEntry = {
                           id: Date.now(),
                           name: issue.summary,
@@ -392,6 +405,7 @@ export function TimerView() {
                           ts: Date.now(),
                           jiraKey: issue.key,
                           jiraSummary: issue.summary,
+                          clientName,
                           jiraSent: false,
                           untracked: false,
                           carriedOver: false,
@@ -400,7 +414,6 @@ export function TimerView() {
                           updatedAt: new Date().toISOString(),
                         }
                         await addEntry(entry)
-                        await handleStart(entry.id)
                         setJiraQuery('')
                         setJiraResults([])
                         setAddPanelOpen(false)
