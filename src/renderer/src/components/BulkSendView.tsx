@@ -2,6 +2,13 @@ import { useState } from 'react'
 import { useLtt } from '../hooks/useLtt'
 import type { TimeEntry } from '../../../types/index'
 
+const formatMs = (ms: number): string => {
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  const s = Math.floor((ms % 60000) / 1000)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 const formatMsShort = (ms: number): string => {
   const totalMins = Math.floor(ms / 60000)
   const h = Math.floor(totalMins / 60)
@@ -110,7 +117,7 @@ export function BulkSendView({
             fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
             whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
           }}>
-            {formatMsShort(entry.ms)}
+            {formatMs(entry.ms)}
           </span>
         </div>
 
