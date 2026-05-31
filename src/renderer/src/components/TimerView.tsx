@@ -168,7 +168,7 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav }: { icon: string; jira
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
     >
-      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{icon}</span>
+      {icon && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{icon}</span>}
       <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
         {jiraKey}
       </span>
