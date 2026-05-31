@@ -99,7 +99,7 @@ export function registerIpcHandlers(): void {
       .eq('user_id', userId)
       .single()
     if (error) { console.error('[ipc] settings:pull error:', error); return null }
-    const row = data as Record<string, unknown>
+    const row = ((data as Record<string, unknown>).settings ?? {}) as Record<string, unknown>
     const mapped: UserSettings = {
       lttTitle:          row.ltt_title           as string | undefined,
       jiraAccessToken:   row.jira_access_token   as string | undefined,
