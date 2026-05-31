@@ -142,25 +142,23 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   if (!cloudId) return []
 
   try {
+    const jql = `assignee=currentUser() AND text~"${query}" ORDER BY updated DESC`
     const params = new URLSearchParams({
-      query,
-      currentJQL: 'assignee=currentUser()',
-      showSubTasks: 'true',
-      limit: '10',
+      jql,
+      maxResults: '15',
+      fields: 'summary,status,issuetype',
     })
     const res = await fetch(
-      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?${params}`,
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?${params}`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
     )
-    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+    const data = await res.json() as { issues?: { key: string; fields: { summary: string } }[] }
     const seen = new Set<string>()
     const issues: { key: string; summary: string }[] = []
-    for (const section of data.sections ?? []) {
-      for (const issue of section.issues ?? []) {
-        if (!seen.has(issue.key)) {
-          seen.add(issue.key)
-          issues.push({ key: issue.key, summary: issue.summaryText })
-        }
+    for (const issue of data.issues ?? []) {
+      if (!seen.has(issue.key)) {
+        seen.add(issue.key)
+        issues.push({ key: issue.key, summary: issue.fields.summary })
       }
     }
     return issues
