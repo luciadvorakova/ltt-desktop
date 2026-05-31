@@ -192,7 +192,7 @@ export default function App() {
 
   if (!session) {
     return (
-      <div style={{ background: '#0a1628', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 320, padding: '40px 32px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <img src="/digismoothie-logo.svg" style={{ width: 160, marginBottom: 28, opacity: 0.92 }} />
           <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
