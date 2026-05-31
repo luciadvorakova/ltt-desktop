@@ -7,7 +7,7 @@ interface UseTimerResult {
   elapsed: number
   start: (entryId: number) => Promise<{ id: number; ms: number } | null>
   pause: () => Promise<void>
-  stop: () => Promise<void>
+  stop: () => Promise<{ id: number; ms: number } | null>
 }
 
 export function useTimer(): UseTimerResult {
@@ -57,9 +57,10 @@ export function useTimer(): UseTimerResult {
     await refreshState()
   }, [ltt, refreshState])
 
-  const stop = useCallback(async () => {
-    await ltt.stopTimer()
+  const stop = useCallback(async (): Promise<{ id: number; ms: number } | null> => {
+    const result = await ltt.stopTimer()
     await refreshState()
+    return result as { id: number; ms: number } | null
   }, [ltt, refreshState])
 
   return { timerState, elapsed, start, pause, stop }
