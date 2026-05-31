@@ -201,7 +201,7 @@ export function TimerView() {
   const { timerState, elapsed, start, pause, stop } = useTimer()
   const { settings } = useSettings()
   const [addPanelOpen, setAddPanelOpen] = useState(false)
-  const [addMode, setAddMode] = useState<'jira' | 'manual'>('jira')
+  const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
@@ -334,7 +334,7 @@ export function TimerView() {
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
-            {(['jira', 'manual'] as const).map((mode) => (
+            {(['jira', 'manual', 'recent'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setAddMode(mode)}
@@ -349,7 +349,7 @@ export function TimerView() {
                   fontFamily: 'inherit',
                 }}
               >
-                {mode === 'jira' ? 'Jira task' : 'Manual'}
+                {mode === 'jira' ? 'Jira task' : mode === 'manual' ? 'Manual' : 'Recent'}
               </button>
             ))}
           </div>
@@ -450,7 +450,7 @@ export function TimerView() {
                     {favKeys.length > 0 && (
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                         <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
-                          ★ Favourites
+                          Favourites
                         </div>
                         {favKeys.map(key => {
                           const src = entries.find(e => e.jiraKey === key)
@@ -473,12 +473,12 @@ export function TimerView() {
                     {recentEntries.length > 0 && (
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                         <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
-                          🕐 Recent
+                          Recent
                         </div>
                         {recentEntries.map(e => (
                           <JiraRow
                             key={e.jiraKey}
-                            icon="🕐"
+                            icon="◷"
                             jiraKey={e.jiraKey!}
                             name={e.jiraSummary ?? e.name}
                             onClick={async () => {
@@ -513,6 +513,51 @@ export function TimerView() {
               </button>
             </div>
           )}
+
+          {/* Recent mode */}
+          {addMode === 'recent' && (() => {
+            const seen = new Set<string>()
+            const recent = [...entries]
+              .filter(e => !!e.jiraKey)
+              .sort((a, b) => b.ts - a.ts)
+              .filter(e => { if (seen.has(e.jiraKey!)) return false; seen.add(e.jiraKey!); return true })
+              .slice(0, 30)
+            return recent.length === 0 ? (
+              <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
+                No recent Jira tasks
+              </div>
+            ) : (
+              <div>
+                {recent.map(e => (
+                  <JiraRow
+                    key={e.jiraKey}
+                    icon="◷"
+                    jiraKey={e.jiraKey!}
+                    name={e.jiraSummary ?? e.name}
+                    onClick={async () => {
+                      const entry: TimeEntry = {
+                        id: Date.now(),
+                        name: e.jiraSummary ?? e.name,
+                        ms: 0,
+                        ts: Date.now(),
+                        jiraKey: e.jiraKey,
+                        jiraSummary: e.jiraSummary,
+                        clientName: e.clientName,
+                        jiraSent: false,
+                        untracked: false,
+                        carriedOver: false,
+                        removedFromTimer: false,
+                        deletedFromBulk: false,
+                        updatedAt: new Date().toISOString(),
+                      }
+                      await addEntry(entry)
+                      setAddPanelOpen(false)
+                    }}
+                  />
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
 
