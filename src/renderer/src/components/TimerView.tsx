@@ -230,7 +230,9 @@ export function TimerView() {
     await reload()
   }
   const handlePause = async () => {
+    const currentMs = timerState ? (timerState.running ? timerState.baseMs + elapsed : timerState.baseMs) : 0
     await pause()
+    if (timerState?.activeEntryId) patchEntry(timerState.activeEntryId, currentMs)
     await reload()
   }
   const handleStop = async () => {
