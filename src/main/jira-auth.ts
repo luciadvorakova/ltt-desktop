@@ -135,33 +135,46 @@ export function getJiraStatus(): { connected: boolean; email?: string; cloudId?:
   }
 }
 
-export async function searchJiraIssues(query: string): Promise<{ key: string; summary: string }[]> {
-  console.log('[JIRA] searchJiraIssues called, query:', query)
-  try {
-    const cloudId = store.get('jiraCloudId')
-    console.log('[JIRA] cloudId:', cloudId)
-    await ensureJiraToken()
-    const token = store.get('jiraAccessToken')
-    console.log('[JIRA] token exists:', !!token)
-    if (!token || !cloudId) return []
+export function signOutJira(): void {
+  store.set('jiraAccessToken', null)
+  store.set('jiraRefreshToken', null)
+  store.set('jiraExpiresAt', null)
+  store.set('jiraEmail', null)
+  store.set('jiraCloudId', null)
+  store.set('jiraCloudUrl', null)
+}
 
-    const jql = `assignee = currentUser() AND summary ~ "${query}" ORDER BY updated DESC`
-    const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?jql=${encodeURIComponent(jql)}&maxResults=15&fields=summary,status,issuetype`
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
-    console.log('[JIRA] search URL:', url, 'response status:', res.status)
-    const data = await res.json() as { issues?: { key: string; fields: { summary: string } }[] }
-    console.log('[JIRA] search data:', JSON.stringify(data).slice(0, 500))
+export async function searchJiraIssues(query: string): Promise<{ key: string; summary: string }[]> {
+  const accessToken = await ensureJiraToken()
+  if (!accessToken) return []
+  const cloudId = store.get('jiraCloudId')
+  if (!cloudId) return []
+
+  try {
+    const params = new URLSearchParams({
+      query,
+      currentJQL: 'assignee=currentUser()',
+      showSubTasks: 'true',
+      limit: '10',
+    })
+    const res = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?${params}`,
+      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
+    )
+    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
     const seen = new Set<string>()
     const issues: { key: string; summary: string }[] = []
-    for (const issue of data.issues ?? []) {
-      if (!seen.has(issue.key)) {
-        seen.add(issue.key)
-        issues.push({ key: issue.key, summary: issue.fields.summary })
+    for (const section of data.sections ?? []) {
+      for (const issue of section.issues ?? []) {
+        if (!seen.has(issue.key)) {
+          seen.add(issue.key)
+          issues.push({ key: issue.key, summary: issue.summaryText })
+        }
       }
     }
     return issues
-  } catch (e) {
-    console.error('[JIRA] searchJiraIssues error:', e)
+  } catch (err) {
+    console.error('[jira] searchJiraIssues error:', err)
     return []
   }
 }
@@ -183,13 +196,4 @@ export async function getJiraProjects(): Promise<{ key: string; name: string }[]
     console.error('[jira] getJiraProjects error:', err)
     return []
   }
-}
-
-export function signOutJira(): void {
-  store.set('jiraAccessToken', null)
-  store.set('jiraRefreshToken', null)
-  store.set('jiraExpiresAt', null)
-  store.set('jiraEmail', null)
-  store.set('jiraCloudId', null)
-  store.set('jiraCloudUrl', null)
 }
