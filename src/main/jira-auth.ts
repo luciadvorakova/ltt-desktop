@@ -142,17 +142,12 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   if (!cloudId) return []
 
   try {
-    const jql = `assignee=currentUser() AND text~"${query}" ORDER BY updated DESC`
-    const params = new URLSearchParams({
-      jql,
-      maxResults: '15',
-      fields: 'summary,status,issuetype',
-    })
-    const res = await fetch(
-      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?${params}`,
-      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
-    )
+    const jql = `assignee = currentUser() AND summary ~ "${query}" ORDER BY updated DESC`
+    const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?jql=${encodeURIComponent(jql)}&maxResults=15&fields=summary,status,issuetype`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } })
+    console.log('[JIRA] search URL:', url, 'response status:', res.status)
     const data = await res.json() as { issues?: { key: string; fields: { summary: string } }[] }
+    console.log('[JIRA] search data:', JSON.stringify(data).slice(0, 500))
     const seen = new Set<string>()
     const issues: { key: string; summary: string }[] = []
     for (const issue of data.issues ?? []) {

@@ -99,7 +99,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('jira:getStatus', () => getJiraStatus())
 
-  ipcMain.handle('jira:search', (_event, query: string) => searchJiraIssues(query))
+  ipcMain.handle('jira:search', (_event, query: string) => {
+    console.log('[IPC] jira:search called, query:', query)
+    return searchJiraIssues(query)
+  })
 
   ipcMain.handle('jira:getProjects', () => getJiraProjects())
 
