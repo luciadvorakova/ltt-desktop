@@ -22,8 +22,12 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 app.setAsDefaultProtocolClient('ltt')
 
+// const trayIcon = nativeImage.createFromDataURL(
+//   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAPElEQVR42mNgGHbgPw5AdQMpsuA/iYAmhhJl+H8KAX0N/k8lMGrwcDJ46KVjmmZpmhZCNC02aVrQD1oAAKA5/C5Hrur7AAAAAElFTkSuQmCC'
+// )
 const trayIcon = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public/digismoothie-logo-small.png')).resize({ width: 22, height: 22 })
 trayIcon.setTemplateImage(true)
+console.log('[MAIN] trayIcon empty:', trayIcon.isEmpty())
 
 const preloadPath = path.join(__dirname, 'preload.js')
 console.log('[MAIN] preload path:', preloadPath)
