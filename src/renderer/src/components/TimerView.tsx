@@ -3,6 +3,7 @@ import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 import { useSettings } from '../hooks/useSettings'
 import { useLtt } from '../hooks/useLtt'
+import { BulkSendView } from './BulkSendView'
 import type { TimeEntry } from '../../../types/index'
 
 function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
@@ -210,6 +211,7 @@ export function TimerView() {
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause, stop } = useTimer()
   const { settings, updateSetting } = useSettings()
+  const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
@@ -283,6 +285,14 @@ export function TimerView() {
     : 0
 
   const totalMs = todayEntries.reduce((sum, e) => sum + e.ms, 0) + (isRunning ? elapsed : 0)
+
+  if (bulkSendOpen) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <BulkSendView entries={entries} updateEntry={updateEntry} onBack={() => setBulkSendOpen(false)} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -735,17 +745,19 @@ export function TimerView() {
           Total Today
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button style={{
-            fontSize: 9,
-            padding: '3px 7px',
-            borderRadius: 99,
-            background: 'rgba(80,180,100,0.28)',
-            border: '1px solid rgba(80,180,100,0.45)',
-            color: '#7fd89a',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontWeight: 600,
-          }}>
+          <button
+            onClick={() => setBulkSendOpen(true)}
+            style={{
+              fontSize: 9,
+              padding: '3px 7px',
+              borderRadius: 99,
+              background: 'rgba(80,180,100,0.28)',
+              border: '1px solid rgba(80,180,100,0.45)',
+              color: '#7fd89a',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontWeight: 600,
+            }}>
             Send to Jira
           </button>
           <button style={{
