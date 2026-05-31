@@ -34,8 +34,8 @@ export interface UserSettings {
   slackChannel?: string
   slackUserId?: string
   manualTimerCleanup?: boolean
-  jiraFavourites?: string[]
-  jiraRecent?: string[]
+  jiraFavourites?: { jiraKey: string; jiraSummary?: string; clientName?: string }[]
+  jiraRecent?: { jiraKey: string; jiraSummary?: string; clientName?: string }[]
 }
 
 export interface TimerState {

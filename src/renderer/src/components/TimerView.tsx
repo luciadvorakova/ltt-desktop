@@ -399,7 +399,7 @@ export function TimerView() {
                 </div>
               )}
               {!jiraQuery.trim() && (() => {
-                const favKeys = (settings?.jiraFavourites ?? []).filter(k => !!k).slice(0, 5)
+                const favKeys = (settings?.jiraFavourites ?? []).filter(f => !!f?.jiraKey).slice(0, 5)
                 const seenRecent = new Set<string>()
                 const recentEntries = [...entries]
                   .filter(e => !!e.jiraKey)
@@ -428,22 +428,18 @@ export function TimerView() {
                         <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
                           Favourites
                         </div>
-                        {favKeys.map(key => {
-                          const src = entries.find(e => e.jiraKey === key)
-                          if (!src) return null
-                          return (
-                            <JiraRow
-                              key={key}
-                              icon=""
-                              jiraKey={key}
-                              name={src.jiraSummary ?? src.name}
-                              onClick={async () => {
-                                await addEntry(makeEntry(key, src.jiraSummary ?? src.name, src.jiraSummary, src.clientName))
-                                setAddPanelOpen(false)
-                              }}
-                            />
-                          )
-                        })}
+                        {favKeys.map(fav => (
+                          <JiraRow
+                            key={fav.jiraKey}
+                            icon=""
+                            jiraKey={fav.jiraKey}
+                            name={fav.jiraSummary ?? fav.jiraKey}
+                            onClick={async () => {
+                              await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
+                              setAddPanelOpen(false)
+                            }}
+                          />
+                        ))}
                       </div>
                     )}
                     {recentEntries.length > 0 && (
