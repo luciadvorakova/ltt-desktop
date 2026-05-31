@@ -14,7 +14,6 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 }
 
 const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px' }
-const rowBordered: React.CSSProperties = { ...rowStyle, borderBottom: '1px solid rgba(255,255,255,0.06)' }
 const sectionLabelStyle: React.CSSProperties = { fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '10px 14px 3px' }
 const rowLabelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }
 const rowSubStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', marginTop: 1 }
@@ -24,7 +23,7 @@ const saveBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', bor
 const connectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, flexShrink: 0 }
 const disconnectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 const fieldLabelStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', width: 56, flexShrink: 0 }
-const dividerStyle: React.CSSProperties = { border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '4px 0' }
+const dividerStyle: React.CSSProperties = { height: 1, background: 'rgba(255,255,255,0.08)', margin: '6px 0' }
 
 export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
   const { settings, updateSetting } = useSettings()
@@ -74,7 +73,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
         <div style={sectionLabelStyle}>Connections</div>
 
         {/* Jira */}
-        <div style={rowBordered}>
+        <div style={rowStyle}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Jira</div>
             {jiraStatus.connected
@@ -112,13 +111,13 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <hr style={dividerStyle} />
+        <div style={dividerStyle} />
 
         {/* SLACK STANDUP */}
         <div style={sectionLabelStyle}>Slack standup</div>
 
         {/* Channel */}
-        <div style={rowBordered}>
+        <div style={rowStyle}>
           <span style={fieldLabelStyle}>Channel</span>
           <input
             style={inputStyle}
@@ -143,7 +142,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           <button style={saveBtnStyle} onClick={() => updateSetting('slackUserId', slackUserId)}>Save</button>
         </div>
 
-        <hr style={dividerStyle} />
+        <div style={dividerStyle} />
 
         {/* TIMER */}
         <div style={sectionLabelStyle}>Timer</div>
