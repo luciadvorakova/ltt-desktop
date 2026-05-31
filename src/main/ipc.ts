@@ -118,8 +118,8 @@ export function registerIpcHandlers(): void {
       slackChannel:      row.slack_channel       as string | undefined,
       slackUserId:       row.slack_user_id       as string | undefined,
       manualTimerCleanup: row.manual_timer_cleanup as boolean | undefined,
-      jiraFavourites:    row.jira_favourites     as string[] | undefined,
-      jiraRecent:        row.jira_recent         as string[] | undefined,
+      jiraFavourites:    typeof row.jira_favourites === 'string' ? JSON.parse(row.jira_favourites) : row.jira_favourites as string[] | undefined,
+      jiraRecent:        typeof row.jira_recent === 'string' ? JSON.parse(row.jira_recent) : row.jira_recent as string[] | undefined,
     }
     // strip undefined fields so they don't overwrite valid local values on merge
     Object.keys(mapped).forEach(k => { if (mapped[k as keyof UserSettings] === undefined) delete mapped[k as keyof UserSettings] })
