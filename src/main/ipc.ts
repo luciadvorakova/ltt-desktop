@@ -99,7 +99,31 @@ export function registerIpcHandlers(): void {
       .eq('user_id', userId)
       .single()
     if (error) { console.error('[ipc] settings:pull error:', error); return null }
-    return data as UserSettings | null
+    const row = data as Record<string, unknown>
+    const mapped: UserSettings = {
+      lttTitle:          row.ltt_title           as string | undefined,
+      jiraAccessToken:   row.jira_access_token   as string | undefined,
+      jiraRefreshToken:  row.jira_refresh_token  as string | undefined,
+      jiraTokenExpiry:   row.jira_token_expiry   as string | undefined,
+      jiraCloudId:       row.jira_cloud_id       as string | undefined,
+      jiraSiteName:      row.jira_site_name      as string | undefined,
+      jiraUserName:      row.jira_user_name      as string | undefined,
+      jiraUserEmail:     row.jira_user_email     as string | undefined,
+      jiraAccountId:     row.jira_account_id     as string | undefined,
+      gcalEmail:         row.gcal_email          as string | undefined,
+      gcalAccessToken:   row.gcal_access_token   as string | undefined,
+      gcalRefreshToken:  row.gcal_refresh_token  as string | undefined,
+      gcalTokenExpiry:   row.gcal_token_expiry   as string | undefined,
+      gcalLastSyncDate:  row.gcal_last_sync_date as string | undefined,
+      slackChannel:      row.slack_channel       as string | undefined,
+      slackUserId:       row.slack_user_id       as string | undefined,
+      manualTimerCleanup: row.manual_timer_cleanup as boolean | undefined,
+      jiraFavourites:    row.jira_favourites     as string[] | undefined,
+      jiraRecent:        row.jira_recent         as string[] | undefined,
+    }
+    // strip undefined fields so they don't overwrite valid local values on merge
+    Object.keys(mapped).forEach(k => { if (mapped[k as keyof UserSettings] === undefined) delete mapped[k as keyof UserSettings] })
+    return mapped
   })
 
   // ---- JIRA ----
