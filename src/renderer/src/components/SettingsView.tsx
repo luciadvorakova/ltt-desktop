@@ -19,12 +19,12 @@ const sectionLabelStyle: React.CSSProperties = { fontSize: 9, fontWeight: 700, l
 const rowLabelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }
 const rowSubStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', marginTop: 1 }
 const connectedEmailStyle: React.CSSProperties = { fontSize: 9, color: '#7fd89a', marginTop: 1 }
-const inputStyle: React.CSSProperties = { flex: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 99, padding: '4px 10px', fontSize: 10, color: 'white', fontFamily: 'inherit', outline: 'none' }
+const inputStyle: React.CSSProperties = { flex: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 99, padding: '4px 10px', fontSize: 10, color: 'white', fontFamily: 'inherit', outline: 'none', WebkitAppearance: 'none' }
 const saveBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 const connectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, flexShrink: 0 }
 const disconnectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 const fieldLabelStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', width: 56, flexShrink: 0 }
-const dividerStyle: React.CSSProperties = { borderTop: '1px solid rgba(255,255,255,0.08)', margin: '4px 0' }
+const dividerStyle: React.CSSProperties = { border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '4px 0' }
 
 export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
   const { settings, updateSetting } = useSettings()
