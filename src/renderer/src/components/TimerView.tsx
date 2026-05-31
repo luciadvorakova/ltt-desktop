@@ -196,7 +196,7 @@ const formatMsShort = (ms: number): string => {
 
 export function TimerView() {
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
-  const { timerState, elapsed, start, pause } = useTimer()
+  const { timerState, elapsed, start, pause, stop } = useTimer()
   const { settings } = useSettings()
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
@@ -227,9 +227,15 @@ export function TimerView() {
   const handleStart = async (id: number) => {
     const prevSaved = await start(id)
     if (prevSaved) patchEntry(prevSaved.id, prevSaved.ms)
+    await reload()
   }
   const handlePause = async () => {
     await pause()
+    await reload()
+  }
+  const handleStop = async () => {
+    const result = await stop()
+    if (result) patchEntry(result.id, result.ms)
     await reload()
   }
 

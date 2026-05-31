@@ -60,7 +60,7 @@ export function useTimer(): UseTimerResult {
   const stop = useCallback(async (): Promise<{ id: number; ms: number } | null> => {
     const result = await ltt.stopTimer()
     await refreshState()
-    return result as { id: number; ms: number } | null
+    return result
   }, [ltt, refreshState])
 
   return { timerState, elapsed, start, pause, stop }
