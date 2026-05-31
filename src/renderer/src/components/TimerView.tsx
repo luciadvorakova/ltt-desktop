@@ -571,32 +571,31 @@ export function TimerView() {
                 padding: '8px 14px',
                 borderTop: '1px solid rgba(255,255,255,0.08)',
                 background: isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
+                opacity: entry.jiraSent ? 0.5 : 1,
               }}
             >
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-                {!entry.jiraSent && (
-                  <button
-                    onClick={() => isActiveRunning ? handlePause() : handleStart(entry.id)}
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
-                      border: `1px solid ${isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
-                      color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontSize: 8,
-                      padding: 0,
-                    }}
-                  >
-                    {isActiveRunning ? '⏸' : '▶'}
-                  </button>
-                )}
+                <button
+                  onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: '50%',
+                    background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
+                    border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
+                    color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
+                    cursor: entry.jiraSent ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    fontSize: 8,
+                    padding: 0,
+                  }}
+                >
+                  {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
+                </button>
 
                 {isActiveRunning && (
                   <div style={{
@@ -632,12 +631,6 @@ export function TimerView() {
                 }}>
                   {formatMs(displayMs)}
                 </span>
-
-                {entry.jiraSent && (
-                  <span style={{ fontSize: 9, color: '#7fd89a', background: 'rgba(80,180,100,0.15)', border: '1px solid rgba(80,180,100,0.3)', borderRadius: 99, padding: '1px 6px', flexShrink: 0 }}>
-                    ✓ Sent
-                  </span>
-                )}
 
                 <EntryMenu
                   ms={entry.ms}
