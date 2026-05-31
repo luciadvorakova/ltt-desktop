@@ -284,53 +284,29 @@ export function TimerView() {
         padding: '7px 14px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
-        <span style={{
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          color: 'rgba(255,255,255,0.28)',
-          textTransform: 'uppercase',
-        }}>
-          Today's Tasks
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+          {addPanelOpen ? 'Add Task' : "Today's Tasks"}
         </span>
-        <button
-          onClick={() => setAddPanelOpen(v => !v)}
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: addPanelOpen ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.18)',
-            fontSize: 15,
-            color: 'rgba(255,255,255,0.7)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            lineHeight: 1,
-            fontFamily: 'inherit',
-          }}
-        >
-          +
-        </button>
+        {addPanelOpen ? (
+          <button
+            onClick={() => setAddPanelOpen(false)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          >
+            ×
+          </button>
+        ) : (
+          <button
+            onClick={() => setAddPanelOpen(true)}
+            style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 15, color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          >
+            +
+          </button>
+        )}
       </div>
 
       {/* Add panel */}
       {addPanelOpen && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {/* Panel header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
-              Add Task
-            </span>
-            <button
-              onClick={() => setAddPanelOpen(false)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
-            >
-              ×
-            </button>
-          </div>
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
@@ -423,7 +399,7 @@ export function TimerView() {
                 </div>
               )}
               {!jiraQuery.trim() && (() => {
-                const favKeys = (settings?.jiraFavourites ?? []).slice(0, 5)
+                const favKeys = (settings?.jiraFavourites ?? []).filter(k => !!k).slice(0, 5)
                 const seenRecent = new Set<string>()
                 const recentEntries = [...entries]
                   .filter(e => !!e.jiraKey)
@@ -458,7 +434,7 @@ export function TimerView() {
                           return (
                             <JiraRow
                               key={key}
-                              icon="★"
+                              icon=""
                               jiraKey={key}
                               name={src.jiraSummary ?? src.name}
                               onClick={async () => {
@@ -478,7 +454,7 @@ export function TimerView() {
                         {recentEntries.map(e => (
                           <JiraRow
                             key={e.jiraKey}
-                            icon="◷"
+                            icon=""
                             jiraKey={e.jiraKey!}
                             name={e.jiraSummary ?? e.name}
                             onClick={async () => {
@@ -531,7 +507,7 @@ export function TimerView() {
                 {recent.map(e => (
                   <JiraRow
                     key={e.jiraKey}
-                    icon="◷"
+                    icon=""
                     jiraKey={e.jiraKey!}
                     name={e.jiraSummary ?? e.name}
                     onClick={async () => {
