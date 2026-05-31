@@ -159,11 +159,11 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   )
 }
 
-function JiraRow({ icon, jiraKey, name, onClick }: { icon: string; jiraKey: string; name: string; onClick: () => void }) {
+function JiraRow({ icon, jiraKey, name, onClick, onUnfav }: { icon: string; jiraKey: string; name: string; onClick: () => void; onUnfav?: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
@@ -175,6 +175,14 @@ function JiraRow({ icon, jiraKey, name, onClick }: { icon: string; jiraKey: stri
       <span style={{ fontSize: 11, flex: 1, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {name}
       </span>
+      {onUnfav && (
+        <button
+          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          onClick={e => { e.stopPropagation(); onUnfav() }}
+        >
+          ★
+        </button>
+      )}
     </div>
   )
 }
@@ -199,7 +207,7 @@ export function TimerView() {
   const ltt = useLtt()
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause, stop } = useTimer()
-  const { settings } = useSettings()
+  const { settings, updateSetting } = useSettings()
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
@@ -306,7 +314,8 @@ export function TimerView() {
 
       {/* Add panel */}
       {addPanelOpen && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; }`}</style>
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
@@ -332,7 +341,7 @@ export function TimerView() {
 
           {/* Jira mode */}
           {addMode === 'jira' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ padding: '4px 14px 8px', flexShrink: 0 }}>
                 <input
                   autoFocus
@@ -424,45 +433,45 @@ export function TimerView() {
                 return (
                   <>
                     {favKeys.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginBottom: recentEntries.length > 0 ? 0 : 8 }}>
-                        <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
+                      <div style={{ padding: '8px 0 0' }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px' }}>
                           ★ Favourites
                         </div>
-                        <div style={{ maxHeight: 150, overflowY: 'auto' }}>
-                          {favKeys.map(fav => (
-                            <JiraRow
-                              key={fav.jiraKey}
-                              icon=""
-                              jiraKey={fav.jiraKey}
-                              name={fav.jiraSummary ?? fav.jiraKey}
-                              onClick={async () => {
-                                await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
-                                setAddPanelOpen(false)
-                              }}
-                            />
-                          ))}
-                        </div>
+                        {favKeys.map(fav => (
+                          <JiraRow
+                            key={fav.jiraKey}
+                            icon=""
+                            jiraKey={fav.jiraKey}
+                            name={fav.jiraSummary ?? fav.jiraKey}
+                            onClick={async () => {
+                              await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
+                              setAddPanelOpen(false)
+                            }}
+                            onUnfav={() => {
+                              const next = (settings?.jiraFavourites ?? []).filter(f => f.jiraKey !== fav.jiraKey)
+                              updateSetting('jiraFavourites', next)
+                            }}
+                          />
+                        ))}
                       </div>
                     )}
                     {recentEntries.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginTop: favKeys.length > 0 ? 8 : 0, marginBottom: 8 }}>
-                        <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px', marginTop: 8 }}>
                           ◷ Recent
                         </div>
-                        <div style={{ maxHeight: 150, overflowY: 'auto' }}>
-                          {recentEntries.map(e => (
-                            <JiraRow
-                              key={e.jiraKey}
-                              icon=""
-                              jiraKey={e.jiraKey!}
-                              name={e.jiraSummary ?? e.name}
-                              onClick={async () => {
-                                await addEntry(makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, e.clientName))
-                                setAddPanelOpen(false)
-                              }}
-                            />
-                          ))}
-                        </div>
+                        {recentEntries.map(e => (
+                          <JiraRow
+                            key={e.jiraKey}
+                            icon=""
+                            jiraKey={e.jiraKey!}
+                            name={e.jiraSummary ?? e.name}
+                            onClick={async () => {
+                              await addEntry(makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, e.clientName))
+                              setAddPanelOpen(false)
+                            }}
+                          />
+                        ))}
                       </div>
                     )}
                   </>
