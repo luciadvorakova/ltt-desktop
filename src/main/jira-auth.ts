@@ -136,15 +136,18 @@ export function getJiraStatus(): { connected: boolean; email?: string; cloudId?:
 }
 
 export async function searchJiraIssues(query: string): Promise<{ key: string; summary: string }[]> {
-  const accessToken = await ensureJiraToken()
-  if (!accessToken) return []
-  const cloudId = store.get('jiraCloudId')
-  if (!cloudId) return []
-
+  console.log('[JIRA] searchJiraIssues called, query:', query)
   try {
+    const cloudId = store.get('jiraCloudId')
+    console.log('[JIRA] cloudId:', cloudId)
+    await ensureJiraToken()
+    const token = store.get('jiraAccessToken')
+    console.log('[JIRA] token exists:', !!token)
+    if (!token || !cloudId) return []
+
     const jql = `assignee = currentUser() AND summary ~ "${query}" ORDER BY updated DESC`
     const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?jql=${encodeURIComponent(jql)}&maxResults=15&fields=summary,status,issuetype`
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } })
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
     console.log('[JIRA] search URL:', url, 'response status:', res.status)
     const data = await res.json() as { issues?: { key: string; fields: { summary: string } }[] }
     console.log('[JIRA] search data:', JSON.stringify(data).slice(0, 500))
@@ -157,8 +160,8 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
       }
     }
     return issues
-  } catch (err) {
-    console.error('[jira] searchJiraIssues error:', err)
+  } catch (e) {
+    console.error('[JIRA] searchJiraIssues error:', e)
     return []
   }
 }
