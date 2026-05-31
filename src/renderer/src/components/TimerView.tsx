@@ -163,7 +163,7 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav }: { icon: string; jira
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
@@ -315,7 +315,7 @@ export function TimerView() {
       {/* Add panel */}
       {addPanelOpen && (
         <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; }`}</style>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
@@ -359,7 +359,8 @@ export function TimerView() {
                       setJiraSearching(false)
                     }, 300)
                   }}
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
+                  className="ltt-jira-search"
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'rgba(255,255,255,0.85)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
               {jiraSearching && (
