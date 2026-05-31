@@ -135,17 +135,18 @@ export function pauseTimer(): void {
   const state = store.get('timerState')
   if (!state?.running || state.startedAt === null) return
   const elapsed = Date.now() - state.startedAt
+  const newMs = state.baseMs + elapsed
   store.set('timerState', {
     ...state,
-    baseMs: state.baseMs + elapsed,
+    baseMs: newMs,
     running: false,
     paused: true,
     startedAt: null,
   })
-  if (flushInterval) {
-    clearInterval(flushInterval)
-    flushInterval = null
-  }
+  console.log('[PAUSE] baseMs set to:', newMs)
+  if (flushInterval) { clearInterval(flushInterval); flushInterval = null }
+  const entry = currentEntries.find(e => e.id === state.activeEntryId)
+  if (entry) saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
 }
 
 export async function stopTimer(): Promise<{ id: number; ms: number } | null> {
@@ -181,7 +182,7 @@ export async function flushActiveTime(): Promise<void> {
   const idx = currentEntries.findIndex((e) => e.id === state.activeEntryId)
   if (idx === -1) return
 
-  console.log('[FLUSH] entry id:', state.activeEntryId, 'elapsed:', elapsed, 'baseMs:', state.baseMs, 'new ms:', state.baseMs + elapsed)
+  console.log('[FLUSH]', state.activeEntryId, 'baseMs:', state.baseMs, 'elapsed:', elapsed, 'newMs:', state.baseMs + elapsed)
 
   const updated: TimeEntry = {
     ...currentEntries[idx],
