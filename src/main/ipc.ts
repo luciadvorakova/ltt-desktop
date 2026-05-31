@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { store } from './store'
 import { supabase, ensureSession } from './supabase'
 import { signInWithGoogle, getSession } from './auth'
+import { signInWithJira, signOutJira, getJiraStatus } from './jira-auth'
 import {
   loadEntries,
   saveEntry,
@@ -61,7 +62,10 @@ export function registerIpcHandlers(): void {
     return startTimer(entryId)
   })
 
-  ipcMain.handle('timer:pause', () => pauseTimer())
+  ipcMain.handle('timer:pause', () => {
+    console.log('[IPC] timer:pause called')
+    return pauseTimer()
+  })
 
   ipcMain.handle('timer:stop', () => stopTimer())
 
@@ -86,6 +90,14 @@ export function registerIpcHandlers(): void {
       .upsert({ user_id: userId, ...settings }, { onConflict: 'user_id' })
     if (error) console.error('[ipc] settings:push error:', error)
   })
+
+  // ---- JIRA ----
+
+  ipcMain.handle('jira:signIn', () => signInWithJira())
+
+  ipcMain.handle('jira:signOut', () => signOutJira())
+
+  ipcMain.handle('jira:getStatus', () => getJiraStatus())
 
   // ---- APP ----
 

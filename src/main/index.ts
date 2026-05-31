@@ -1,8 +1,10 @@
+import 'dotenv/config'
 import { app, nativeImage, globalShortcut } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
 import { handleAuthCallback, startSessionRefreshInterval, authEmitter } from './auth'
+import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
 import { registerIpcHandlers } from './ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -51,6 +53,7 @@ let ipcRegistered = false
 mb.on('ready', () => {
   console.log('[MAIN] menubar ready')
   startSessionRefreshInterval()
+  startJiraRefreshInterval()
   authEmitter.on('auth-success', (session) => {
     console.log('[AUTH] auth-success received in index.ts, win exists:', !!mb.window)
     mb.window?.webContents.send('auth-success', session)
@@ -86,6 +89,10 @@ app.on('open-url', (event, url) => {
   if (url.startsWith('ltt://auth')) {
     handleAuthCallback(url).then((session) => {
       if (session) mb.window?.webContents.send('auth-success', session)
+    })
+  } else if (url.startsWith('ltt://jira-auth')) {
+    handleJiraCallback(url).then(() => {
+      mb.window?.webContents.send('jira-auth-success')
     })
   }
 })

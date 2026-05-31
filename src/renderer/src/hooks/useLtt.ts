@@ -23,6 +23,11 @@ interface LttAPI {
   setSettings:  (settings: UserSettings) => Promise<void>
   pushSettings: (userId: string) => Promise<void>
 
+  // JIRA
+  jiraSignIn:    () => Promise<void>
+  jiraSignOut:   () => Promise<void>
+  jiraGetStatus: () => Promise<{ connected: boolean; email?: string; cloudId?: string }>
+
   // APP
   getDeletedIds: () => Promise<number[]>
   addDeletedId:  (id: number) => Promise<void>

@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld('ltt', {
   setSettings:   (settings: UserSettings) => ipcRenderer.invoke('settings:set', settings),
   pushSettings:  (userId: string)         => ipcRenderer.invoke('settings:push', userId),
 
+  // ---- JIRA ----
+  jiraSignIn:    ()                          => ipcRenderer.invoke('jira:signIn'),
+  jiraSignOut:   ()                          => ipcRenderer.invoke('jira:signOut'),
+  jiraGetStatus: ()                          => ipcRenderer.invoke('jira:getStatus'),
+
   // ---- APP ----
   getDeletedIds: ()                       => ipcRenderer.invoke('app:getDeletedIds'),
   addDeletedId:  (id: number)             => ipcRenderer.invoke('app:addDeletedId', id),

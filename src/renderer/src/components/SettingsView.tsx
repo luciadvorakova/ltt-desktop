@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSettings } from '../hooks/useSettings'
+import { useLtt } from '../hooks/useLtt'
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
@@ -25,8 +26,10 @@ const fieldLabelStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255
 
 export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
   const { settings, updateSetting } = useSettings()
+  const ltt = useLtt()
   const [slackChannel, setSlackChannel] = useState('')
   const [slackUserId, setSlackUserId] = useState('')
+  const [jiraStatus, setJiraStatus] = useState<{ connected: boolean; email?: string; cloudId?: string }>({ connected: false })
 
   useEffect(() => {
     if (settings) {
@@ -34,6 +37,13 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
       setSlackUserId(settings.slackUserId ?? '')
     }
   }, [settings])
+
+  useEffect(() => {
+    ltt.jiraGetStatus().then(setJiraStatus)
+    const handler = () => ltt.jiraGetStatus().then(setJiraStatus)
+    ltt.on('jira-auth-success', handler)
+    return () => ltt.off('jira-auth-success', handler)
+  }, [ltt])
 
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
@@ -55,15 +65,15 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
         <div style={rowStyle}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Jira</div>
-            {!settings?.jiraUserName && <div style={rowSubStyle}>Search issues and log time directly.</div>}
+            {!jiraStatus.connected && <div style={rowSubStyle}>Search issues and log time directly.</div>}
           </div>
-          {settings?.jiraUserName ? (
+          {jiraStatus.connected ? (
             <>
-              <span style={connectedStyle}>✓ {settings.jiraUserName}</span>
-              <button style={disconnectBtnStyle} onClick={() => updateSetting('jiraUserName', undefined)}>Disconnect</button>
+              <span style={connectedStyle}>✓ {jiraStatus.email}</span>
+              <button style={disconnectBtnStyle} onClick={() => { ltt.jiraSignOut(); setJiraStatus({ connected: false }) }}>Disconnect</button>
             </>
           ) : (
-            <button style={connectBtnStyle}>Connect</button>
+            <button style={connectBtnStyle} onClick={() => ltt.jiraSignIn()}>Connect</button>
           )}
         </div>
 
