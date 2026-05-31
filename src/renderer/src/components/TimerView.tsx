@@ -217,6 +217,7 @@ export function TimerView() {
         const map = new Map<string, string>()
         for (const p of projects) map.set(p.key, p.name)
         jiraProjectsRef.current = map
+        console.log('[JIRA] projectsMap size:', jiraProjectsRef.current.size)
       })
     }
   }, [addPanelOpen, addMode, ltt])
@@ -398,6 +399,7 @@ export function TimerView() {
                       onClick={async () => {
                         const projectKey = issue.key.split('-')[0]
                         const clientName = jiraProjectsRef.current.get(projectKey)
+                        console.log('[JIRA] creating entry, jiraKey:', issue.key, 'clientName:', clientName)
                         const entry: TimeEntry = {
                           id: Date.now(),
                           name: issue.summary,
@@ -485,11 +487,49 @@ export function TimerView() {
           )}
 
           {/* Recent mode */}
-          {addMode === 'recent' && (
-            <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
-              Coming soon
-            </div>
-          )}
+          {addMode === 'recent' && (() => {
+            const seen = new Set<string>()
+            const recent = [...entries]
+              .filter(e => !!e.jiraKey)
+              .sort((a, b) => b.ts - a.ts)
+              .filter(e => { if (seen.has(e.jiraKey!)) return false; seen.add(e.jiraKey!); return true })
+              .slice(0, 30)
+            return recent.length === 0 ? (
+              <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
+                No recent Jira tasks
+              </div>
+            ) : (
+              <div>
+                {recent.map(e => (
+                  <JiraRow
+                    key={e.jiraKey}
+                    icon="🕐"
+                    jiraKey={e.jiraKey!}
+                    name={e.jiraSummary ?? e.name}
+                    onClick={async () => {
+                      const entry: TimeEntry = {
+                        id: Date.now(),
+                        name: e.jiraSummary ?? e.name,
+                        ms: 0,
+                        ts: Date.now(),
+                        jiraKey: e.jiraKey,
+                        jiraSummary: e.jiraSummary,
+                        clientName: e.clientName,
+                        jiraSent: false,
+                        untracked: false,
+                        carriedOver: false,
+                        removedFromTimer: false,
+                        deletedFromBulk: false,
+                        updatedAt: new Date().toISOString(),
+                      }
+                      await addEntry(entry)
+                      setAddPanelOpen(false)
+                    }}
+                  />
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
 
