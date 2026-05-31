@@ -399,13 +399,13 @@ export function TimerView() {
                 </div>
               )}
               {!jiraQuery.trim() && (() => {
-                const favKeys = (settings?.jiraFavourites ?? []).filter(f => !!f?.jiraKey).slice(0, 5)
+                const favKeys = (settings?.jiraFavourites ?? []).filter(f => !!f?.jiraKey)
                 const seenRecent = new Set<string>()
                 const recentEntries = [...entries]
                   .filter(e => !!e.jiraKey)
                   .sort((a, b) => b.ts - a.ts)
                   .filter(e => { if (seenRecent.has(e.jiraKey!)) return false; seenRecent.add(e.jiraKey!); return true })
-                  .slice(0, 5)
+                  .slice(0, 30)
                 const makeEntry = (jiraKey: string, name: string, jiraSummary: string | undefined, clientName: string | undefined): TimeEntry => ({
                   id: Date.now(),
                   name,
@@ -424,41 +424,45 @@ export function TimerView() {
                 return (
                   <>
                     {favKeys.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginBottom: recentEntries.length > 0 ? 0 : 8 }}>
                         <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
-                          Favourites
+                          ★ Favourites
                         </div>
-                        {favKeys.map(fav => (
-                          <JiraRow
-                            key={fav.jiraKey}
-                            icon=""
-                            jiraKey={fav.jiraKey}
-                            name={fav.jiraSummary ?? fav.jiraKey}
-                            onClick={async () => {
-                              await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
-                              setAddPanelOpen(false)
-                            }}
-                          />
-                        ))}
+                        <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                          {favKeys.map(fav => (
+                            <JiraRow
+                              key={fav.jiraKey}
+                              icon=""
+                              jiraKey={fav.jiraKey}
+                              name={fav.jiraSummary ?? fav.jiraKey}
+                              onClick={async () => {
+                                await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
+                                setAddPanelOpen(false)
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
                     {recentEntries.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginTop: favKeys.length > 0 ? 8 : 0, marginBottom: 8 }}>
                         <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '6px 14px 2px' }}>
-                          Recent
+                          ◷ Recent
                         </div>
-                        {recentEntries.map(e => (
-                          <JiraRow
-                            key={e.jiraKey}
-                            icon=""
-                            jiraKey={e.jiraKey!}
-                            name={e.jiraSummary ?? e.name}
-                            onClick={async () => {
-                              await addEntry(makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, e.clientName))
-                              setAddPanelOpen(false)
-                            }}
-                          />
-                        ))}
+                        <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                          {recentEntries.map(e => (
+                            <JiraRow
+                              key={e.jiraKey}
+                              icon=""
+                              jiraKey={e.jiraKey!}
+                              name={e.jiraSummary ?? e.name}
+                              onClick={async () => {
+                                await addEntry(makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, e.clientName))
+                                setAddPanelOpen(false)
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
                   </>
