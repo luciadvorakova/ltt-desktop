@@ -42,17 +42,27 @@ export function useTimer(): UseTimerResult {
     refreshState()
   }, [refreshState])
 
+  // Refresh when window becomes visible
+  useEffect(() => {
+    const handler = () => refreshState()
+    ltt.on('window-show', handler)
+    return () => ltt.off('window-show', handler)
+  }, [ltt, refreshState])
+
   const start = useCallback(async (entryId: number): Promise<{ id: number; ms: number } | null> => {
     setElapsed(0)
     const prevSaved = timerState?.activeEntryId && timerState.activeEntryId !== entryId
       ? await ltt.stopTimer()
       : null
+    console.log('[useTimer] calling startTimer', entryId)
     await ltt.startTimer(entryId)
     await refreshState()
     return prevSaved as { id: number; ms: number } | null
   }, [ltt, refreshState, timerState])
 
   const pause = useCallback(async () => {
+    console.log('[useTimer] ltt exists:', !!ltt, 'pauseTimer:', typeof ltt.pauseTimer)
+    console.log('[useTimer] calling pauseTimer')
     await ltt.pauseTimer()
     await refreshState()
   }, [ltt, refreshState])

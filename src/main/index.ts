@@ -56,6 +56,9 @@ mb.on('ready', () => {
     mb.window?.webContents.send('auth-success', session)
     console.log('[AUTH] sent to renderer')
   })
+  mb.on('show', () => {
+    mb.window?.webContents.send('window-show')
+  })
   globalShortcut.register('CommandOrControl+Shift+I', () => {
     mb.window?.webContents.toggleDevTools()
   })
