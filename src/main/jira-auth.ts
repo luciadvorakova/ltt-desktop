@@ -152,17 +152,10 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   if (!cloudId) return []
 
   try {
-    const params = new URLSearchParams({
-      query,
-      currentJQL: 'assignee=currentUser()',
-      showSubTasks: 'true',
-      limit: '10',
-    })
-    const res = await fetch(
-      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?${params}`,
-      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
-    )
+    const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?query=${encodeURIComponent(query)}&showSubTasks=true&limit=20`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
     const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+    console.log('[JIRA] picker response:', res.status, JSON.stringify(data).slice(0, 300))
     const seen = new Set<string>()
     const issues: { key: string; summary: string }[] = []
     for (const section of data.sections ?? []) {
