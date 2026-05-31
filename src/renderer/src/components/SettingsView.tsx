@@ -30,11 +30,13 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
   const [slackChannel, setSlackChannel] = useState('')
   const [slackUserId, setSlackUserId] = useState('')
   const [jiraStatus, setJiraStatus] = useState<{ connected: boolean; email?: string; cloudId?: string }>({ connected: false })
+  const [gcalEmail, setGcalEmail] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (settings) {
       setSlackChannel(settings.slackChannel ?? '')
       setSlackUserId(settings.slackUserId ?? '')
+      if (settings.gcalEmail !== undefined) setGcalEmail(settings.gcalEmail)
     }
   }, [settings])
 
@@ -43,6 +45,12 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
     const handler = () => ltt.jiraGetStatus().then(setJiraStatus)
     ltt.on('jira-auth-success', handler)
     return () => ltt.off('jira-auth-success', handler)
+  }, [ltt])
+
+  useEffect(() => {
+    const handler = () => ltt.getSettings().then(s => setGcalEmail(s?.gcalEmail))
+    ltt.on('gcal-auth-success', handler)
+    return () => ltt.off('gcal-auth-success', handler)
   }, [ltt])
 
   return (
@@ -81,15 +89,22 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
         <div style={{ ...rowStyle }}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Google Calendar</div>
-            {!settings?.gcalEmail && <div style={rowSubStyle}>Import events as time entries.</div>}
+            {!gcalEmail && <div style={rowSubStyle}>Import events as time entries.</div>}
           </div>
-          {settings?.gcalEmail ? (
+          {gcalEmail ? (
             <>
-              <span style={connectedStyle}>✓ {settings.gcalEmail}</span>
-              <button style={disconnectBtnStyle} onClick={() => updateSetting('gcalEmail', undefined)}>Disconnect</button>
+              <span style={connectedStyle}>✓ {gcalEmail}</span>
+              <button style={disconnectBtnStyle} onClick={() => {
+                setGcalEmail(undefined)
+                updateSetting('gcalEmail', undefined)
+                updateSetting('gcalAccessToken', undefined)
+                updateSetting('gcalRefreshToken', undefined)
+                updateSetting('gcalTokenExpiry', undefined)
+                updateSetting('gcalLastSyncDate', undefined)
+              }}>Disconnect</button>
             </>
           ) : (
-            <button style={connectBtnStyle}>Connect</button>
+            <button style={connectBtnStyle} onClick={() => ltt.gcalSignIn()}>Connect</button>
           )}
         </div>
 

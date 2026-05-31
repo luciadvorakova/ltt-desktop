@@ -38,6 +38,10 @@ contextBridge.exposeInMainWorld('ltt', {
   slackSendStandup: (payload: { channel: string; userId: string; accomplished: string; workingOn: string; problems: string; share: string }) =>
     ipcRenderer.invoke('slack:sendStandup', payload),
 
+  // ---- GCAL ----
+  gcalSignIn: ()  => ipcRenderer.invoke('gcal:signIn'),
+  gcalSync:   ()  => ipcRenderer.invoke('gcal:sync'),
+
   // ---- APP ----
   getDeletedIds: ()                       => ipcRenderer.invoke('app:getDeletedIds'),
   addDeletedId:  (id: number)             => ipcRenderer.invoke('app:addDeletedId', id),

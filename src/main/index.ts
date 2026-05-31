@@ -5,6 +5,8 @@ import path from 'node:path'
 import { menubar } from 'menubar'
 import { handleAuthCallback, startSessionRefreshInterval, authEmitter } from './auth'
 import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
+import { handleGCalCallback, gcalAuthEmitter } from './gcal-auth'
+import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -59,8 +61,13 @@ mb.on('ready', () => {
     mb.window?.webContents.send('auth-success', session)
     console.log('[AUTH] sent to renderer')
   })
-  mb.on('show', () => {
+  gcalAuthEmitter.on('gcal-auth-success', () => {
+    mb.window?.webContents.send('gcal-auth-success')
+  })
+  mb.on('show', async () => {
     mb.window?.webContents.send('window-show')
+    const synced = await syncGoogleCalendar()
+    if (synced) mb.window?.webContents.send('window-show')
   })
   globalShortcut.register('CommandOrControl+Shift+I', () => {
     mb.window?.webContents.toggleDevTools()
@@ -94,6 +101,8 @@ app.on('open-url', (event, url) => {
     handleJiraCallback(url).then(() => {
       mb.window?.webContents.send('jira-auth-success')
     })
+  } else if (url.startsWith('ltt://gcal-auth')) {
+    handleGCalCallback(url)
   }
 })
 

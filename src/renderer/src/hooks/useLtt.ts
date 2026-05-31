@@ -35,6 +35,10 @@ interface LttAPI {
   // SLACK
   slackSendStandup: (payload: { channel: string; userId: string; accomplished: string; workingOn: string; problems: string; share: string }) => Promise<{ success: boolean; error?: string }>
 
+  // GCAL
+  gcalSignIn: () => Promise<void>
+  gcalSync:   () => Promise<{ success: boolean; error?: string }>
+
   // APP
   getDeletedIds: () => Promise<number[]>
   addDeletedId:  (id: number) => Promise<void>

@@ -3,6 +3,8 @@ import { store } from './store'
 import { supabase, ensureSession } from './supabase'
 import { signInWithGoogle, getSession } from './auth'
 import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira } from './jira-auth'
+import { signInWithGCal } from './gcal-auth'
+import { syncGoogleCalendar } from './gcal'
 import {
   loadEntries,
   saveEntry,
@@ -164,6 +166,19 @@ export function registerIpcHandlers(): void {
         body: JSON.stringify({ ...payload, text }),
       })
       if (!res.ok) { const body = await res.text(); return { success: false, error: `HTTP ${res.status}: ${body}` } }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // ---- GCAL ----
+
+  ipcMain.handle('gcal:signIn', () => signInWithGCal())
+
+  ipcMain.handle('gcal:sync', async () => {
+    try {
+      await syncGoogleCalendar()
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
