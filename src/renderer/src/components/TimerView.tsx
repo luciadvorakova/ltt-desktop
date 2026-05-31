@@ -48,11 +48,12 @@ function msToMin(ms: number): string {
   return String(Math.floor(ms / 60000))
 }
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
   onAddToFavourites?: () => void;
+  onSendToJira?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -138,10 +139,10 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
               </div>
             )}
           </div>
-          {ms > 0 && menuDivider}
-          {ms > 0 && (
+          {ms > 0 && onSendToJira && menuDivider}
+          {ms > 0 && onSendToJira && (
             <div style={{ padding: '4px 0' }}>
-              <MenuItem icon="↑" label="Send to Jira" />
+              <MenuItem icon="↑" label="Send to Jira" onAction={() => { onSendToJira(); onClose() }} />
             </div>
           )}
           {menuDivider}
@@ -642,6 +643,11 @@ export function TimerView() {
                     const favs = settings?.jiraFavourites ?? []
                     if (favs.some(f => f.jiraKey === entry.jiraKey)) return
                     updateSetting('jiraFavourites', [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...favs])
+                  } : undefined}
+                  onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
+                    const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
+                    if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
+                    else console.error('[jira] logTime failed:', result.error)
                   } : undefined}
                 />
               </div>

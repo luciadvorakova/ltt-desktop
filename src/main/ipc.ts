@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { store } from './store'
 import { supabase, ensureSession } from './supabase'
 import { signInWithGoogle, getSession } from './auth'
-import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects } from './jira-auth'
+import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira } from './jira-auth'
 import {
   loadEntries,
   saveEntry,
@@ -140,6 +140,10 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('jira:getProjects', () => getJiraProjects())
+
+  ipcMain.handle('jira:logTime', (_event, issueKey: string, ms: number, comment?: string) =>
+    logTimeToJira(issueKey, ms, comment)
+  )
 
   // ---- APP ----
 

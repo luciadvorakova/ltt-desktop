@@ -173,6 +173,39 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   }
 }
 
+export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
+  const token = await ensureJiraToken()
+  if (!token) return { success: false, error: 'Not authenticated' }
+  const cloudId = store.get('jiraCloudId')
+  if (!cloudId) return { success: false, error: 'No cloud ID' }
+
+  try {
+    const res = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}/worklog`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          timeSpentSeconds: Math.round(timeSpentMs / 1000),
+          comment: {
+            type: 'doc', version: 1,
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: comment ?? '' }] }],
+          },
+        }),
+      }
+    )
+    if (!res.ok) {
+      const body = await res.text()
+      console.error('[jira] logTime failed:', res.status, body)
+      return { success: false, error: `HTTP ${res.status}` }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('[jira] logTimeToJira error:', err)
+    return { success: false, error: String(err) }
+  }
+}
+
 export async function getJiraProjects(): Promise<{ key: string; name: string }[]> {
   const accessToken = await ensureJiraToken()
   if (!accessToken) return []
