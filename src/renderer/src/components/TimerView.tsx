@@ -48,10 +48,11 @@ function msToMin(ms: number): string {
   return String(Math.floor(ms / 60000))
 }
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
+  onAddToFavourites?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -146,7 +147,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
-            <MenuItem icon="★" label="Add to favourites" />
+            <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" />
           </div>
           {menuDivider}
@@ -637,6 +638,11 @@ export function TimerView() {
                   onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
                   onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
                   onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
+                  onAddToFavourites={entry.jiraKey ? () => {
+                    const favs = settings?.jiraFavourites ?? []
+                    if (favs.some(f => f.jiraKey === entry.jiraKey)) return
+                    updateSetting('jiraFavourites', [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...favs])
+                  } : undefined}
                 />
               </div>
 
