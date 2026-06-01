@@ -4,9 +4,7 @@ import { useSettings } from '../hooks/useSettings'
 import type { TimeEntry } from '../../../types/index'
 
 function formatEntry(e: TimeEntry): string {
-  const prefix = e.clientName ?? e.jiraSummary ?? e.name
-  const desc = e.jiraDesc?.trim()
-  return desc ? `${prefix} - ${desc}` : prefix
+  return e.clientName ? `${e.clientName} - ${e.name}` : e.name
 }
 
 function getPreviousRange(): { start: number; end: number } {
@@ -32,7 +30,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   const { start: prevStart, end: prevEnd } = getPreviousRange()
 
   const previousEntries = entries.filter(e => e.ms > 0 && e.ts >= prevStart && e.ts < prevEnd)
-  const todayEntries = entries.filter(e => e.ms > 0 && e.ts >= todayStart.getTime() && !e.jiraSent)
+  const todayEntries = entries.filter(e => e.ts >= todayStart.getTime() && !e.jiraSent && !e.removedFromTimer)
 
   const [accomplished, setAccomplished] = useState(() => previousEntries.map(formatEntry).join('\n'))
   const [workingOn, setWorkingOn]       = useState(() => todayEntries.map(formatEntry).join('\n'))
