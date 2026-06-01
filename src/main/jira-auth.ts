@@ -254,6 +254,7 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
     )
     if (!parentRes.ok) return null
     const parentData = await parentRes.json() as { fields: { summary?: string; customfield_10252?: string[] } }
+    console.log('[JIRA] customfield_10252:', JSON.stringify(parentData.fields?.customfield_10252))
     const clientLabel = parentData.fields.customfield_10252?.[0]
     if (clientLabel) return clientLabel
     const parentSummary = parentData.fields.summary
