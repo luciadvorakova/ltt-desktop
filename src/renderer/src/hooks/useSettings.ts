@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { UserSettings } from '../../../types/index'
 import { useLtt } from './useLtt'
 
@@ -12,11 +12,13 @@ interface UseSettingsResult {
 export function useSettings(): UseSettingsResult {
   const ltt = useLtt()
   const [settings, setSettings] = useState<UserSettings | null>(null)
+  const settingsRef = useRef<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       const local = await ltt.getSettings()
+      settingsRef.current = local
       setSettings(local)
       setLoading(false)
 
@@ -28,8 +30,10 @@ export function useSettings(): UseSettingsResult {
       if (!userId) return
 
       const remote = await ltt.pullSettings(userId)
+      console.log('[SETTINGS] pulled:', JSON.stringify(remote?.jiraFavourites))
       if (!remote) return
       const merged = { ...(local ?? {}), ...remote } as import('../../../types/index').UserSettings
+      settingsRef.current = merged
       setSettings(merged)
       await ltt.setSettings(merged)
     }
@@ -38,11 +42,12 @@ export function useSettings(): UseSettingsResult {
 
   const updateSetting = useCallback(
     async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
-      const next = { ...(settings ?? {}), [key]: value } as UserSettings
-      setSettings(next)
+      const next = { ...(settingsRef.current ?? {}), [key]: value } as UserSettings
+      settingsRef.current = next
+      setSettings(prev => ({ ...(prev ?? {}), [key]: value } as UserSettings))
       await ltt.setSettings(next)
     },
-    [ltt, settings],
+    [ltt],
   )
 
   const pushSettings = useCallback(
