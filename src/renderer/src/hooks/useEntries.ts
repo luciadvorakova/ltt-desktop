@@ -31,6 +31,12 @@ export function useEntries(): UseEntriesResult {
     reload()
   }, [reload])
 
+  // Reload when main process signals new gcal entries were created
+  useEffect(() => {
+    ltt.on('reload-entries', reload)
+    return () => ltt.off('reload-entries', reload)
+  }, [ltt, reload])
+
   const addEntry = useCallback(async (entry: TimeEntry) => {
     await ltt.saveEntry(entry)
     setEntries((prev) => {

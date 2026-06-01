@@ -71,8 +71,8 @@ mb.on('ready', () => {
     const settings = store.get('settings')
     console.log('[GCAL] show fired, lastSync:', settings?.gcalLastSyncDate, 'today:', new Date().toISOString().slice(0, 10))
     mb.window?.webContents.send('window-show')
-    const synced = await syncGoogleCalendar()
-    if (synced) mb.window?.webContents.send('window-show')
+    const created = await syncGoogleCalendar()
+    if (created) mb.window?.webContents.send('reload-entries')
   })
   globalShortcut.register('CommandOrControl+Shift+I', () => {
     mb.window?.webContents.toggleDevTools()
