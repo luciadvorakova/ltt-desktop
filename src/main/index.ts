@@ -22,7 +22,8 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-app.setAsDefaultProtocolClient('ltt')
+const protocolSet = app.setAsDefaultProtocolClient('ltt')
+console.log('[MAIN] setAsDefaultProtocolClient result:', protocolSet)
 
 const trayIconPath = app.isPackaged
   ? path.join(process.resourcesPath, 'public/digismoothie-logo-small.png')
@@ -59,6 +60,7 @@ let ipcRegistered = false
 
 mb.on('ready', () => {
   console.log('[MAIN] menubar ready')
+  console.log('[MAIN] protocol registered:', app.isDefaultProtocolClient('ltt'))
   autoUpdater.checkForUpdatesAndNotify()
   autoUpdater.on('update-downloaded', () => {
     autoUpdater.quitAndInstall()
