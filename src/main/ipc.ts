@@ -161,10 +161,10 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     if (payload.share.trim())       sections.push(`🙋 *I would like to share:*\n${payload.share.trim()}`)
     const text = sections.join('\n\n')
     try {
-      const res = await fetch('https://ltt-proxy.onrender.com/slack/standup', {
+      const res = await fetch('https://ltt-proxy.onrender.com/standup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, text }),
+        headers: { 'Content-Type': 'application/json', 'x-ltt-secret': 'ltt-proxy-secret' },
+        body: JSON.stringify({ message: text }),
       })
       if (!res.ok) { const body = await res.text(); return { success: false, error: `HTTP ${res.status}: ${body}` } }
       return { success: true }
