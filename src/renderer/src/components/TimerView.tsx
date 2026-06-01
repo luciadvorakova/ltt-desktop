@@ -285,10 +285,12 @@ export function TimerView() {
     await reload()
   }
 
-  const modifyFavourites = async (fn: (current: NonNullable<typeof settings>['jiraFavourites']) => NonNullable<typeof settings>['jiraFavourites']) => {
+  const modifyFavourites = async (fn: (current: NonNullable<typeof settings>['jiraFavourites']) => NonNullable<typeof settings>['jiraFavourites'], label?: string) => {
+    console.log('[FAV] called, label:', label)
     const latest = await ltt.getSettings()
     const current = latest?.jiraFavourites ?? []
     const next = fn(current)
+    console.log('[FAV] new array:', JSON.stringify(next))
     updateSetting('jiraFavourites', next)
     await ltt.setSettings({ ...(latest ?? {}), jiraFavourites: next })
     const session = await ltt.getSession()
@@ -460,8 +462,8 @@ export function TimerView() {
                           if (name) { patchEntry(entry.id, undefined, name); updateEntry({ ...entry, clientName: name, updatedAt: new Date().toISOString() }) }
                         })
                       }}
-                      onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key)) : undefined}
-                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur]) : undefined}
+                      onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key), `remove:${issue.key}`) : undefined}
+                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur], `add:${issue.key}`) : undefined}
                     />
                     )
                   })}
@@ -507,7 +509,7 @@ export function TimerView() {
                               await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
                               setAddPanelOpen(false)
                             }}
-                            onUnfav={() => modifyFavourites(cur => cur.filter(f => f.jiraKey !== fav.jiraKey))}
+                            onUnfav={() => modifyFavourites(cur => cur.filter(f => f.jiraKey !== fav.jiraKey), `remove-fav:${fav.jiraKey}`)}
                           />
                         ))}
                       </div>
@@ -697,7 +699,7 @@ export function TimerView() {
                   onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
                     if (cur.some(f => f.jiraKey === entry.jiraKey)) return cur
                     return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...cur]
-                  }) : undefined}
+                  }, `add-entry:${entry.jiraKey}`) : undefined}
                   onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
                     const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
                     if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
@@ -910,8 +912,8 @@ export function TimerView() {
                       return (
                         <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary}
                           onClick={() => handleLinkPick(issue)}
-                          onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key)) : undefined}
-                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur]) : undefined}
+                          onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key), `modal-remove:${issue.key}`) : undefined}
+                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur], `modal-add:${issue.key}`) : undefined}
                         />
                       )
                     })}
