@@ -1,10 +1,14 @@
+import http from 'node:http'
 import { shell } from 'electron'
+import { EventEmitter } from 'events'
 import { store } from './store'
 
 const JIRA_CLIENT_ID = 'dwD4aPYHdf9kXcnLDm3lqJhHIuJYoVUf'
-const JIRA_REDIRECT_URI = 'ltt://jira-auth'
+const JIRA_REDIRECT_URI = 'http://localhost:7431/jira-auth'
 const JIRA_SCOPES = 'read:jira-work write:jira-work offline_access'
 const TOKEN_URL = 'https://auth.atlassian.com/oauth/token'
+
+export const jiraAuthEmitter = new EventEmitter()
 
 export async function signInWithJira(): Promise<void> {
   const state = Math.random().toString(36).slice(2)
@@ -16,15 +20,31 @@ export async function signInWithJira(): Promise<void> {
   url.searchParams.set('state', state)
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('prompt', 'consent')
+
+  const server = http.createServer(async (req, res) => {
+    if (!req.url?.startsWith('/jira-auth')) { res.writeHead(404); res.end(); return }
+
+    const parsed = new URL(req.url, 'http://localhost:7431')
+    const code = parsed.searchParams.get('code')
+    const error = parsed.searchParams.get('error')
+
+    res.writeHead(200, { 'Content-Type': 'text/html' })
+    res.end('<html><body><p>Jira connected. You can close this tab.</p></body></html>')
+    server.close()
+
+    if (error || !code) { console.error('[jira] OAuth callback error:', error); return }
+
+    await exchangeCodeForTokens(code)
+  })
+
+  server.listen(7431, () => console.log('[jira] callback server listening on port 7431'))
+  server.on('error', (err) => console.error('[jira] callback server error:', err))
+
   await shell.openExternal(url.toString())
 }
 
-export async function handleJiraCallback(url: string): Promise<void> {
+async function exchangeCodeForTokens(code: string): Promise<void> {
   try {
-    const parsed = new URL(url)
-    const code = parsed.searchParams.get('code')
-    if (!code) { console.error('[jira] no code in callback URL'); return }
-
     const secret = process.env.JIRA_CLIENT_SECRET
     if (!secret) { console.error('[jira] JIRA_CLIENT_SECRET not set'); return }
 
@@ -48,8 +68,9 @@ export async function handleJiraCallback(url: string): Promise<void> {
 
     await fetchAndStoreJiraProfile(tokens.access_token)
     console.log('[jira] connected, email:', store.get('jiraEmail'))
+    jiraAuthEmitter.emit('jira-auth-success')
   } catch (err) {
-    console.error('[jira] handleJiraCallback error:', err)
+    console.error('[jira] exchangeCodeForTokens error:', err)
   }
 }
 

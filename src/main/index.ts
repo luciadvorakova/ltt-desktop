@@ -5,7 +5,7 @@ import path from 'node:path'
 import { menubar } from 'menubar'
 import { autoUpdater } from 'electron-updater'
 import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter } from './auth'
-import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
+import { jiraAuthEmitter, startJiraRefreshInterval } from './jira-auth'
 import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
@@ -76,6 +76,9 @@ mb.on('ready', () => {
   gcalAuthEmitter.on('gcal-auth-success', () => {
     mb.window?.webContents.send('gcal-auth-success')
   })
+  jiraAuthEmitter.on('jira-auth-success', () => {
+    mb.window?.webContents.send('jira-auth-success')
+  })
   mb.on('show', async () => {
     const settings = store.get('settings')
     console.log('[GCAL] show fired, lastSync:', settings?.gcalLastSyncDate, 'today:', new Date().toISOString().slice(0, 10))
@@ -110,10 +113,6 @@ app.on('open-url', (event, url) => {
   if (url.startsWith('ltt://auth')) {
     handleAuthCallback(url).then((session) => {
       if (session) mb.window?.webContents.send('auth-success', session)
-    })
-  } else if (url.startsWith('ltt://jira-auth')) {
-    handleJiraCallback(url).then(() => {
-      mb.window?.webContents.send('jira-auth-success')
     })
   }
 })
