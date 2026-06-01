@@ -2,6 +2,12 @@ import http from 'node:http'
 import { shell } from 'electron'
 import { EventEmitter } from 'events'
 import { store } from './store'
+import type { UserSettings } from '../types/index'
+
+function getJiraSettings(): UserSettings { return store.get('settings') ?? {} }
+function patchJiraSettings(patch: Partial<UserSettings>): void {
+  store.set('settings', { ...getJiraSettings(), ...patch } as UserSettings)
+}
 
 const JIRA_CLIENT_ID = 'dwD4aPYHdf9kXcnLDm3lqJhHIuJYoVUf'
 const JIRA_REDIRECT_URI = 'http://localhost:7431/jira-auth'
@@ -62,12 +68,14 @@ async function exchangeCodeForTokens(code: string): Promise<void> {
     const tokens = await res.json() as { access_token: string; refresh_token: string; expires_in: number }
     if (!tokens.access_token) { console.error('[jira] token exchange failed:', tokens); return }
 
-    store.set('jiraAccessToken', tokens.access_token)
-    store.set('jiraRefreshToken', tokens.refresh_token)
-    store.set('jiraExpiresAt', Date.now() + tokens.expires_in * 1000)
+    patchJiraSettings({
+      jiraAccessToken: tokens.access_token,
+      jiraRefreshToken: tokens.refresh_token,
+      jiraTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+    })
 
     await fetchAndStoreJiraProfile(tokens.access_token)
-    console.log('[jira] connected, email:', store.get('jiraEmail'))
+    console.log('[jira] connected, email:', getJiraSettings().jiraUserEmail)
     jiraAuthEmitter.emit('jira-auth-success')
   } catch (err) {
     console.error('[jira] exchangeCodeForTokens error:', err)
@@ -85,18 +93,17 @@ async function fetchAndStoreJiraProfile(accessToken: string): Promise<void> {
   ])
 
   const me = await meRes.json() as { email?: string }
-  store.set('jiraEmail', me.email ?? null)
+  patchJiraSettings({ jiraUserEmail: me.email ?? undefined })
 
   const resources = await resourcesRes.json() as { id: string; url: string }[]
   console.log('[JIRA] accessible resources:', JSON.stringify(resources))
   if (Array.isArray(resources) && resources.length > 0) {
-    store.set('jiraCloudId', resources[0].id)
-    store.set('jiraCloudUrl', resources[0].url)
+    patchJiraSettings({ jiraCloudId: resources[0].id })
   }
 }
 
 export async function refreshJiraToken(): Promise<string | null> {
-  const refreshToken = store.get('jiraRefreshToken')
+  const refreshToken = getJiraSettings().jiraRefreshToken
   if (!refreshToken) return null
 
   const secret = process.env.JIRA_CLIENT_SECRET
@@ -116,9 +123,11 @@ export async function refreshJiraToken(): Promise<string | null> {
     const tokens = await res.json() as { access_token: string; refresh_token: string; expires_in: number }
     if (!tokens.access_token) { console.error('[jira] refresh failed:', tokens); return null }
 
-    store.set('jiraAccessToken', tokens.access_token)
-    store.set('jiraRefreshToken', tokens.refresh_token)
-    store.set('jiraExpiresAt', Date.now() + tokens.expires_in * 1000)
+    patchJiraSettings({
+      jiraAccessToken: tokens.access_token,
+      jiraRefreshToken: tokens.refresh_token,
+      jiraTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+    })
     console.log('[jira] token refreshed')
     return tokens.access_token
   } catch (err) {
@@ -128,9 +137,10 @@ export async function refreshJiraToken(): Promise<string | null> {
 }
 
 export async function ensureJiraToken(): Promise<string | null> {
-  const expiresAt = store.get('jiraExpiresAt')
-  const accessToken = store.get('jiraAccessToken')
+  const s = getJiraSettings()
+  const accessToken = s.jiraAccessToken
   if (!accessToken) return null
+  const expiresAt = s.jiraTokenExpiry ? new Date(s.jiraTokenExpiry).getTime() : null
   if (expiresAt && Date.now() > expiresAt - 5 * 60 * 1000) {
     return refreshJiraToken()
   }
@@ -139,37 +149,38 @@ export async function ensureJiraToken(): Promise<string | null> {
 
 export function startJiraRefreshInterval(): void {
   setInterval(async () => {
-    const expiresAt = store.get('jiraExpiresAt')
-    if (!expiresAt) return
-    if (Date.now() > expiresAt - 5 * 60 * 1000) {
+    const tokenExpiry = getJiraSettings().jiraTokenExpiry
+    if (!tokenExpiry) return
+    if (Date.now() > new Date(tokenExpiry).getTime() - 5 * 60 * 1000) {
       await refreshJiraToken()
     }
   }, 50 * 60 * 1000)
 }
 
 export function getJiraStatus(): { connected: boolean; email?: string; cloudId?: string } {
-  const accessToken = store.get('jiraAccessToken')
-  if (!accessToken) return { connected: false }
+  const s = getJiraSettings()
+  if (!s.jiraAccessToken) return { connected: false }
   return {
     connected: true,
-    email: store.get('jiraEmail') ?? undefined,
-    cloudId: store.get('jiraCloudId') ?? undefined,
+    email: s.jiraUserEmail,
+    cloudId: s.jiraCloudId,
   }
 }
 
 export function signOutJira(): void {
-  store.set('jiraAccessToken', null)
-  store.set('jiraRefreshToken', null)
-  store.set('jiraExpiresAt', null)
-  store.set('jiraEmail', null)
-  store.set('jiraCloudId', null)
-  store.set('jiraCloudUrl', null)
+  patchJiraSettings({
+    jiraAccessToken: undefined,
+    jiraRefreshToken: undefined,
+    jiraTokenExpiry: undefined,
+    jiraUserEmail: undefined,
+    jiraCloudId: undefined,
+  })
 }
 
 export async function searchJiraIssues(query: string): Promise<{ key: string; summary: string }[]> {
   const token = await ensureJiraToken()
   if (!token) return []
-  const cloudId = store.get('jiraCloudId')
+  const cloudId = getJiraSettings().jiraCloudId
   if (!cloudId) return []
 
   const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
@@ -223,7 +234,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
 export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
   const token = await ensureJiraToken()
   if (!token) return { success: false, error: 'Not authenticated' }
-  const cloudId = store.get('jiraCloudId')
+  const cloudId = getJiraSettings().jiraCloudId
   if (!cloudId) return { success: false, error: 'No cloud ID' }
 
   try {
@@ -256,7 +267,7 @@ export async function logTimeToJira(issueKey: string, timeSpentMs: number, comme
 export async function getJiraIssueClientName(issueKey: string): Promise<string | null> {
   const token = await ensureJiraToken()
   if (!token) return null
-  const cloudId = store.get('jiraCloudId')
+  const cloudId = getJiraSettings().jiraCloudId
   if (!cloudId) return null
 
   try {
@@ -290,7 +301,7 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
 export async function getJiraProjects(): Promise<{ key: string; name: string }[]> {
   const accessToken = await ensureJiraToken()
   if (!accessToken) return []
-  const cloudId = store.get('jiraCloudId')
+  const cloudId = getJiraSettings().jiraCloudId
   if (!cloudId) return []
 
   try {
