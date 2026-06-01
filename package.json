@@ -15,10 +15,50 @@
     "@supabase/supabase-js": "^2.106.2",
     "dotenv": "^17.4.2",
     "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3",
     "menubar": "^9.5.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "ws": "^8.21.0"
+  },
+  "build": {
+    "appId": "com.digismoothie.timetracker",
+    "productName": "Digismoothie Time Tracker",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/digismoothie-logo-small.png"
+    },
+    "dmg": {
+      "title": "Digismoothie Time Tracker"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "public/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "luciadvorakova",
+      "repo": "ltt-desktop"
+    }
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

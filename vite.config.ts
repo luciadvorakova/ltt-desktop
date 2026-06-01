@@ -12,6 +12,12 @@ export default defineConfig({
         // Main process entry
         entry: 'src/main/index.ts',
         vite: {
+          define: {
+            'process.env.JIRA_CLIENT_SECRET': JSON.stringify(process.env.JIRA_CLIENT_SECRET),
+            'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
+            'process.env.GOOGLE_CLIENT_SECRET': JSON.stringify(process.env.GOOGLE_CLIENT_SECRET),
+            'process.env.LTT_PROXY_SECRET': JSON.stringify(process.env.LTT_PROXY_SECRET),
+          },
           build: {
             rollupOptions: {
               external: ['ws', 'bufferutil', 'utf-8-validate'],
