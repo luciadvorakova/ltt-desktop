@@ -68,7 +68,7 @@ export async function syncGoogleCalendar(): Promise<boolean> {
       const durationMs = event.start.dateTime && event.end.dateTime
         ? new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime()
         : 0
-      const isDuplicate = currentEntries.some(e => e.name === (event.summary ?? 'Calendar event') && e.ts >= todayStartMs)
+      const isDuplicate = currentEntries.some(e => e.ts >= todayStartMs && (e.name === (event.summary ?? 'Calendar event') || e.jiraDesc === (event.summary ?? 'Calendar event')))
       console.log('[gcal] event:', event.summary, 'allDay:', !event.start?.dateTime, 'declined:', isDeclined, 'tooShort:', durationMs < 5 * 60 * 1000, 'duplicate:', isDuplicate)
 
       if (shouldSkip(event)) continue
