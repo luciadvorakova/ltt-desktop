@@ -53,6 +53,12 @@
         ]
       }
     ],
+    "protocols": [
+      {
+        "name": "LTT",
+        "schemes": ["ltt"]
+      }
+    ],
     "publish": {
       "provider": "github",
       "owner": "luciadvorakova",
