@@ -289,6 +289,7 @@ export function TimerView() {
     const latest = await ltt.getSettings()
     const current = latest?.jiraFavourites ?? []
     const next = fn(current)
+    updateSetting('jiraFavourites', next)
     await ltt.setSettings({ ...(latest ?? {}), jiraFavourites: next })
     const session = await ltt.getSession()
     if (session) {
