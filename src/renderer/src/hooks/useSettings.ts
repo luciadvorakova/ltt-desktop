@@ -32,7 +32,7 @@ export function useSettings(): UseSettingsResult {
       const remote = await ltt.pullSettings(userId)
       console.log('[SETTINGS] pulled:', JSON.stringify(remote?.jiraFavourites))
       if (!remote) return
-      const merged = { ...(local ?? {}), ...remote } as import('../../../types/index').UserSettings
+      const merged = { ...remote, ...(local ?? {}) } as import('../../../types/index').UserSettings
       settingsRef.current = merged
       setSettings(merged)
       await ltt.setSettings(merged)
