@@ -166,7 +166,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
     const res = await fetch(url, { headers })
     if (!res.ok) { console.error('[JIRA] picker failed:', label, res.status); return }
     const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
-    console.log('[JIRA] picker raw response', label, ':', JSON.stringify(data).slice(0, 500))
+
     for (const section of data.sections ?? [])
       for (const issue of section.issues ?? [])
         addIssue(issue.key, issue.summaryText)
@@ -191,7 +191,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
         await runPicker(`${base}?query=${encodeURIComponent(query)}&showSubTasks=true&limit=15`, 'text-plain')
       }
     }
-    console.log('[JIRA] total results:', issues.length)
+
   } catch (err) {
     console.error('[jira] searchJiraIssues error:', err)
   }
