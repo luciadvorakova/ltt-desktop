@@ -50,12 +50,13 @@ function msToMin(ms: number): string {
   return String(Math.floor(ms / 60000))
 }
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
   onAddToFavourites?: () => void;
   onSendToJira?: () => void;
+  onLinkToJira?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -149,6 +150,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
           )}
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
+            {onLinkToJira && <MenuItem icon="⛓" label="Link to Jira" onAction={() => { onLinkToJira(); onClose() }} />}
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" />
@@ -219,6 +221,7 @@ export function TimerView() {
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
+  const [linkJiraEntryId, setLinkJiraEntryId] = useState<number | null>(null)
   const [jiraQuery, setJiraQuery] = useState('')
   const [jiraResults, setJiraResults] = useState<{ key: string; summary: string }[]>([])
   const [jiraSearching, setJiraSearching] = useState(false)
@@ -226,14 +229,15 @@ export function TimerView() {
   const jiraProjectsRef = useRef<Map<string, string>>(new Map())
 
   useEffect(() => {
-    if (addPanelOpen && addMode === 'jira' && jiraProjectsRef.current.size === 0) {
+    const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
+    if (needsProjects && jiraProjectsRef.current.size === 0) {
       ltt.jiraGetProjects().then(projects => {
         const map = new Map<string, string>()
         for (const p of projects) map.set(p.key, p.name)
         jiraProjectsRef.current = map
       })
     }
-  }, [addPanelOpen, addMode, ltt])
+  }, [addPanelOpen, addMode, linkJiraEntryId, ltt])
 
   const handleAddEntry = async () => {
     const name = manualInput.trim()
@@ -671,6 +675,7 @@ export function TimerView() {
                     if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
                     else console.error('[jira] logTime failed:', result.error)
                   } : undefined}
+                  onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                 />
               </div>
 
@@ -795,6 +800,112 @@ export function TimerView() {
           </span>
         </div>
       </div>
+
+      {/* Link to Jira modal */}
+      {linkJiraEntryId !== null && (() => {
+        const linkEntry = todayEntries.find(e => e.id === linkJiraEntryId)
+        if (!linkEntry) return null
+
+        const closeLinkModal = () => { setLinkJiraEntryId(null); setJiraQuery(''); setJiraResults([]) }
+
+        const handleLinkPick = async (issue: { key: string; summary: string }) => {
+          const projectKey = issue.key.split('-')[0]
+          const clientName = jiraProjectsRef.current.get(projectKey)
+          await updateEntry({
+            ...linkEntry,
+            name: issue.summary,
+            jiraKey: issue.key,
+            jiraSummary: issue.summary,
+            jiraDesc: linkEntry.name,
+            clientName,
+            updatedAt: new Date().toISOString(),
+          })
+          closeLinkModal()
+        }
+
+        const favKeys = (settings?.jiraFavourites ?? []).filter(f => !!f?.jiraKey)
+        const seenRecent = new Set<string>()
+        const recentEntries = [...entries]
+          .filter(e => !!e.jiraKey)
+          .sort((a, b) => b.ts - a.ts)
+          .filter(e => { if (seenRecent.has(e.jiraKey!)) return false; seenRecent.add(e.jiraKey!); return true })
+          .slice(0, 30)
+
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+            onMouseDown={closeLinkModal}
+          >
+            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
+            <div
+              style={{ background: 'linear-gradient(145deg, #1e1850, #0e1830)', borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', maxHeight: '80%' }}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px 6px', flexShrink: 0 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>Link to Jira</span>
+                <button onMouseDown={closeLinkModal} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+              </div>
+              <div style={{ padding: '4px 14px 8px', flexShrink: 0 }}>
+                <input
+                  autoFocus
+                  placeholder="Search Jira issues…"
+                  value={jiraQuery}
+                  onChange={e => {
+                    const q = e.target.value
+                    setJiraQuery(q)
+                    if (jiraDebounceRef.current) clearTimeout(jiraDebounceRef.current)
+                    if (!q.trim()) { setJiraResults([]); setJiraSearching(false); return }
+                    setJiraSearching(true)
+                    jiraDebounceRef.current = setTimeout(async () => {
+                      const results = await ltt.jiraSearch(q)
+                      setJiraResults(results)
+                      setJiraSearching(false)
+                    }, 300)
+                  }}
+                  className="ltt-jira-search"
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'rgba(255,255,255,0.85)', outline: 'none', fontFamily: 'inherit' }}
+                />
+              </div>
+              <div className="ltt-panel-scroll" style={{ overflowY: 'auto', flexShrink: 1 }}>
+                {jiraSearching && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>Searching…</div>}
+                {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>No results</div>}
+                {!jiraSearching && jiraResults.length > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                    {jiraResults.map(issue => (
+                      <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary} onClick={() => handleLinkPick(issue)} />
+                    ))}
+                  </div>
+                )}
+                {!jiraQuery.trim() && (
+                  <>
+                    {favKeys.length > 0 && (
+                      <div style={{ padding: '8px 0 0' }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px' }}>★ Favourites</div>
+                        {favKeys.map(fav => (
+                          <JiraRow key={fav.jiraKey} icon="" jiraKey={fav.jiraKey} name={fav.jiraSummary ?? fav.jiraKey}
+                            onClick={() => handleLinkPick({ key: fav.jiraKey, summary: fav.jiraSummary ?? fav.jiraKey })} />
+                        ))}
+                      </div>
+                    )}
+                    {recentEntries.length > 0 && (
+                      <div style={{ borderTop: favKeys.length > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none', marginTop: favKeys.length > 0 ? 4 : 0 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px', marginTop: 8 }}>◷ Recent</div>
+                        {recentEntries.map(e => (
+                          <JiraRow key={e.jiraKey} icon="" jiraKey={e.jiraKey!} name={e.jiraSummary ?? e.name}
+                            onClick={() => handleLinkPick({ key: e.jiraKey!, summary: e.jiraSummary ?? e.name })} />
+                        ))}
+                      </div>
+                    )}
+                    {favKeys.length === 0 && recentEntries.length === 0 && (
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '12px 14px', textAlign: 'center' }}>No favourites or recent Jira tasks</div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
     </div>
   )
