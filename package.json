@@ -35,7 +35,7 @@
           ]
         }
       ],
-      "icon": "public/digismoothie-logo-small.png"
+      "icon": "public/icon-512.png"
     },
     "dmg": {
       "title": "Digismoothie Time Tracker"
