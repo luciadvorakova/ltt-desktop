@@ -444,7 +444,7 @@ export function TimerView() {
                         setJiraResults([])
                         setAddPanelOpen(false)
                         ltt.jiraGetClientName(issue.key).then(name => {
-                          if (name) updateEntry({ ...entry, clientName: name, updatedAt: new Date().toISOString() })
+                          if (name) { patchEntry(entry.id, undefined, name); updateEntry({ ...entry, clientName: name, updatedAt: new Date().toISOString() }) }
                         })
                       }}
                       onUnfav={isFav ? () => updateSetting('jiraFavourites', favs.filter(f => f.jiraKey !== issue.key)) : undefined}
@@ -843,7 +843,7 @@ export function TimerView() {
           await updateEntry(updated)
           closeLinkModal()
           ltt.jiraGetClientName(issue.key).then(name => {
-            if (name) updateEntry({ ...updated, clientName: name, updatedAt: new Date().toISOString() })
+            if (name) { patchEntry(updated.id!, undefined, name); updateEntry({ ...updated, clientName: name, updatedAt: new Date().toISOString() }) }
           })
         }
 
