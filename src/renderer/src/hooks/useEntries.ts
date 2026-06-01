@@ -22,8 +22,9 @@ export function useEntries(): UseEntriesResult {
     console.log('[useEntries] session:', session ? 'present' : 'null', 'userId:', userId)
     if (!session || !userId) return
     const loaded = await ltt.loadEntries(userId)
-    console.log('[useEntries] loaded:', loaded.length)
-    setEntries(loaded)
+    const deletedIds = await ltt.getDeletedIds()
+    console.log('[useEntries] loaded:', loaded.length, 'deletedIds:', deletedIds.length)
+    setEntries(loaded.filter(e => !deletedIds.includes(e.id)))
   }, [ltt])
 
   // Load on mount
