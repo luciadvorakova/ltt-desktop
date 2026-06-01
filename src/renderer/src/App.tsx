@@ -36,6 +36,7 @@ function getUserInfo(accessToken: string): { name: string; email: string } {
 
 function AppShell({ session, signOut }: { session: Session; signOut: () => Promise<void> }) {
   const [tab, setTab] = useState<Tab>('timer')
+  const [timerResetKey, setTimerResetKey] = useState(0)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -71,7 +72,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
           {(['timer', 'history', 'weekly'] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => { setTab(t); setSettingsOpen(false) }}
+              onClick={() => { if (t === 'timer' && tab === 'timer') setTimerResetKey(k => k + 1); setTab(t); setSettingsOpen(false) }}
               style={{
                 fontSize: 10,
                 padding: '3px 10px',
@@ -155,7 +156,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {tab === 'timer' && <TimerView />}
+        {tab === 'timer' && <TimerView key={timerResetKey} />}
         {tab === 'history' && <HistoryView />}
         {tab === 'weekly' && <WeeklyView />}
         {settingsOpen && <SettingsView onClose={() => setSettingsOpen(false)} />}
