@@ -6,6 +6,7 @@ interface StoreSchema {
   settings: UserSettings | null
   timerState: TimerState | null
   deletedIds: number[]
+  deletedEntryNames: string[]
   jiraAccessToken: string | null
   jiraRefreshToken: string | null
   jiraExpiresAt: number | null
@@ -20,6 +21,7 @@ export const store = new Store<StoreSchema>({
     settings: null,
     timerState: null,
     deletedIds: [],
+    deletedEntryNames: [],
     jiraAccessToken: null,
     jiraRefreshToken: null,
     jiraExpiresAt: null,

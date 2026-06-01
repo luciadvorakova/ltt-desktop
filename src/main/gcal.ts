@@ -61,6 +61,7 @@ export async function syncGoogleCalendar(): Promise<boolean> {
 
     const data = await res.json() as { items?: GCalEvent[] }
     const events = data.items ?? []
+    const deletedNames = new Set(store.get('deletedEntryNames') ?? [])
     let created = 0
 
     for (const event of events) {
@@ -68,13 +69,15 @@ export async function syncGoogleCalendar(): Promise<boolean> {
       const durationMs = event.start.dateTime && event.end.dateTime
         ? new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime()
         : 0
-      const isDuplicate = currentEntries.some(e => e.ts >= todayStartMs && (e.name === (event.summary ?? 'Calendar event') || e.jiraDesc === (event.summary ?? 'Calendar event')))
-      console.log('[gcal] event:', event.summary, 'allDay:', !event.start?.dateTime, 'declined:', isDeclined, 'tooShort:', durationMs < 5 * 60 * 1000, 'duplicate:', isDuplicate)
+      const eventName = event.summary ?? 'Calendar event'
+      const isDuplicate = currentEntries.some(e => e.ts >= todayStartMs && (e.name === eventName || e.jiraDesc === eventName))
+      const isDeleted = deletedNames.has(eventName)
+      console.log('[gcal] event:', event.summary, 'allDay:', !event.start?.dateTime, 'declined:', isDeclined, 'tooShort:', durationMs < 5 * 60 * 1000, 'duplicate:', isDuplicate, 'deleted:', isDeleted)
 
       if (shouldSkip(event)) continue
 
-      const name = event.summary ?? 'Calendar event'
-      if (isDuplicate) continue
+      const name = eventName
+      if (isDuplicate || isDeleted) continue
 
       const ms = 0
       const ts = new Date(event.start.dateTime!).getTime()

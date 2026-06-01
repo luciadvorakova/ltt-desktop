@@ -55,7 +55,14 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
       .eq('user_id', user.id)
     if (error) { console.error('[ipc] entries:delete error:', error); return }
     const idx = currentEntries.findIndex((e) => e.id === id)
-    if (idx > -1) currentEntries.splice(idx, 1)
+    if (idx > -1) {
+      const deleted = currentEntries[idx]
+      const namesToRecord = [deleted.name, deleted.jiraDesc].filter(Boolean) as string[]
+      const existing = store.get('deletedEntryNames') ?? []
+      const next = [...new Set([...existing, ...namesToRecord])]
+      store.set('deletedEntryNames', next)
+      currentEntries.splice(idx, 1)
+    }
   })
 
   // ---- TIMER ----
