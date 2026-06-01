@@ -151,53 +151,22 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   const cloudId = store.get('jiraCloudId')
   if (!cloudId) return []
 
-  const seen = new Set<string>()
-  const issues: { key: string; summary: string }[] = []
-  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-
-  const addIssue = (key: string, summary: string) => {
-    if (!seen.has(key)) { seen.add(key); issues.push({ key, summary }) }
-  }
-
   try {
-    // Strategy 1: issue/picker
-    const pickerUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?query=${encodeURIComponent(query)}&showSubTasks=true&limit=20`
-    const pickerRes = await fetch(pickerUrl, { headers })
-    if (pickerRes.ok) {
-      const data = await pickerRes.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
-      for (const section of data.sections ?? [])
-        for (const issue of section.issues ?? [])
-          addIssue(issue.key, issue.summaryText)
-    }
+    const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?query=${encodeURIComponent(query)}&showSubTasks=true&limit=50`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+    if (!res.ok) { console.error('[jira] picker failed:', res.status); return [] }
+    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+    const seen = new Set<string>()
+    const issues: { key: string; summary: string }[] = []
+    for (const section of data.sections ?? [])
+      for (const issue of section.issues ?? [])
+        if (!seen.has(issue.key)) { seen.add(issue.key); issues.push({ key: issue.key, summary: issue.summaryText }) }
     console.log('[JIRA] picker results:', issues.length)
-
-    // Strategy 2: JQL text search
-    const jqlFull = `issuekey = "${query}" OR summary ~ "${query}"`
-    const searchUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search`
-    console.log('[JIRA] trying JQL full:', jqlFull)
-    const jqlRes = await fetch(`${searchUrl}?jql=${encodeURIComponent(jqlFull)}&maxResults=20&fields=summary`, { headers })
-    const jqlData = await jqlRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[] }
-    console.log('[JIRA] JQL full result:', jqlRes.status, jqlData.issues?.length, jqlData.errorMessages)
-    if (jqlRes.ok) {
-      for (const issue of jqlData.issues ?? [])
-        addIssue(issue.key, issue.fields.summary)
-    } else if (jqlRes.status === 400) {
-      // Fallback: key-only JQL (safe for all query strings)
-      const jqlKey = `issuekey = "${query.toUpperCase()}"`
-      console.log('[JIRA] trying JQL key-only:', jqlKey)
-      const keyRes = await fetch(`${searchUrl}?jql=${encodeURIComponent(jqlKey)}&maxResults=10&fields=summary`, { headers })
-      const keyData = await keyRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[] }
-      console.log('[JIRA] JQL key-only result:', keyRes.status, keyData.issues?.length, keyData.errorMessages)
-      if (keyRes.ok) {
-        for (const issue of keyData.issues ?? [])
-          addIssue(issue.key, issue.fields.summary)
-      }
-    }
+    return issues
   } catch (err) {
     console.error('[jira] searchJiraIssues error:', err)
+    return []
   }
-
-  return issues
 }
 
 export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
