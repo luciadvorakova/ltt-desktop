@@ -443,6 +443,9 @@ export function TimerView() {
                         setJiraQuery('')
                         setJiraResults([])
                         setAddPanelOpen(false)
+                        ltt.jiraGetClientName(issue.key).then(name => {
+                          if (name) updateEntry({ ...entry, clientName: name, updatedAt: new Date().toISOString() })
+                        })
                       }}
                       onUnfav={isFav ? () => updateSetting('jiraFavourites', favs.filter(f => f.jiraKey !== issue.key)) : undefined}
                       onFav={!isFav ? () => updateSetting('jiraFavourites', [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...favs]) : undefined}
@@ -828,7 +831,7 @@ export function TimerView() {
         const handleLinkPick = async (issue: { key: string; summary: string }) => {
           const projectKey = issue.key.split('-')[0]
           const clientName = jiraProjectsRef.current.get(projectKey)
-          await updateEntry({
+          const updated = {
             ...linkEntry,
             name: issue.summary,
             jiraKey: issue.key,
@@ -836,8 +839,12 @@ export function TimerView() {
             jiraDesc: linkEntry.jiraDesc || linkEntry.name,
             clientName,
             updatedAt: new Date().toISOString(),
-          })
+          }
+          await updateEntry(updated)
           closeLinkModal()
+          ltt.jiraGetClientName(issue.key).then(name => {
+            if (name) updateEntry({ ...updated, clientName: name, updatedAt: new Date().toISOString() })
+          })
         }
 
         const favKeys = (settings?.jiraFavourites ?? []).filter(f => !!f?.jiraKey)

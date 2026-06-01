@@ -232,6 +232,33 @@ export async function logTimeToJira(issueKey: string, timeSpentMs: number, comme
   }
 }
 
+export async function getJiraIssueClientName(issueKey: string): Promise<string | null> {
+  const token = await ensureJiraToken()
+  if (!token) return null
+  const cloudId = store.get('jiraCloudId')
+  if (!cloudId) return null
+
+  try {
+    const res = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}?fields=parent,customfield_10014,customfield_10008`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+    )
+    if (!res.ok) { console.error('[jira] getJiraIssueClientName failed:', res.status); return null }
+    const data = await res.json() as { fields: Record<string, unknown> }
+    console.log('[JIRA] issue fields:', JSON.stringify(data.fields).slice(0, 500))
+    const parent = data.fields.parent as { fields?: { summary?: string; issuetype?: { name?: string } } } | undefined
+    if (parent?.fields?.issuetype?.name === 'Epic' && parent.fields.summary) {
+      return parent.fields.summary
+    }
+    const epicLink = data.fields.customfield_10014 as string | null | undefined
+    if (epicLink) return epicLink
+    return null
+  } catch (err) {
+    console.error('[jira] getJiraIssueClientName error:', err)
+    return null
+  }
+}
+
 export async function getJiraProjects(): Promise<{ key: string; name: string }[]> {
   const accessToken = await ensureJiraToken()
   if (!accessToken) return []

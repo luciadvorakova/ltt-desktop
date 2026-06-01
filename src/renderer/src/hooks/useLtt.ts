@@ -30,6 +30,7 @@ interface LttAPI {
   jiraGetStatus:    () => Promise<{ connected: boolean; email?: string; cloudId?: string }>
   jiraSearch:       (query: string) => Promise<{ key: string; summary: string }[]>
   jiraGetProjects:  () => Promise<{ key: string; name: string }[]>
+  jiraGetClientName: (issueKey: string) => Promise<string | null>
   jiraLogTime:      (issueKey: string, ms: number, comment?: string) => Promise<{ success: boolean; error?: string }>
 
   // SLACK

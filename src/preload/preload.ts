@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('ltt', {
   jiraGetStatus:    ()                       => ipcRenderer.invoke('jira:getStatus'),
   jiraSearch:       (query: string)          => ipcRenderer.invoke('jira:search', query),
   jiraGetProjects:  ()                       => ipcRenderer.invoke('jira:getProjects'),
+  jiraGetClientName: (issueKey: string)      => ipcRenderer.invoke('jira:getClientName', issueKey),
   jiraLogTime:      (issueKey: string, ms: number, comment?: string) => ipcRenderer.invoke('jira:logTime', issueKey, ms, comment),
 
   // ---- SLACK ----

@@ -3,7 +3,7 @@ import { store } from './store'
 import { supabase } from './supabase'
 import { ensureSession } from './auth'
 import { signInWithGoogle, getSession } from './auth'
-import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira } from './jira-auth'
+import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira, getJiraIssueClientName } from './jira-auth'
 import { signInWithGCal } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import {
@@ -150,6 +150,8 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
   })
 
   ipcMain.handle('jira:getProjects', () => getJiraProjects())
+
+  ipcMain.handle('jira:getClientName', (_event, issueKey: string) => getJiraIssueClientName(issueKey))
 
   ipcMain.handle('jira:logTime', (_event, issueKey: string, ms: number, comment?: string) =>
     logTimeToJira(issueKey, ms, comment)
