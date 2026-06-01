@@ -50,13 +50,14 @@ function msToMin(ms: number): string {
   return String(Math.floor(ms / 60000))
 }
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
   onAddToFavourites?: () => void;
   onSendToJira?: () => void;
   onLinkToJira?: () => void;
+  onChangeJiraLink?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -151,6 +152,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
             {onLinkToJira && <MenuItem icon="⛓" label="Link to Jira" onAction={() => { onLinkToJira(); onClose() }} />}
+            {onChangeJiraLink && <MenuItem icon="⛓" label="Change Jira link" onAction={() => { onChangeJiraLink(); onClose() }} />}
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" />
@@ -676,6 +678,7 @@ export function TimerView() {
                     else console.error('[jira] logTime failed:', result.error)
                   } : undefined}
                   onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+                  onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                 />
               </div>
 
@@ -816,7 +819,7 @@ export function TimerView() {
             name: issue.summary,
             jiraKey: issue.key,
             jiraSummary: issue.summary,
-            jiraDesc: linkEntry.name,
+            jiraDesc: linkEntry.jiraDesc || linkEntry.name,
             clientName,
             updatedAt: new Date().toISOString(),
           })
@@ -842,7 +845,7 @@ export function TimerView() {
               onMouseDown={e => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px 6px', flexShrink: 0 }}>
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>Link to Jira</span>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>{linkEntry.jiraKey ? 'Change Jira link' : 'Link to Jira'}</span>
                 <button onMouseDown={closeLinkModal} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
               </div>
               <div style={{ padding: '4px 14px 8px', flexShrink: 0 }}>
