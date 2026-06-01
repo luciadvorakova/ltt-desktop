@@ -240,65 +240,24 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
 
   try {
     const res = await fetch(
-      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}?fields=parent,issuetype,summary,customfield_10014,customfield_10008`,
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}?fields=parent`,
       { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
     )
-    if (!res.ok) { console.error('[jira] getJiraIssueClientName failed:', res.status); return null }
-    const data = await res.json() as { fields: Record<string, unknown> }
-    const fields = data.fields as { issuetype?: { name?: string }; summary?: string; parent?: { key?: string; fields?: { summary?: string; issuetype?: { name?: string } } }; customfield_10014?: string }
-    console.log('[JIRA] issue issuetype:', fields.issuetype?.name, 'summary:', fields.summary)
-    console.log('[JIRA] parent issuetype:', fields.parent?.fields?.issuetype?.name, 'summary:', fields.parent?.fields?.summary, 'key:', fields.parent?.key)
+    if (!res.ok) return null
+    const data = await res.json() as { fields: { parent?: { key?: string } } }
+    const parentKey = data.fields.parent?.key
+    if (!parentKey) return null
 
-    // One-time: discover Client Name field ID
-    const fieldsRes = await fetch(`https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/field`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
-    const allFields = await fieldsRes.json()
-    const relevant = (allFields as { id: string; name: string }[]).filter(f => f.name?.toLowerCase().includes('client') || f.name?.toLowerCase().includes('company'))
-    console.log('[JIRA] client fields:', JSON.stringify(relevant))
-
-    // Fetch parent with all fields to find Client Name custom field
-    if (fields.parent?.key) {
-      const parentRes = await fetch(
-        `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${fields.parent.key}?fields=*all`,
-        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
-      )
-      if (parentRes.ok) {
-        const parentData = await parentRes.json() as { fields: Record<string, unknown> }
-        console.log('[JIRA] parent all fields keys:', Object.keys(parentData.fields).join(', '))
-        console.log('[JIRA] client name candidates:', JSON.stringify({
-          customfield_10150: parentData.fields?.customfield_10150,
-          customfield_10151: parentData.fields?.customfield_10151,
-          customfield_10152: parentData.fields?.customfield_10152,
-          customfield_10155: parentData.fields?.customfield_10155,
-          customfield_10113: parentData.fields?.customfield_10113,
-          customfield_10160: parentData.fields?.customfield_10160,
-          customfield_10163: parentData.fields?.customfield_10163,
-          customfield_10164: parentData.fields?.customfield_10164,
-        }))
-        console.log('[JIRA] more candidates:', JSON.stringify({
-          customfield_10100: parentData.fields?.customfield_10100,
-          customfield_10101: parentData.fields?.customfield_10101,
-          customfield_10102: parentData.fields?.customfield_10102,
-          customfield_10103: parentData.fields?.customfield_10103,
-          customfield_10104: parentData.fields?.customfield_10104,
-          customfield_10139: parentData.fields?.customfield_10139,
-          customfield_10140: parentData.fields?.customfield_10140,
-          customfield_10145: parentData.fields?.customfield_10145,
-          customfield_10146: parentData.fields?.customfield_10146,
-          customfield_10147: parentData.fields?.customfield_10147,
-          customfield_10148: parentData.fields?.customfield_10148,
-          customfield_10165: parentData.fields?.customfield_10165,
-          customfield_10166: parentData.fields?.customfield_10166,
-          customfield_10169: parentData.fields?.customfield_10169,
-          customfield_10170: parentData.fields?.customfield_10170,
-        }))
-      }
-    }
-
-    const parent = fields.parent
-    if (parent?.fields?.issuetype?.name === 'Epic' && parent.fields?.summary) {
-      return parent.fields.summary
-    }
-    if (fields.customfield_10014) return fields.customfield_10014
+    const parentRes = await fetch(
+      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${parentKey}?fields=summary,issuetype,customfield_10252`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+    )
+    if (!parentRes.ok) return null
+    const parentData = await parentRes.json() as { fields: { summary?: string; customfield_10252?: string[] } }
+    const clientLabel = parentData.fields.customfield_10252?.[0]
+    if (clientLabel) return clientLabel
+    const parentSummary = parentData.fields.summary
+    if (parentSummary) return parentSummary.split(' ')[0]
     return null
   } catch (err) {
     console.error('[jira] getJiraIssueClientName error:', err)
