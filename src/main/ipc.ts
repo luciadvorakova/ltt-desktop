@@ -154,12 +154,12 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     channel: string; userId: string;
     accomplished: string; workingOn: string; problems: string; share: string;
   }) => {
-    const sections: string[] = []
-    if (payload.accomplished.trim()) sections.push(`🚀 *I accomplished:*\n${payload.accomplished.trim()}`)
-    if (payload.workingOn.trim())   sections.push(`➡️ *I will work on:*\n${payload.workingOn.trim()}`)
-    if (payload.problems.trim())    sections.push(`🚨 *Possible problems:*\n${payload.problems.trim()}`)
-    if (payload.share.trim())       sections.push(`🙋 *I would like to share:*\n${payload.share.trim()}`)
-    const text = sections.join('\n\n')
+    const accomplished = payload.accomplished.trim() || '—'
+    const workingOn = payload.workingOn.trim() || '—'
+    const problems = payload.problems.trim() || '—'
+    const share = payload.share.trim() || '—'
+    const body = `🚀 *I accomplished:*\n${accomplished}\n\n➡️ *I will work on:*\n${workingOn}\n\n🚨 *Possible problems:*\n${problems}\n\n🙋 *I would like to share:*\n${share}`
+    const text = `💥 submission from <@${payload.userId}>\n\n${body}`
     try {
       const res = await fetch('https://ltt-proxy.onrender.com/standup', {
         method: 'POST',
