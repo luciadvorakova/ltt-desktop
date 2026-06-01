@@ -81,7 +81,7 @@ mb.on('ready', () => {
 
 mb.on('after-create-window', () => {
   if (!ipcRegistered) {
-    registerIpcHandlers()
+    registerIpcHandlers(() => mb.window)
     ipcRegistered = true
     console.log('[MAIN] IPC registered')
   }

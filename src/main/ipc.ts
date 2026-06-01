@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import { store } from './store'
 import { supabase } from './supabase'
 import { ensureSession } from './auth'
@@ -18,7 +18,7 @@ import {
 } from './timer'
 import type { TimeEntry, UserSettings } from '../types/index'
 
-export function registerIpcHandlers(): void {
+export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined): void {
   // ---- AUTH ----
 
   ipcMain.handle('auth:signIn', () => {
@@ -179,7 +179,8 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('gcal:sync', async () => {
     try {
-      await syncGoogleCalendar()
+      const result = await syncGoogleCalendar()
+      if (result) getWindow?.()?.webContents.send('reload-entries')
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
