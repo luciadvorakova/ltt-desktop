@@ -98,13 +98,24 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
             }
           </div>
           {gcalEmail ? (
-            <button style={disconnectBtnStyle} onClick={() => {
+            <button style={disconnectBtnStyle} onClick={async () => {
               setGcalEmail(undefined)
-              updateSetting('gcalEmail', undefined)
-              updateSetting('gcalAccessToken', undefined)
-              updateSetting('gcalRefreshToken', undefined)
-              updateSetting('gcalTokenExpiry', undefined)
-              updateSetting('gcalLastSyncDate', undefined)
+              const cleared = {
+                ...(settings ?? {}),
+                gcalEmail: undefined,
+                gcalAccessToken: undefined,
+                gcalRefreshToken: undefined,
+                gcalTokenExpiry: undefined,
+                gcalLastSyncDate: undefined,
+              }
+              await ltt.setSettings(cleared)
+              const session = await ltt.getSession()
+              if (session) {
+                try {
+                  const userId = JSON.parse(atob(session.access_token.split('.')[1])).sub as string
+                  await ltt.pushSettings(userId)
+                } catch { /* ignore */ }
+              }
             }}>Disconnect</button>
           ) : (
             <button style={connectBtnStyle} onClick={() => ltt.gcalSignIn()}>Connect</button>
