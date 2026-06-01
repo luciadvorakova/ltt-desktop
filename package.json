@@ -38,7 +38,11 @@
       "icon": "public/icon-512.png"
     },
     "dmg": {
-      "title": "Digismoothie Time Tracker"
+      "title": "Digismoothie Time Tracker",
+      "contents": [
+        { "x": 130, "y": 220, "type": "file" },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
     },
     "files": [
       "dist/index.html",
