@@ -5,9 +5,10 @@ import path from 'node:path'
 import { menubar } from 'menubar'
 import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter } from './auth'
 import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
-import { handleGCalCallback, gcalAuthEmitter } from './gcal-auth'
+import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
+import { store } from './store'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -67,6 +68,8 @@ mb.on('ready', () => {
     mb.window?.webContents.send('gcal-auth-success')
   })
   mb.on('show', async () => {
+    const settings = store.get('settings')
+    console.log('[GCAL] show fired, lastSync:', settings?.gcalLastSyncDate, 'today:', new Date().toISOString().slice(0, 10))
     mb.window?.webContents.send('window-show')
     const synced = await syncGoogleCalendar()
     if (synced) mb.window?.webContents.send('window-show')
@@ -103,8 +106,6 @@ app.on('open-url', (event, url) => {
     handleJiraCallback(url).then(() => {
       mb.window?.webContents.send('jira-auth-success')
     })
-  } else if (url.startsWith('ltt://gcal-auth')) {
-    handleGCalCallback(url)
   }
 })
 
