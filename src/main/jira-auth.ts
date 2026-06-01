@@ -258,6 +258,16 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
       if (parentRes.ok) {
         const parentData = await parentRes.json() as { fields: Record<string, unknown> }
         console.log('[JIRA] parent all fields keys:', Object.keys(parentData.fields).join(', '))
+        console.log('[JIRA] client name candidates:', JSON.stringify({
+          customfield_10150: parentData.fields?.customfield_10150,
+          customfield_10151: parentData.fields?.customfield_10151,
+          customfield_10152: parentData.fields?.customfield_10152,
+          customfield_10155: parentData.fields?.customfield_10155,
+          customfield_10113: parentData.fields?.customfield_10113,
+          customfield_10160: parentData.fields?.customfield_10160,
+          customfield_10163: parentData.fields?.customfield_10163,
+          customfield_10164: parentData.fields?.customfield_10164,
+        }))
       }
     }
 
