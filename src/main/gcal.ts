@@ -64,18 +64,27 @@ export async function syncGoogleCalendar(): Promise<boolean> {
     let created = 0
 
     for (const event of events) {
+      const isDeclined = event.attendees?.find(a => a.self)?.responseStatus === 'declined'
+      const durationMs = event.start.dateTime && event.end.dateTime
+        ? new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime()
+        : 0
+      const isDuplicate = currentEntries.some(e => e.name === (event.summary ?? 'Calendar event') && e.ts >= todayStartMs)
+      console.log('[gcal] event:', event.summary, 'allDay:', !event.start?.dateTime, 'declined:', isDeclined, 'tooShort:', durationMs < 5 * 60 * 1000, 'duplicate:', isDuplicate)
+
       if (shouldSkip(event)) continue
 
       const name = event.summary ?? 'Calendar event'
-      if (currentEntries.some(e => e.name === name && e.ts >= todayStartMs)) continue
+      if (isDuplicate) continue
 
       const ms = new Date(event.end.dateTime!).getTime() - new Date(event.start.dateTime!).getTime()
       const ts = new Date(event.start.dateTime!).getTime()
       const now = new Date().toISOString()
 
+      const entryId = Date.now() + created
       const { data: row, error } = await supabase
         .from('time_entries')
         .insert({
+          id: entryId,
           user_id: userId,
           name,
           ms,
@@ -90,11 +99,10 @@ export async function syncGoogleCalendar(): Promise<boolean> {
         .select()
         .single()
 
-      if (error) { console.error('[gcal] insert failed:', error); continue }
+      if (error) { console.log('[gcal] insert failed:', error.message, error.code); continue }
       if (row) {
-        const r = row as Record<string, unknown>
         const entry: TimeEntry = {
-          id: Number(r.id),
+          id: entryId,
           name,
           ms,
           ts,
