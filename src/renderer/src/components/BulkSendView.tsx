@@ -18,8 +18,8 @@ const formatMsShort = (ms: number): string => {
   return `${h}h ${m}m`
 }
 
-function formatDate(ts: number): string {
-  const d = new Date(ts)
+function formatDate(iso: string): string {
+  const d = new Date(iso)
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
 }
 
@@ -152,7 +152,7 @@ export function BulkSendView({
             fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 99,
             border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)',
           }}>
-            {formatDate(entry.ts)}
+            {formatDate(entry.updatedAt)}
           </span>
         </div>
       </div>
