@@ -163,7 +163,7 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     try {
       const res = await fetch('https://ltt-proxy.onrender.com/standup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-ltt-secret': 'ltt-proxy-secret' },
+        headers: { 'Content-Type': 'application/json', 'x-ltt-secret': process.env.LTT_PROXY_SECRET ?? 'ltt-proxy-secret' },
         body: JSON.stringify({ message: text }),
       })
       if (!res.ok) { const body = await res.text(); return { success: false, error: `HTTP ${res.status}: ${body}` } }
