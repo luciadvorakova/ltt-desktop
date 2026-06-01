@@ -3,6 +3,7 @@ import { app, nativeImage, globalShortcut } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
+import { autoUpdater } from 'electron-updater'
 import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter } from './auth'
 import { handleJiraCallback, startJiraRefreshInterval } from './jira-auth'
 import { gcalAuthEmitter } from './gcal-auth'
@@ -58,6 +59,10 @@ let ipcRegistered = false
 
 mb.on('ready', () => {
   console.log('[MAIN] menubar ready')
+  autoUpdater.checkForUpdatesAndNotify()
+  autoUpdater.on('update-downloaded', () => {
+    autoUpdater.quitAndInstall()
+  })
   refreshSession()
   startSessionRefreshInterval()
   startJiraRefreshInterval()
