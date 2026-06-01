@@ -174,21 +174,23 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
     // Strategy 2: JQL text search
     const jqlFull = `issuekey = "${query}" OR text ~ "${query}"`
     const searchUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search`
+    console.log('[JIRA] trying JQL full:', jqlFull)
     const jqlRes = await fetch(`${searchUrl}?jql=${encodeURIComponent(jqlFull)}&maxResults=20&fields=summary`, { headers })
+    const jqlData = await jqlRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[] }
+    console.log('[JIRA] JQL full result:', jqlRes.status, jqlData.issues?.length, jqlData.errorMessages)
     if (jqlRes.ok) {
-      const data = await jqlRes.json() as { issues?: { key: string; fields: { summary: string } }[] }
-      for (const issue of data.issues ?? [])
+      for (const issue of jqlData.issues ?? [])
         addIssue(issue.key, issue.fields.summary)
-      console.log('[JIRA] jql full results:', issues.length)
     } else if (jqlRes.status === 400) {
       // Fallback: key-only JQL (safe for all query strings)
       const jqlKey = `issuekey = "${query.toUpperCase()}"`
+      console.log('[JIRA] trying JQL key-only:', jqlKey)
       const keyRes = await fetch(`${searchUrl}?jql=${encodeURIComponent(jqlKey)}&maxResults=10&fields=summary`, { headers })
+      const keyData = await keyRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[] }
+      console.log('[JIRA] JQL key-only result:', keyRes.status, keyData.issues?.length, keyData.errorMessages)
       if (keyRes.ok) {
-        const data = await keyRes.json() as { issues?: { key: string; fields: { summary: string } }[] }
-        for (const issue of data.issues ?? [])
+        for (const issue of keyData.issues ?? [])
           addIssue(issue.key, issue.fields.summary)
-        console.log('[JIRA] jql key-only results:', issues.length)
       }
     }
   } catch (err) {
