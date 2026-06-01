@@ -2,7 +2,7 @@ import { store } from './store'
 import { supabase } from './supabase'
 import { ensureSession } from './auth'
 import { currentEntries } from './timer'
-import { ensureGCalToken } from './gcal-auth'
+import { refreshGCalToken } from './gcal-auth'
 import type { TimeEntry } from '../types/index'
 
 interface GCalEvent {
@@ -23,13 +23,18 @@ function shouldSkip(event: GCalEvent): boolean {
 
 export async function syncGoogleCalendar(): Promise<boolean> {
   const settings = store.get('settings')
-  if (!settings?.gcalAccessToken) return false
+  console.log('[gcal] syncGoogleCalendar called, hasRefreshToken:', !!settings?.gcalRefreshToken, 'hasEmail:', !!settings?.gcalEmail)
+  if (!settings?.gcalRefreshToken) return false
 
   const todayStr = new Date().toISOString().split('T')[0]
   if (settings.gcalLastSyncDate === todayStr) return false
 
-  const token = await ensureGCalToken()
-  if (!token) { console.log('[gcal] sync skipped: no token after refresh'); return false }
+  const token = await refreshGCalToken()
+  if (!token) { console.error('[gcal] token refresh failed — cannot sync'); return false }
+  console.log('[gcal] token refreshed successfully')
+
+  // Re-read settings after refresh so we have the updated access token in updatedSettings later
+  const freshSettings = store.get('settings')!
 
   await ensureSession()
   const { data: { user } } = await supabase.auth.getUser()
@@ -107,7 +112,7 @@ export async function syncGoogleCalendar(): Promise<boolean> {
 
     console.log('[gcal] sync done, created:', created, 'of', events.length, 'events')
 
-    const updatedSettings = { ...settings, gcalLastSyncDate: todayStr }
+    const updatedSettings = { ...freshSettings, gcalLastSyncDate: todayStr }
     store.set('settings', updatedSettings)
 
     await supabase

@@ -74,7 +74,7 @@ export async function refreshGCalToken(): Promise<string | null> {
 
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-  if (!clientId || !clientSecret) return null
+  if (!clientId || !clientSecret) { console.error('[gcal] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set'); return null }
 
   try {
     const res = await fetch(TOKEN_URL, {
@@ -87,15 +87,18 @@ export async function refreshGCalToken(): Promise<string | null> {
         refresh_token: refreshToken,
       }),
     })
-    const tokens = await res.json() as { access_token: string; expires_in: number; error?: string }
-    if (!tokens.access_token) { console.error('[gcal] refresh failed:', tokens); return null }
+    const tokens = await res.json() as { access_token: string; expires_in: number; error?: string; error_description?: string }
+    if (!tokens.access_token) {
+      console.error('[gcal] token refresh failed:', tokens.error, tokens.error_description)
+      return null
+    }
 
     store.set('settings', {
       ...store.get('settings'),
       gcalAccessToken: tokens.access_token,
       gcalTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
     })
-    console.log('[gcal] token refreshed')
+    console.log('[gcal] token refreshed successfully, expires in:', tokens.expires_in, 's')
     return tokens.access_token
   } catch (err) {
     console.error('[gcal] refreshGCalToken error:', err)
