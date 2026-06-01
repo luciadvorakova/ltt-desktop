@@ -155,43 +155,36 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   const seen = new Set<string>()
   const issues: { key: string; summary: string }[] = []
   const addIssue = (key: string, summary: string) => {
-    if (!seen.has(key)) { seen.add(key); issues.push({ key, summary }) }
+    if (seen.has(key) || issues.length >= 15) return
+    seen.add(key); issues.push({ key, summary })
   }
 
-  const isKeyLike = /^[A-Z]+-\d+$/i.test(query.trim())
-  const projectPrefix = isKeyLike ? query.trim().split('-')[0].toUpperCase() : null
-
   const base = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker`
+  const isKeyLike = /^[A-Z]+-\d+$/i.test(query.trim())
 
-  const pickerUrls: string[] = [
-    `${base}?query=${encodeURIComponent(query)}&showSubTasks=true&limit=50`,
-  ]
-  if (projectPrefix) {
-    pickerUrls.push(`${base}?query=${encodeURIComponent(query)}&currentJQL=${encodeURIComponent(`project=${projectPrefix}`)}&showSubTasks=true&limit=50`)
-    pickerUrls.push(`${base}?query=${encodeURIComponent(projectPrefix)}&showSubTasks=true&limit=50`)
+  const runPicker = async (url: string, label: string) => {
+    const res = await fetch(url, { headers })
+    if (!res.ok) { console.error('[JIRA] picker failed:', label, res.status); return }
+    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+    console.log('[JIRA] picker raw response', label, ':', JSON.stringify(data).slice(0, 500))
+    for (const section of data.sections ?? [])
+      for (const issue of section.issues ?? [])
+        addIssue(issue.key, issue.summaryText)
   }
 
   try {
-    const pickerResults = await Promise.all(pickerUrls.map(url => fetch(url, { headers })))
-    for (let i = 0; i < pickerResults.length; i++) {
-      const res = pickerResults[i]
-      if (!res.ok) { console.error('[jira] picker failed:', res.status, pickerUrls[i]); continue }
-      const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
-      console.log('[JIRA] picker raw response', i, ':', JSON.stringify(data).slice(0, 500))
-      for (const section of data.sections ?? [])
-        for (const issue of section.issues ?? [])
-          addIssue(issue.key, issue.summaryText)
-    }
-    console.log('[JIRA] picker total:', issues.length)
-
-    // JQL summary search
-    const jql = encodeURIComponent(`project in projectsWhereUserHasPermission() AND summary ~ "${query}" ORDER BY updated DESC`)
-    const jqlRes = await fetch(`https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?jql=${jql}&maxResults=20&fields=summary`, { headers })
-    const jqlData = await jqlRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[]; message?: string }
-    console.log('[JIRA] JQL response body:', JSON.stringify(jqlData).slice(0, 200))
-    if (jqlRes.ok) {
-      for (const issue of jqlData.issues ?? [])
-        addIssue(issue.key, issue.fields.summary)
+    if (isKeyLike) {
+      // Exact key match first
+      const exactJQL = encodeURIComponent(`issuekey = "${query.toUpperCase()}"`)
+      await runPicker(`${base}?query=${encodeURIComponent(query)}&currentJQL=${exactJQL}&showSubTasks=true&limit=15`, 'key-exact')
+      // Fill remaining with project prefix
+      const prefix = query.trim().split('-')[0].toUpperCase()
+      if (issues.length < 15) {
+        await runPicker(`${base}?query=${encodeURIComponent(query)}&currentJQL=${encodeURIComponent(`project = ${prefix}`)}&showSubTasks=true&limit=15`, 'key-prefix')
+      }
+    } else {
+      // Text search — single picker, query searches summary text
+      await runPicker(`${base}?query=${encodeURIComponent(query)}&showSubTasks=true&limit=15`, 'text')
     }
     console.log('[JIRA] total results:', issues.length)
   } catch (err) {
