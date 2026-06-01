@@ -12,7 +12,7 @@ import { store } from './store'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-process.env.APP_ROOT = path.join(__dirname, '../..')
+process.env.APP_ROOT = path.join(__dirname, '..')
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
@@ -23,7 +23,9 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 app.setAsDefaultProtocolClient('ltt')
 
-const trayIconPath = path.join(__dirname, '../public/digismoothie-logo-small.png')
+const trayIconPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'public/digismoothie-logo-small.png')
+  : path.join(__dirname, '../public/digismoothie-logo-small.png')
 const trayIcon = nativeImage.createFromPath(trayIconPath).resize({ height: 16 })
 trayIcon.setTemplateImage(true)
 console.log('[MAIN] trayIcon path:', trayIconPath, 'empty:', trayIcon.isEmpty())

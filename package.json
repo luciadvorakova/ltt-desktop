@@ -41,9 +41,9 @@
       "title": "Digismoothie Time Tracker"
     },
     "files": [
-      "dist/**/*",
-      "dist-electron/**/*",
-      "public/**/*"
+      "dist/index.html",
+      "dist/assets/**/*",
+      "dist-electron/**/*"
     ],
     "extraResources": [
       {
