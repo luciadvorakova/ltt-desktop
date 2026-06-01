@@ -28,7 +28,7 @@
       "category": "public.app-category.productivity",
       "target": [
         { "target": "dmg", "arch": ["arm64"] },
-        { "target": "dmg", "arch": ["x64"] }
+        { "target": "zip", "arch": ["x64"] }
       ],
       "icon": "public/app-icon.png"
     },
