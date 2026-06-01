@@ -249,6 +249,12 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
     console.log('[JIRA] issue issuetype:', fields.issuetype?.name, 'summary:', fields.summary)
     console.log('[JIRA] parent issuetype:', fields.parent?.fields?.issuetype?.name, 'summary:', fields.parent?.fields?.summary, 'key:', fields.parent?.key)
 
+    // One-time: discover Client Name field ID
+    const fieldsRes = await fetch(`https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/field`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+    const allFields = await fieldsRes.json()
+    const relevant = (allFields as { id: string; name: string }[]).filter(f => f.name?.toLowerCase().includes('client') || f.name?.toLowerCase().includes('company'))
+    console.log('[JIRA] client fields:', JSON.stringify(relevant))
+
     // Fetch parent with all fields to find Client Name custom field
     if (fields.parent?.key) {
       const parentRes = await fetch(
