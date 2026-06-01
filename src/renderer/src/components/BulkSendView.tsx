@@ -36,8 +36,8 @@ export function BulkSendView({
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
 
   const eligible = entries.filter(e => !!e.jiraKey && e.ms > 0 && !e.jiraSent)
-  const todayEligible = eligible.filter(e => e.ts >= todayStart.getTime())
-  const olderEligible = eligible.filter(e => e.ts < todayStart.getTime())
+  const todayEligible = eligible.filter(e => new Date(e.updatedAt) >= todayStart)
+  const olderEligible = eligible.filter(e => new Date(e.updatedAt) < todayStart)
 
   const [checked, setChecked] = useState<Set<number>>(
     () => new Set(todayEligible.map(e => e.id))
