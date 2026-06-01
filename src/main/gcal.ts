@@ -76,7 +76,7 @@ export async function syncGoogleCalendar(): Promise<boolean> {
       const name = event.summary ?? 'Calendar event'
       if (isDuplicate) continue
 
-      const ms = new Date(event.end.dateTime!).getTime() - new Date(event.start.dateTime!).getTime()
+      const ms = 0
       const ts = new Date(event.start.dateTime!).getTime()
       const now = new Date().toISOString()
 
