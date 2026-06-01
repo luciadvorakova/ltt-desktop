@@ -183,8 +183,13 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
         await runPicker(`${base}?query=${encodeURIComponent(query)}&currentJQL=${encodeURIComponent(`project = ${prefix}`)}&showSubTasks=true&limit=15`, 'key-prefix')
       }
     } else {
-      // Text search — single picker, query searches summary text
-      await runPicker(`${base}?query=${encodeURIComponent(query)}&showSubTasks=true&limit=15`, 'text')
+      // Text search — try picker with currentJQL=summary~ first
+      const summaryJQL = encodeURIComponent(`summary ~ "${query}"`)
+      await runPicker(`${base}?query=${encodeURIComponent(query)}&currentJQL=${summaryJQL}&showSubTasks=true&limit=15`, 'text-jql')
+      // Fall back to plain picker if no results
+      if (issues.length === 0) {
+        await runPicker(`${base}?query=${encodeURIComponent(query)}&showSubTasks=true&limit=15`, 'text-plain')
+      }
     }
     console.log('[JIRA] total results:', issues.length)
   } catch (err) {
