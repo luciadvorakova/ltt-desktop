@@ -172,7 +172,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
     console.log('[JIRA] picker results:', issues.length)
 
     // Strategy 2: JQL text search
-    const jqlFull = `issuekey = "${query}" OR text ~ "${query}"`
+    const jqlFull = `issuekey = "${query}" OR summary ~ "${query}"`
     const searchUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search`
     console.log('[JIRA] trying JQL full:', jqlFull)
     const jqlRes = await fetch(`${searchUrl}?jql=${encodeURIComponent(jqlFull)}&maxResults=20&fields=summary`, { headers })

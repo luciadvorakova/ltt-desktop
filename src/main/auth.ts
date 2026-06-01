@@ -100,7 +100,16 @@ async function attemptRefresh(): Promise<{ access_token: string; refresh_token: 
   if (!stored) return null
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: stored.refresh_token })
   if (error || !data.session) {
-    console.error('[auth] refreshSession attempt failed:', error)
+    console.error('[auth] refreshSession attempt failed:', error?.message)
+    if (error?.message?.includes('refresh_token_already_used')) {
+      console.log('[auth] refresh_token_already_used — fetching current session from Supabase')
+      const { data: current } = await supabase.auth.getSession()
+      if (current.session) {
+        const session = { access_token: current.session.access_token, refresh_token: current.session.refresh_token }
+        store.set('session', session)
+        return session
+      }
+    }
     return null
   }
   const session = {
