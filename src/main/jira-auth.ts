@@ -245,10 +245,22 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
     )
     if (!res.ok) { console.error('[jira] getJiraIssueClientName failed:', res.status); return null }
     const data = await res.json() as { fields: Record<string, unknown> }
-    console.log('[JIRA] issue fields:', JSON.stringify(data.fields).slice(0, 500))
-    const fields = data.fields as { issuetype?: { name?: string }; summary?: string; parent?: { fields?: { summary?: string; issuetype?: { name?: string } } }; customfield_10014?: string }
+    const fields = data.fields as { issuetype?: { name?: string }; summary?: string; parent?: { key?: string; fields?: { summary?: string; issuetype?: { name?: string } } }; customfield_10014?: string }
     console.log('[JIRA] issue issuetype:', fields.issuetype?.name, 'summary:', fields.summary)
-    console.log('[JIRA] parent issuetype:', fields.parent?.fields?.issuetype?.name, 'summary:', fields.parent?.fields?.summary)
+    console.log('[JIRA] parent issuetype:', fields.parent?.fields?.issuetype?.name, 'summary:', fields.parent?.fields?.summary, 'key:', fields.parent?.key)
+
+    // Fetch parent with all fields to find Client Name custom field
+    if (fields.parent?.key) {
+      const parentRes = await fetch(
+        `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${fields.parent.key}?fields=*all`,
+        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+      )
+      if (parentRes.ok) {
+        const parentData = await parentRes.json() as { fields: Record<string, unknown> }
+        console.log('[JIRA] parent all fields keys:', Object.keys(parentData.fields).join(', '))
+      }
+    }
+
     const parent = fields.parent
     if (parent?.fields?.issuetype?.name === 'Epic' && parent.fields?.summary) {
       return parent.fields.summary
