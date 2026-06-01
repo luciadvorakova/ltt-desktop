@@ -167,7 +167,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   )
 }
 
-function JiraRow({ icon, jiraKey, name, onClick, onUnfav }: { icon: string; jiraKey: string; name: string; onClick: () => void; onUnfav?: () => void }) {
+function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: string; jiraKey: string; name: string; onClick: () => void; onUnfav?: () => void; onFav?: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
@@ -185,10 +185,18 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav }: { icon: string; jira
       </span>
       {onUnfav && (
         <button
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
           onClick={e => { e.stopPropagation(); onUnfav() }}
         >
           ★
+        </button>
+      )}
+      {onFav && (
+        <button
+          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          onClick={e => { e.stopPropagation(); onFav() }}
+        >
+          ☆
         </button>
       )}
     </div>
@@ -404,7 +412,10 @@ export function TimerView() {
               )}
               {!jiraSearching && jiraResults.length > 0 && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                  {jiraResults.map(issue => (
+                  {jiraResults.map(issue => {
+                    const favs = settings?.jiraFavourites ?? []
+                    const isFav = favs.some(f => f.jiraKey === issue.key)
+                    return (
                     <JiraRow
                       key={issue.key}
                       icon="◈"
@@ -433,8 +444,11 @@ export function TimerView() {
                         setJiraResults([])
                         setAddPanelOpen(false)
                       }}
+                      onUnfav={isFav ? () => updateSetting('jiraFavourites', favs.filter(f => f.jiraKey !== issue.key)) : undefined}
+                      onFav={!isFav ? () => updateSetting('jiraFavourites', [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...favs]) : undefined}
                     />
-                  ))}
+                    )
+                  })}
                 </div>
               )}
               {!jiraQuery.trim() && (() => {
@@ -874,9 +888,17 @@ export function TimerView() {
                 {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>No results</div>}
                 {!jiraSearching && jiraResults.length > 0 && (
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                    {jiraResults.map(issue => (
-                      <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary} onClick={() => handleLinkPick(issue)} />
-                    ))}
+                    {jiraResults.map(issue => {
+                      const favs = settings?.jiraFavourites ?? []
+                      const isFav = favs.some(f => f.jiraKey === issue.key)
+                      return (
+                        <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary}
+                          onClick={() => handleLinkPick(issue)}
+                          onUnfav={isFav ? () => updateSetting('jiraFavourites', favs.filter(f => f.jiraKey !== issue.key)) : undefined}
+                          onFav={!isFav ? () => updateSetting('jiraFavourites', [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...favs]) : undefined}
+                        />
+                      )
+                    })}
                   </div>
                 )}
                 {!jiraQuery.trim() && (
