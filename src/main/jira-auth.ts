@@ -151,22 +151,42 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   const cloudId = store.get('jiraCloudId')
   if (!cloudId) return []
 
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+  const seen = new Set<string>()
+  const issues: { key: string; summary: string }[] = []
+  const addIssue = (key: string, summary: string) => {
+    if (!seen.has(key)) { seen.add(key); issues.push({ key, summary }) }
+  }
+
   try {
-    const url = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?query=${encodeURIComponent(query)}&showSubTasks=true&limit=50`
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
-    if (!res.ok) { console.error('[jira] picker failed:', res.status); return [] }
-    const data = await res.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
-    const seen = new Set<string>()
-    const issues: { key: string; summary: string }[] = []
-    for (const section of data.sections ?? [])
-      for (const issue of section.issues ?? [])
-        if (!seen.has(issue.key)) { seen.add(issue.key); issues.push({ key: issue.key, summary: issue.summaryText }) }
+    // Picker
+    const pickerUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/picker?query=${encodeURIComponent(query)}&showSubTasks=true&limit=50`
+    const pickerRes = await fetch(pickerUrl, { headers })
+    if (pickerRes.ok) {
+      const data = await pickerRes.json() as { sections?: { issues?: { key: string; summaryText: string }[] }[] }
+      for (const section of data.sections ?? [])
+        for (const issue of section.issues ?? [])
+          addIssue(issue.key, issue.summaryText)
+    } else {
+      console.error('[jira] picker failed:', pickerRes.status)
+    }
     console.log('[JIRA] picker results:', issues.length)
-    return issues
+
+    // JQL summary search
+    const jql = encodeURIComponent(`project in projectsWhereUserHasPermission() AND summary ~ "${query}" ORDER BY updated DESC`)
+    const jqlRes = await fetch(`https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/search?jql=${jql}&maxResults=20&fields=summary`, { headers })
+    const data = await jqlRes.json() as { issues?: { key: string; fields: { summary: string } }[]; errorMessages?: string[]; message?: string }
+    console.log('[JIRA] JQL response body:', JSON.stringify(data).slice(0, 200))
+    if (jqlRes.ok) {
+      for (const issue of data.issues ?? [])
+        addIssue(issue.key, issue.fields.summary)
+    }
+    console.log('[JIRA] total results:', issues.length)
   } catch (err) {
     console.error('[jira] searchJiraIssues error:', err)
-    return []
   }
+
+  return issues
 }
 
 export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
