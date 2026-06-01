@@ -46,9 +46,6 @@ function parseMin(input: string): number | null {
   return n * 60000
 }
 
-function msToMin(ms: number): string {
-  return String(Math.floor(ms / 60000))
-}
 
 function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
@@ -222,7 +219,7 @@ const formatMsShort = (ms: number): string => {
 export function TimerView() {
   const ltt = useLtt()
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
-  const { timerState, elapsed, start, pause, stop } = useTimer()
+  const { timerState, elapsed, start, pause } = useTimer()
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [standupOpen, setStandupOpen] = useState(false)
@@ -279,12 +276,6 @@ export function TimerView() {
     await pause()
     if (timerState?.activeEntryId) patchEntry(timerState.activeEntryId, currentMs)
   }
-  const handleStop = async () => {
-    const result = await stop()
-    if (result) patchEntry(result.id, result.ms)
-    await reload()
-  }
-
   const modifyFavourites = async (fn: (current: NonNullable<typeof settings>['jiraFavourites']) => NonNullable<typeof settings>['jiraFavourites'], label?: string) => {
     console.log('[FAV] called, label:', label)
     const latest = await ltt.getSettings()
@@ -462,8 +453,8 @@ export function TimerView() {
                           if (name) { patchEntry(entry.id, undefined, name); updateEntry({ ...entry, clientName: name, updatedAt: new Date().toISOString() }) }
                         })
                       }}
-                      onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key), `remove:${issue.key}`) : undefined}
-                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur], `add:${issue.key}`) : undefined}
+                      onUnfav={isFav ? () => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== issue.key), `remove:${issue.key}`) : undefined}
+                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `add:${issue.key}`) : undefined}
                     />
                     )
                   })}
@@ -509,7 +500,7 @@ export function TimerView() {
                               await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
                               setAddPanelOpen(false)
                             }}
-                            onUnfav={() => modifyFavourites(cur => cur.filter(f => f.jiraKey !== fav.jiraKey), `remove-fav:${fav.jiraKey}`)}
+                            onUnfav={() => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== fav.jiraKey), `remove-fav:${fav.jiraKey}`)}
                           />
                         ))}
                       </div>
@@ -697,8 +688,8 @@ export function TimerView() {
                   onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
                   onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
                   onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
-                    if (cur.some(f => f.jiraKey === entry.jiraKey)) return cur
-                    return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...cur]
+                    if ((cur ?? []).some(f => f.jiraKey === entry.jiraKey)) return cur ?? []
+                    return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
                   }, `add-entry:${entry.jiraKey}`) : undefined}
                   onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
                     const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
@@ -912,8 +903,8 @@ export function TimerView() {
                       return (
                         <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary}
                           onClick={() => handleLinkPick(issue)}
-                          onUnfav={isFav ? () => modifyFavourites(cur => cur.filter(f => f.jiraKey !== issue.key), `modal-remove:${issue.key}`) : undefined}
-                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...cur], `modal-add:${issue.key}`) : undefined}
+                          onUnfav={isFav ? () => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== issue.key), `modal-remove:${issue.key}`) : undefined}
+                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `modal-add:${issue.key}`) : undefined}
                         />
                       )
                     })}
