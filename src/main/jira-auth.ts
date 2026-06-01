@@ -268,6 +268,23 @@ export async function getJiraIssueClientName(issueKey: string): Promise<string |
           customfield_10163: parentData.fields?.customfield_10163,
           customfield_10164: parentData.fields?.customfield_10164,
         }))
+        console.log('[JIRA] more candidates:', JSON.stringify({
+          customfield_10100: parentData.fields?.customfield_10100,
+          customfield_10101: parentData.fields?.customfield_10101,
+          customfield_10102: parentData.fields?.customfield_10102,
+          customfield_10103: parentData.fields?.customfield_10103,
+          customfield_10104: parentData.fields?.customfield_10104,
+          customfield_10139: parentData.fields?.customfield_10139,
+          customfield_10140: parentData.fields?.customfield_10140,
+          customfield_10145: parentData.fields?.customfield_10145,
+          customfield_10146: parentData.fields?.customfield_10146,
+          customfield_10147: parentData.fields?.customfield_10147,
+          customfield_10148: parentData.fields?.customfield_10148,
+          customfield_10165: parentData.fields?.customfield_10165,
+          customfield_10166: parentData.fields?.customfield_10166,
+          customfield_10169: parentData.fields?.customfield_10169,
+          customfield_10170: parentData.fields?.customfield_10170,
+        }))
       }
     }
 
