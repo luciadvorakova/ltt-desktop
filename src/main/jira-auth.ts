@@ -2,6 +2,8 @@ import http from 'node:http'
 import { shell } from 'electron'
 import { EventEmitter } from 'events'
 import { store } from './store'
+import { supabase } from './supabase'
+import { ensureSession } from './auth'
 import type { UserSettings } from '../types/index'
 
 function getJiraSettings(): UserSettings { return store.get('settings') ?? {} }
@@ -76,6 +78,15 @@ async function exchangeCodeForTokens(code: string): Promise<void> {
 
     await fetchAndStoreJiraProfile(tokens.access_token)
     console.log('[jira] connected, email:', getJiraSettings().jiraUserEmail)
+
+    await ensureSession()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id) {
+      const settings = getJiraSettings()
+      await supabase.from('user_settings').upsert({ user_id: user.id, ...settings }, { onConflict: 'user_id' })
+      console.log('[jira] settings pushed to Supabase')
+    }
+
     jiraAuthEmitter.emit('jira-auth-success')
   } catch (err) {
     console.error('[jira] exchangeCodeForTokens error:', err)
