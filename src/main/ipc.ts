@@ -153,9 +153,10 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   ipcMain.handle('jira:getClientName', (_event, issueKey: string) => getJiraIssueClientName(issueKey))
 
-  ipcMain.handle('jira:logTime', (_event, issueKey: string, ms: number, comment?: string) =>
-    logTimeToJira(issueKey, ms, comment)
-  )
+  ipcMain.handle('jira:logTime', (_event, issueKey: string, ms: number, comment?: string) => {
+    console.log('[IPC] jira:logTime called, issueKey:', issueKey)
+    return logTimeToJira(issueKey, ms, comment)
+  })
 
   // ---- SLACK ----
 
