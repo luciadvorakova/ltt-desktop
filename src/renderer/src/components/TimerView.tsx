@@ -335,9 +335,12 @@ export function TimerView() {
   useEffect(() => {
     setOrderedEntries(
       [...todayEntries].sort((a, b) => {
-        if (a.sortOrder === undefined) return 1
-        if (b.sortOrder === undefined) return -1
-        return a.sortOrder - b.sortOrder
+        if (!a.jiraSent && b.jiraSent) return -1
+        if (a.jiraSent && !b.jiraSent) return 1
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) return a.sortOrder - b.sortOrder
+        if (a.sortOrder !== undefined) return -1
+        if (b.sortOrder !== undefined) return 1
+        return b.ts - a.ts
       })
     )
   }, [entries])
