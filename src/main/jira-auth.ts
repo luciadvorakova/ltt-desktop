@@ -140,8 +140,13 @@ export async function ensureJiraToken(): Promise<string | null> {
   const s = getJiraSettings()
   const accessToken = s.jiraAccessToken
   if (!accessToken) return null
-  const expiresAt = s.jiraTokenExpiry ? new Date(s.jiraTokenExpiry).getTime() : null
-  if (expiresAt && Date.now() > expiresAt - 5 * 60 * 1000) {
+  const expiry = s.jiraTokenExpiry
+  const expiresAt = expiry
+    ? (isNaN(Number(expiry)) ? new Date(expiry).getTime() : Number(expiry))
+    : null
+  const needsRefresh = expiresAt !== null && Date.now() > expiresAt - 5 * 60 * 1000
+  console.log('[JIRA] ensureJiraToken, expiry:', expiresAt ? new Date(expiresAt).toISOString() : 'none', 'now:', new Date().toISOString(), 'needs refresh:', needsRefresh)
+  if (needsRefresh) {
     return refreshJiraToken()
   }
   return accessToken
