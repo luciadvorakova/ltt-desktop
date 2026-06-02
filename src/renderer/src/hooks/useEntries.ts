@@ -44,7 +44,7 @@ export function useEntries(): UseEntriesResult {
       const idx = prev.findIndex((e) => e.id === entry.id)
       return idx > -1
         ? prev.map((e) => (e.id === entry.id ? entry : e))
-        : [...prev, entry]
+        : [entry, ...prev]
     })
   }, [ltt])
 

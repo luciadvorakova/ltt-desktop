@@ -200,6 +200,34 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: strin
   )
 }
 
+function RecentRow({ entry, onClick }: { entry: TimeEntry; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      style={{ display: 'flex', flexDirection: 'column', padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {entry.jiraKey && (
+          <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+            {entry.jiraKey}
+          </span>
+        )}
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {entry.name}
+        </span>
+      </div>
+      {entry.jiraDesc && (
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {entry.jiraDesc}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -553,30 +581,33 @@ export function TimerView() {
           {addMode === 'recent' && (() => {
             const seen = new Set<string>()
             const recent = [...entries]
-              .filter(e => !!e.jiraKey)
-              .sort((a, b) => b.ts - a.ts)
-              .filter(e => { if (seen.has(e.jiraKey!)) return false; seen.add(e.jiraKey!); return true })
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .filter(e => {
+                const key = `${e.name}||${e.jiraDesc ?? ''}`
+                if (seen.has(key)) return false
+                seen.add(key)
+                return true
+              })
               .slice(0, 30)
             return recent.length === 0 ? (
               <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
-                No recent Jira tasks
+                No recent entries
               </div>
             ) : (
               <div>
                 {recent.map(e => (
-                  <JiraRow
-                    key={e.jiraKey}
-                    icon=""
-                    jiraKey={e.jiraKey!}
-                    name={e.jiraSummary ?? e.name}
+                  <RecentRow
+                    key={`${e.name}||${e.jiraDesc ?? ''}||${e.id}`}
+                    entry={e}
                     onClick={async () => {
-                      const entry: TimeEntry = {
+                      const newEntry: TimeEntry = {
                         id: Date.now(),
-                        name: e.jiraSummary ?? e.name,
+                        name: e.name,
                         ms: 0,
                         ts: Date.now(),
                         jiraKey: e.jiraKey,
                         jiraSummary: e.jiraSummary,
+                        jiraDesc: e.jiraDesc,
                         clientName: e.clientName,
                         jiraSent: false,
                         untracked: false,
@@ -585,7 +616,7 @@ export function TimerView() {
                         deletedFromBulk: false,
                         updatedAt: new Date().toISOString(),
                       }
-                      await addEntry(entry)
+                      await addEntry(newEntry)
                       setAddPanelOpen(false)
                     }}
                   />
