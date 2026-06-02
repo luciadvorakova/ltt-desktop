@@ -246,12 +246,13 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
 }
 
 export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
-  const token = await ensureJiraToken()
-  if (!token) return { success: false, error: 'Not authenticated' }
-  const cloudId = getJiraSettings().jiraCloudId
-  if (!cloudId) return { success: false, error: 'No cloud ID' }
-
   try {
+    const token = await ensureJiraToken()
+    if (!token) return { success: false, error: 'Not authenticated' }
+    const cloudId = getJiraSettings().jiraCloudId
+    if (!cloudId) return { success: false, error: 'No cloud ID' }
+
+    console.log('[JIRA] logTime posting to:', issueKey, 'timeSeconds:', Math.round(timeSpentMs / 1000))
     const res = await fetch(
       `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}/worklog`,
       {
@@ -266,6 +267,7 @@ export async function logTimeToJira(issueKey: string, timeSpentMs: number, comme
         }),
       }
     )
+    console.log('[JIRA] logTime response:', res.status)
     if (!res.ok) {
       const body = await res.text()
       console.error('[jira] logTime failed:', res.status, body)
