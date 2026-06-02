@@ -248,6 +248,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
 export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await ensureJiraToken()
+    console.log('[JIRA] logTime token received:', token ? token.slice(0, 20) : 'NULL')
     if (!token) return { success: false, error: 'Not authenticated' }
     const cloudId = getJiraSettings().jiraCloudId
     if (!cloudId) return { success: false, error: 'No cloud ID' }
