@@ -121,6 +121,7 @@ export async function refreshJiraToken(): Promise<string | null> {
       }),
     })
     const tokens = await res.json() as { access_token: string; refresh_token: string; expires_in: number }
+    console.log('[JIRA] refresh response status:', res.status, JSON.stringify(tokens).slice(0, 200))
     if (!tokens.access_token) { console.error('[jira] refresh failed:', tokens); return null }
 
     patchJiraSettings({
@@ -153,7 +154,7 @@ export async function ensureJiraToken(): Promise<string | null> {
       console.log('[JIRA] refresh result:', refreshed ? 'ok' : 'failed')
       return refreshed
     } catch (err) {
-      console.error('[JIRA] refresh threw:', err)
+      console.error('[JIRA] refresh error:', err)
       return null
     }
   }
