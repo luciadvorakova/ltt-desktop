@@ -262,6 +262,10 @@ export function TimerView() {
   const [jiraSearching, setJiraSearching] = useState(false)
   const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const jiraProjectsRef = useRef<Map<string, string>>(new Map())
+  const dragIdRef = useRef<number | null>(null)
+  const dragOverIdRef = useRef<number | null>(null)
+  const [dragOverId, setDragOverId] = useState<number | null>(null)
+  const [orderedEntries, setOrderedEntries] = useState<TimeEntry[]>([])
 
   useEffect(() => {
     const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
@@ -327,6 +331,28 @@ export function TimerView() {
   })
 
   console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
+
+  useEffect(() => {
+    setOrderedEntries(
+      [...todayEntries].sort((a, b) => {
+        if (a.sortOrder === undefined) return 1
+        if (b.sortOrder === undefined) return -1
+        return a.sortOrder - b.sortOrder
+      })
+    )
+  }, [entries])
+
+  const reorderEntries = async (fromId: number | null, toId: number) => {
+    if (fromId === null || fromId === toId) return
+    const from = orderedEntries.findIndex(e => e.id === fromId)
+    const to = orderedEntries.findIndex(e => e.id === toId)
+    if (from === -1 || to === -1) return
+    const next = [...orderedEntries]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    setOrderedEntries(next)
+    await Promise.all(next.map((e, i) => updateEntry({ ...e, sortOrder: i, updatedAt: new Date().toISOString() })))
+  }
 
   const activeId = timerState?.activeEntryId ?? null
   const isRunning = timerState?.running ?? false
@@ -634,7 +660,7 @@ export function TimerView() {
             No entries today
           </div>
         )}
-        {todayEntries.map((entry) => {
+        {orderedEntries.map((entry) => {
           const isActive = activeId === entry.id
           const isActiveRunning = isActive && isRunning
           const displayMs = isActiveRunning ? liveMs : entry.ms
@@ -644,16 +670,24 @@ export function TimerView() {
           return (
             <div
               key={entry.id}
+              draggable={true}
+              onDragStart={() => { dragIdRef.current = entry.id }}
+              onDragOver={e => { e.preventDefault(); dragOverIdRef.current = entry.id; setDragOverId(entry.id) }}
+              onDragEnd={() => { setDragOverId(null); dragIdRef.current = null; dragOverIdRef.current = null }}
+              onDrop={() => { reorderEntries(dragIdRef.current, entry.id) }}
               style={{
                 padding: '8px 14px',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
+                borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.08)',
                 background: isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
                 opacity: entry.jiraSent ? 0.5 : 1,
+                cursor: 'grab',
               }}
             >
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
                 <button
+                  draggable={false}
+                  onMouseDown={e => e.stopPropagation()}
                   onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
                   style={{
                     width: 22,
@@ -709,6 +743,7 @@ export function TimerView() {
                   {formatMs(displayMs)}
                 </span>
 
+                <span draggable={false} onMouseDown={e => e.stopPropagation()}>
                 <EntryMenu
                   ms={entry.ms}
                   open={openMenuId === entry.id}
@@ -730,10 +765,13 @@ export function TimerView() {
                   onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                   onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                 />
+                </span>
               </div>
 
               {/* Row 2: description — always editable on click */}
               <div
+                draggable={false}
+                onMouseDown={e => e.stopPropagation()}
                 contentEditable
                 suppressContentEditableWarning
                 onFocus={() => setEditingDescId(entry.id)}
@@ -763,7 +801,7 @@ export function TimerView() {
               {(entry.clientName || entry.jiraKey) && (
                 <div style={{ display: 'flex', gap: 5, paddingLeft: 29 }}>
                   {entry.clientName && (
-                    <span style={{
+                    <span draggable={false} style={{
                       fontSize: 9,
                       fontWeight: 700,
                       padding: '2px 6px',
@@ -776,7 +814,7 @@ export function TimerView() {
                     </span>
                   )}
                   {entry.jiraKey && (
-                    <span style={{
+                    <span draggable={false} style={{
                       fontSize: 9,
                       fontWeight: 700,
                       padding: '2px 6px',
