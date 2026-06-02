@@ -65,7 +65,7 @@ export function BulkSendView({
     setSending(true)
     for (const entry of selectedEntries) {
       const desc = descs.get(entry.id) ?? entry.jiraDesc ?? ''
-      const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, desc)
+      const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, desc, entry.updatedAt)
       if (result.success) {
         await updateEntry({ ...entry, jiraSent: true, jiraDesc: desc, updatedAt: new Date().toISOString() })
       } else {

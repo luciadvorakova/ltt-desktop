@@ -245,7 +245,7 @@ export async function searchJiraIssues(query: string): Promise<{ key: string; su
   return issues
 }
 
-export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string): Promise<{ success: boolean; error?: string }> {
+export async function logTimeToJira(issueKey: string, timeSpentMs: number, comment?: string, started?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await ensureJiraToken()
     console.log('[JIRA] logTime token received:', token ? token.slice(0, 20) : 'NULL')
@@ -263,6 +263,7 @@ export async function logTimeToJira(issueKey: string, timeSpentMs: number, comme
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             timeSpentSeconds: Math.round(timeSpentMs / 1000),
+            started: (started ?? new Date().toISOString()).replace('Z', '+0000'),
             comment: {
               type: 'doc', version: 1,
               content: [{ type: 'paragraph', content: [{ type: 'text', text: comment ?? '' }] }],

@@ -31,7 +31,7 @@ interface LttAPI {
   jiraSearch:       (query: string) => Promise<{ key: string; summary: string }[]>
   jiraGetProjects:  () => Promise<{ key: string; name: string }[]>
   jiraGetClientName: (issueKey: string) => Promise<string | null>
-  jiraLogTime:      (issueKey: string, ms: number, comment?: string) => Promise<{ success: boolean; error?: string }>
+  jiraLogTime:      (issueKey: string, ms: number, comment?: string, started?: string) => Promise<{ success: boolean; error?: string }>
 
   // SLACK
   slackSendStandup: (payload: { channel: string; userId: string; accomplished: string; workingOn: string; problems: string; share: string }) => Promise<{ success: boolean; error?: string }>
