@@ -251,30 +251,36 @@ export async function logTimeToJira(issueKey: string, timeSpentMs: number, comme
     console.log('[JIRA] logTime token received:', token ? token.slice(0, 20) : 'NULL')
     if (!token) return { success: false, error: 'Not authenticated' }
     const cloudId = getJiraSettings().jiraCloudId
+    console.log('[JIRA] logTime cloudId:', cloudId)
     if (!cloudId) return { success: false, error: 'No cloud ID' }
 
     console.log('[JIRA] logTime posting to:', issueKey, 'timeSeconds:', Math.round(timeSpentMs / 1000))
-    const res = await fetch(
-      `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}/worklog`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          timeSpentSeconds: Math.round(timeSpentMs / 1000),
-          comment: {
-            type: 'doc', version: 1,
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: comment ?? '' }] }],
-          },
-        }),
+    try {
+      const res = await fetch(
+        `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/issue/${issueKey}/worklog`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            timeSpentSeconds: Math.round(timeSpentMs / 1000),
+            comment: {
+              type: 'doc', version: 1,
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: comment ?? '' }] }],
+            },
+          }),
+        }
+      )
+      console.log('[JIRA] logTime response:', res.status)
+      if (!res.ok) {
+        const body = await res.text()
+        console.error('[jira] logTime failed:', res.status, body)
+        return { success: false, error: `HTTP ${res.status}` }
       }
-    )
-    console.log('[JIRA] logTime response:', res.status)
-    if (!res.ok) {
-      const body = await res.text()
-      console.error('[jira] logTime failed:', res.status, body)
-      return { success: false, error: `HTTP ${res.status}` }
+      return { success: true }
+    } catch (err) {
+      console.error('[JIRA] logTime fetch error:', err)
+      return { success: false, error: String(err) }
     }
-    return { success: true }
   } catch (err) {
     console.error('[jira] logTimeToJira error:', err)
     return { success: false, error: String(err) }
