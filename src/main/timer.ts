@@ -95,18 +95,22 @@ export async function startTimer(entryId: number): Promise<void> {
   const existing = store.get('timerState')
   console.log('[START] entryId:', entryId, 'existing state:', existing)
 
-  // Resuming the same paused entry — use stored baseMs
   if (existing?.paused && existing.activeEntryId === entryId) {
+    // Check if entry ms was updated while paused (e.g. manual time add)
+    const entry = currentEntries.find((e) => e.id === entryId)
+    const baseMs = Math.max(existing.baseMs, entry?.ms ?? 0)
+    console.log('[START] resuming paused, existing.baseMs:', existing.baseMs, 'entry.ms:', entry?.ms, 'using:', baseMs)
     store.set('timerState', {
       activeEntryId: entryId,
       startedAt: Date.now(),
-      baseMs: existing.baseMs,
+      baseMs,
       running: true,
       paused: false,
     })
   } else {
     // Starting a fresh entry (or after stopTimer cleared existing state)
     const entry = currentEntries.find((e) => e.id === entryId)
+    console.log('[START] currentEntries entry ms:', entry?.ms, 'id:', entryId)
     let baseMs = entry?.ms ?? 0
     if (!entry) {
       // Entry not in memory — fetch from Supabase
@@ -115,6 +119,7 @@ export async function startTimer(entryId: number): Promise<void> {
       baseMs = data?.ms ?? 0
     }
     console.log('[START] baseMs from currentEntries:', entry?.ms, '→ using:', baseMs)
+    console.log('[START] using baseMs:', baseMs)
     store.set('timerState', {
       activeEntryId: entryId,
       startedAt: Date.now(),
