@@ -47,7 +47,7 @@ function parseMin(input: string): number | null {
 }
 
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
@@ -55,6 +55,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   onSendToJira?: () => void;
   onLinkToJira?: () => void;
   onChangeJiraLink?: () => void;
+  onRemoveFromTimer?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -153,6 +154,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" />
+            <MenuItem icon="✕" label="Remove from timer" color="rgba(255,255,255,0.5)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />
           </div>
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
@@ -326,7 +328,10 @@ export function TimerView() {
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEntries = entries.filter(e => {
     if (e.removedFromTimer) return false
-    if (e.jiraSent) return e.ts >= todayStart.getTime()
+    if (e.jiraSent) {
+      if (settings?.manualTimerCleanup) return true
+      return e.ts >= todayStart.getTime()
+    }
     return true
   })
 
@@ -767,6 +772,7 @@ export function TimerView() {
                   } : undefined}
                   onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                   onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+                  onRemoveFromTimer={() => updateEntry({ ...entry, removedFromTimer: true, updatedAt: new Date().toISOString() })}
                 />
                 </span>
               </div>
