@@ -18,6 +18,8 @@ const TOKEN_URL = 'https://auth.atlassian.com/oauth/token'
 
 export const jiraAuthEmitter = new EventEmitter()
 
+let _refreshLock: Promise<string | null> | null = null
+
 export async function signInWithJira(): Promise<void> {
   const state = Math.random().toString(36).slice(2)
   const url = new URL('https://auth.atlassian.com/authorize')
@@ -159,15 +161,10 @@ export async function ensureJiraToken(): Promise<string | null> {
   const needsRefresh = expiresAt !== null && Date.now() > expiresAt - 5 * 60 * 1000
   console.log('[JIRA] ensureJiraToken, expiry:', expiresAt ? new Date(expiresAt).toISOString() : 'none', 'now:', new Date().toISOString(), 'needs refresh:', needsRefresh)
   if (needsRefresh) {
-    console.log('[JIRA] attempting refresh...')
-    try {
-      const refreshed = await refreshJiraToken()
-      console.log('[JIRA] refresh result:', refreshed ? 'ok' : 'failed')
-      return refreshed
-    } catch (err) {
-      console.error('[JIRA] refresh error:', err)
-      return null
+    if (!_refreshLock) {
+      _refreshLock = refreshJiraToken().finally(() => { _refreshLock = null })
     }
+    return _refreshLock
   }
   return accessToken
 }
@@ -177,7 +174,7 @@ export function startJiraRefreshInterval(): void {
     const tokenExpiry = getJiraSettings().jiraTokenExpiry
     if (!tokenExpiry) return
     if (Date.now() > new Date(tokenExpiry).getTime() - 5 * 60 * 1000) {
-      await refreshJiraToken()
+      await ensureJiraToken()
     }
   }, 50 * 60 * 1000)
 }
