@@ -202,30 +202,40 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: strin
   )
 }
 
-function RecentRow({ entry, onClick }: { entry: TimeEntry; onClick: () => void }) {
+function RecentRow({ entry, selected, onToggle }: { entry: TimeEntry; selected: boolean; onToggle: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={onClick}
+      onClick={onToggle}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {entry.jiraKey && (
-          <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
-            {entry.jiraKey}
-          </span>
-        )}
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {entry.name}
-        </span>
+      <div style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10,
+        border: selected ? '1.5px solid rgba(80,180,100,0.6)' : '1.5px solid rgba(255,255,255,0.25)',
+        background: selected ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.06)',
+        color: '#7fd89a',
+      }}>
+        {selected ? '✓' : ''}
       </div>
-      {entry.jiraDesc && (
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {entry.jiraDesc}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {entry.jiraKey && (
+            <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+              {entry.jiraKey}
+            </span>
+          )}
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {entry.name}
+          </span>
         </div>
-      )}
+        {entry.jiraDesc && (
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {entry.jiraDesc}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -268,6 +278,7 @@ export function TimerView() {
   const dragOverIdRef = useRef<number | null>(null)
   const [dragOverId, setDragOverId] = useState<number | null>(null)
   const [orderedEntries, setOrderedEntries] = useState<TimeEntry[]>([])
+  const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
@@ -402,7 +413,7 @@ export function TimerView() {
         </span>
         {addPanelOpen ? (
           <button
-            onClick={() => setAddPanelOpen(false)}
+            onClick={() => { setAddPanelOpen(false); setSelectedRecent(new Set()) }}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
           >
             ×
@@ -427,7 +438,7 @@ export function TimerView() {
             {(['jira', 'manual', 'recent'] as const).map((mode) => (
               <button
                 key={mode}
-                onClick={() => setAddMode(mode)}
+                onClick={() => { setAddMode(mode); setSelectedRecent(new Set()) }}
                 style={{
                   fontSize: 10,
                   padding: '3px 10px',
@@ -623,38 +634,65 @@ export function TimerView() {
                 return true
               })
               .slice(0, 30)
+            const handleAddSelected = async () => {
+              const toAdd = recent.filter(e => selectedRecent.has(`${e.name}||${e.jiraDesc ?? ''}`))
+              for (const e of toAdd) {
+                await addEntry({
+                  id: Date.now() + Math.random(),
+                  name: e.name,
+                  ms: 0,
+                  ts: Date.now(),
+                  jiraKey: e.jiraKey,
+                  jiraSummary: e.jiraSummary,
+                  jiraDesc: e.jiraDesc,
+                  clientName: e.clientName,
+                  jiraSent: false,
+                  untracked: false,
+                  carriedOver: false,
+                  removedFromTimer: false,
+                  deletedFromBulk: false,
+                  updatedAt: new Date().toISOString(),
+                })
+              }
+              setSelectedRecent(new Set())
+              setAddPanelOpen(false)
+            }
             return recent.length === 0 ? (
               <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
                 No recent entries
               </div>
             ) : (
-              <div>
-                {recent.map(e => (
-                  <RecentRow
-                    key={`${e.name}||${e.jiraDesc ?? ''}||${e.id}`}
-                    entry={e}
-                    onClick={async () => {
-                      const newEntry: TimeEntry = {
-                        id: Date.now(),
-                        name: e.name,
-                        ms: 0,
-                        ts: Date.now(),
-                        jiraKey: e.jiraKey,
-                        jiraSummary: e.jiraSummary,
-                        jiraDesc: e.jiraDesc,
-                        clientName: e.clientName,
-                        jiraSent: false,
-                        untracked: false,
-                        carriedOver: false,
-                        removedFromTimer: false,
-                        deletedFromBulk: false,
-                        updatedAt: new Date().toISOString(),
-                      }
-                      await addEntry(newEntry)
-                      setAddPanelOpen(false)
-                    }}
-                  />
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div>
+                  {recent.map(e => {
+                    const key = `${e.name}||${e.jiraDesc ?? ''}`
+                    return (
+                      <RecentRow
+                        key={`${key}||${e.id}`}
+                        entry={e}
+                        selected={selectedRecent.has(key)}
+                        onToggle={() => setSelectedRecent(prev => {
+                          const next = new Set(prev)
+                          next.has(key) ? next.delete(key) : next.add(key)
+                          return next
+                        })}
+                      />
+                    )
+                  })}
+                </div>
+                {selectedRecent.size > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)', position: 'sticky', bottom: 0 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+                      {selectedRecent.size} selected
+                    </span>
+                    <button
+                      onClick={handleAddSelected}
+                      style={{ fontSize: 11, fontWeight: 700, padding: '5px 14px', borderRadius: 99, background: 'rgba(80,180,100,0.22)', border: '1px solid rgba(80,180,100,0.45)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })()}
