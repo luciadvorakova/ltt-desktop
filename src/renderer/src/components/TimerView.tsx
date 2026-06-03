@@ -295,7 +295,7 @@ export function TimerView() {
     const name = manualInput.trim()
     if (!name) return
     const entry: TimeEntry = {
-      id: Date.now(),
+      id: Math.floor(Date.now()),
       name,
       ms: 0,
       ts: Date.now(),
@@ -504,7 +504,7 @@ export function TimerView() {
                         const projectKey = issue.key.split('-')[0]
                         const clientName = jiraProjectsRef.current.get(projectKey)
                         const entry: TimeEntry = {
-                          id: Date.now(),
+                          id: Math.floor(Date.now()),
                           name: issue.summary,
                           ms: 0,
                           ts: Date.now(),
@@ -542,7 +542,7 @@ export function TimerView() {
                   .filter(e => { if (seenRecent.has(e.jiraKey!)) return false; seenRecent.add(e.jiraKey!); return true })
                   .slice(0, 30)
                 const makeEntry = (jiraKey: string, name: string, jiraSummary: string | undefined, clientName: string | undefined): TimeEntry => ({
-                  id: Date.now(),
+                  id: Math.floor(Date.now()),
                   name,
                   ms: 0,
                   ts: Date.now(),
@@ -638,7 +638,7 @@ export function TimerView() {
               const toAdd = recent.filter(e => selectedRecent.has(`${e.name}||${e.jiraDesc ?? ''}`))
               for (const e of toAdd) {
                 await addEntry({
-                  id: Date.now() + Math.random(),
+                  id: Math.floor(Date.now()),
                   name: e.name,
                   ms: 0,
                   ts: Date.now(),
