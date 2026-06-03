@@ -681,7 +681,7 @@ export function TimerView() {
                   })}
                 </div>
                 {selectedRecent.size > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.15)', position: 'sticky', bottom: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(145deg, #1e1850, #0e1830)', position: 'sticky', bottom: 0, flexShrink: 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
                       {selectedRecent.size} selected
                     </span>
