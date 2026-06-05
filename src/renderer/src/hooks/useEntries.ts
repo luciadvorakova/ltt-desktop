@@ -30,6 +30,9 @@ export function useEntries(): UseEntriesResult {
       const local = prev.find(e => e.id === remote.id)
       const keepLocal = !!(local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt)
       console.log('[RELOAD] merging, local jiraDesc:', local?.jiraDesc, 'remote jiraDesc:', remote.jiraDesc, 'keeping local:', keepLocal)
+      if (remote.id === 1780690959953) {
+        console.log('[MERGE] local.updatedAt:', local?.updatedAt, 'remote.updatedAt:', remote.updatedAt, 'local.ms:', local?.ms, 'remote.ms:', remote.ms)
+      }
       if (keepLocal) return local!
       return remote
     }))
