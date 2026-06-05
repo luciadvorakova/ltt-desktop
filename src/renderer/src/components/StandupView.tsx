@@ -22,10 +22,11 @@ function getPreviousRange(): { start: number; end: number } {
   return { start: start.getTime(), end: today.getTime() }
 }
 
-function StandupCard({ text, onChange, onRemove, onDragStart, onDragOver, onDrop, dragOver, autoFocus }: {
+function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOver, onDrop, dragOver, autoFocus }: {
   text: string
   onChange: (text: string) => void
-  onRemove: () => void
+  checked: boolean
+  onToggle: () => void
   onDragStart: () => void
   onDragOver: (e: React.DragEvent) => void
   onDrop: () => void
@@ -58,37 +59,47 @@ function StandupCard({ text, onChange, onRemove, onDragStart, onDragOver, onDrop
         border: dragOver ? '1px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
         borderTop: dragOver ? '2px solid rgba(100,160,255,0.6)' : undefined,
         borderRadius: 8, padding: '6px 8px', marginBottom: 4,
+        opacity: checked ? 1 : 0.4,
+        cursor: 'grab',
       }}
     >
-      <span
-        style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', cursor: 'grab', flexShrink: 0, lineHeight: 1 }}
-        draggable={false}
+      <div
+        onClick={onToggle}
+        style={{
+          width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: checked ? '1.5px solid rgba(80,180,100,0.6)' : '1.5px solid rgba(255,255,255,0.25)',
+          background: checked ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.06)',
+        }}
       >
-        ⠿
-      </span>
+        {checked && <span style={{ fontSize: 9, fontWeight: 700, color: '#7fd89a', lineHeight: 1 }}>✓</span>}
+      </div>
       <span
         ref={spanRef}
         contentEditable
         suppressContentEditableWarning
         onInput={e => onChange((e.target as HTMLSpanElement).textContent ?? '')}
-        style={{ fontSize: 11, color: 'rgba(255,255,255,0.82)', flex: 1, outline: 'none' }}
+        style={{ fontSize: 11, color: checked ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.45)', flex: 1, outline: 'none' }}
       >
         {text}
       </span>
-      <button
-        onClick={onRemove}
-        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 12, padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
-      >
-        ✕
-      </button>
     </div>
   )
 }
 
-function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: string[]) => string[]) => void }) {
+function CardList({ cards, setCards, onCheckedCardsChange }: {
+  cards: string[]
+  setCards: (fn: (prev: string[]) => string[]) => void
+  onCheckedCardsChange: (checkedCards: string[]) => void
+}) {
   const dragIndexRef = useRef<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [autoFocusIndex, setAutoFocusIndex] = useState<number | null>(null)
+  const [checkedIndices, setCheckedIndices] = useState<Set<number>>(() => new Set(cards.map((_, i) => i)))
+
+  const notifyParent = (nextCards: string[], nextChecked: Set<number>) => {
+    onCheckedCardsChange(nextCards.filter((c, i) => nextChecked.has(i) && c.trim()))
+  }
 
   const handleDrop = (toIndex: number) => {
     const fromIndex = dragIndexRef.current
@@ -97,10 +108,47 @@ function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: 
       const next = [...prev]
       const [moved] = next.splice(fromIndex, 1)
       next.splice(toIndex, 0, moved)
+      // Remap checked indices to follow the moved card
+      setCheckedIndices(prevChecked => {
+        const arr = prev.map((_, i) => prevChecked.has(i))
+        const [movedChecked] = arr.splice(fromIndex, 1)
+        arr.splice(toIndex, 0, movedChecked)
+        const nextChecked = new Set(arr.map((c, i) => c ? i : -1).filter(i => i >= 0))
+        notifyParent(next, nextChecked)
+        return nextChecked
+      })
       return next
     })
     dragIndexRef.current = null
     setDragOverIndex(null)
+  }
+
+  const toggle = (i: number) => {
+    setCheckedIndices(prev => {
+      const next = new Set(prev)
+      next.has(i) ? next.delete(i) : next.add(i)
+      notifyParent(cards, next)
+      return next
+    })
+  }
+
+  const handleChange = (i: number, val: string) => {
+    setCards(prev => {
+      const next = prev.map((c, j) => j === i ? val : c)
+      notifyParent(next, checkedIndices)
+      return next
+    })
+  }
+
+  const handleAdd = () => {
+    const newIndex = cards.length
+    setCards(prev => [...prev, ''])
+    setCheckedIndices(prev => {
+      const next = new Set([...prev, newIndex])
+      notifyParent([...cards, ''], next)
+      return next
+    })
+    setAutoFocusIndex(newIndex)
   }
 
   return (
@@ -109,9 +157,10 @@ function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: 
         <StandupCard
           key={i}
           text={text}
+          checked={checkedIndices.has(i)}
+          onToggle={() => toggle(i)}
           autoFocus={autoFocusIndex === i}
-          onChange={val => setCards(prev => prev.map((c, j) => j === i ? val : c))}
-          onRemove={() => { setCards(prev => prev.filter((_, j) => j !== i)); setAutoFocusIndex(null) }}
+          onChange={val => handleChange(i, val)}
           onDragStart={() => { dragIndexRef.current = i; setDragOverIndex(null) }}
           onDragOver={e => { e.preventDefault(); setDragOverIndex(i) }}
           onDrop={() => handleDrop(i)}
@@ -119,10 +168,7 @@ function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: 
         />
       ))}
       <div
-        onClick={() => {
-          setCards(prev => [...prev, ''])
-          setAutoFocusIndex(cards.length)
-        }}
+        onClick={handleAdd}
         style={{
           border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 8px',
           background: 'rgba(255,255,255,0.04)', cursor: 'pointer',
@@ -160,6 +206,8 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
 
   const [accomplishedCards, setAccomplishedCards] = useState<string[]>(() => previousEntries.map(formatEntry))
   const [workingOnCards, setWorkingOnCards]       = useState<string[]>(() => todayEntries.map(formatEntry))
+  const [checkedAccomplished, setCheckedAccomplished] = useState<string[]>(() => previousEntries.map(formatEntry))
+  const [checkedWorkingOn, setCheckedWorkingOn]       = useState<string[]>(() => todayEntries.map(formatEntry))
   const [problems, setProblems]                   = useState('')
   const [share, setShare]                         = useState('')
   const [sending, setSending]                     = useState(false)
@@ -167,8 +215,8 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   const handleSend = async () => {
     if (sending) return
     setSending(true)
-    const accomplished = accomplishedCards.filter(Boolean).join('\n')
-    const workingOn = workingOnCards.filter(Boolean).join('\n')
+    const accomplished = checkedAccomplished.join('\n')
+    const workingOn = checkedWorkingOn.join('\n')
     const result = await ltt.slackSendStandup({ channel, userId, accomplished, workingOn, problems, share })
     if (result.success) {
       await updateSetting('lastStandupDate', new Date().toISOString().slice(0, 10))
@@ -243,7 +291,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
             <span style={labelStyle}>I accomplished</span>
             <span style={sourceStyle}>auto-filled from {new Date().getDay() === 1 ? 'friday' : 'yesterday'}</span>
           </div>
-          <CardList cards={accomplishedCards} setCards={setAccomplishedCards} />
+          <CardList cards={accomplishedCards} setCards={setAccomplishedCards} onCheckedCardsChange={setCheckedAccomplished} />
         </div>
 
         <div style={sectionStyle}>
@@ -252,7 +300,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
             <span style={labelStyle}>I will work on</span>
             <span style={sourceStyle}>auto-filled from today</span>
           </div>
-          <CardList cards={workingOnCards} setCards={setWorkingOnCards} />
+          <CardList cards={workingOnCards} setCards={setWorkingOnCards} onCheckedCardsChange={setCheckedWorkingOn} />
         </div>
 
         <div style={sectionStyle}>
