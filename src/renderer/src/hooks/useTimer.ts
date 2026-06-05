@@ -10,7 +10,7 @@ interface UseTimerResult {
   stop: () => Promise<{ id: number; ms: number } | null>
 }
 
-export function useTimer(): UseTimerResult {
+export function useTimer({ reload }: { reload: () => Promise<void> }): UseTimerResult {
   const ltt = useLtt()
   const [timerState, setTimerState] = useState<TimerState | null>(null)
   const [elapsed, setElapsed] = useState(0)
@@ -61,11 +61,10 @@ export function useTimer(): UseTimerResult {
   }, [ltt, refreshState, timerState])
 
   const pause = useCallback(async () => {
-    console.log('[useTimer] ltt exists:', !!ltt, 'pauseTimer:', typeof ltt.pauseTimer)
-    console.log('[useTimer] calling pauseTimer')
     await ltt.pauseTimer()
     await refreshState()
-  }, [ltt, refreshState])
+    await reload()
+  }, [ltt, refreshState, reload])
 
   const stop = useCallback(async (): Promise<{ id: number; ms: number } | null> => {
     const result = await ltt.stopTimer()
