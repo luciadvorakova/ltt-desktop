@@ -323,9 +323,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     await reload()
   }
   const handlePause = async () => {
-    const currentMs = timerState ? (timerState.running ? timerState.baseMs + elapsed : timerState.baseMs) : 0
     await pause()
-    if (timerState?.activeEntryId) patchEntry(timerState.activeEntryId, currentMs)
   }
   const modifyFavourites = async (fn: (current: NonNullable<typeof settings>['jiraFavourites']) => NonNullable<typeof settings>['jiraFavourites'], label?: string) => {
     console.log('[FAV] called, label:', label)
