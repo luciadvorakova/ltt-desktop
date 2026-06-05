@@ -61,8 +61,10 @@ export function useTimer({ reload }: { reload: () => Promise<void> }): UseTimerR
   }, [ltt, refreshState, timerState])
 
   const pause = useCallback(async () => {
+    console.log('[useTimer] reload fn:', typeof reload)
     await ltt.pauseTimer()
     await refreshState()
+    console.log('[useTimer] pause: calling reload')
     await reload()
   }, [ltt, refreshState, reload])
 
