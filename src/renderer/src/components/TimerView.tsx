@@ -841,13 +841,23 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 onMouseDown={e => e.stopPropagation()}
                 contentEditable
                 suppressContentEditableWarning
-                onFocus={() => setEditingDescId(entry.id)}
-                onBlur={async (e) => {
-                  const text = e.currentTarget.textContent?.trim() ?? ''
-                  await updateEntry({ ...entry, jiraDesc: text })
-                  setEditingDescId(null)
+                ref={el => {
+                  // Only set content when not editing — never overwrite user's in-progress input
+                  if (el && editingDescId !== entry.id) {
+                    el.textContent = entry.jiraDesc || ''
+                  }
                 }}
-                onKeyDown={(e) => { if (e.key === 'Escape') { (e.currentTarget as HTMLElement).blur() } }}
+                onFocus={e => {
+                  setEditingDescId(entry.id)
+                  // Show placeholder-style empty content on focus if empty
+                  if (!e.currentTarget.textContent) e.currentTarget.textContent = ''
+                }}
+                onBlur={e => {
+                  const text = e.currentTarget.textContent ?? ''
+                  setEditingDescId(null)
+                  if (text !== (entry.jiraDesc ?? '')) updateEntry({ ...entry, jiraDesc: text })
+                }}
+                onKeyDown={e => { if (e.key === 'Escape') (e.currentTarget as HTMLElement).blur() }}
                 style={{
                   fontSize: 10,
                   color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
@@ -860,9 +870,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   whiteSpace: 'nowrap',
                   minHeight: '1.2em',
                 }}
-              >
-                {editingDescId === entry.id ? entry.jiraDesc : (entry.jiraDesc || 'Add description...')}
-              </div>
+              />
 
               {/* Row 3: pills */}
               {(entry.clientName || entry.jiraKey) && (
