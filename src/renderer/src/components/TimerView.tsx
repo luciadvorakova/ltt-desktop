@@ -260,7 +260,7 @@ const formatMsHHMM = (ms: number): string => {
 export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { standupOpen?: boolean; onStandupClose?: () => void } = {}) {
   const ltt = useLtt()
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
-  const { timerState, elapsed, start, pause } = useTimer({ reload })
+  const { timerState, elapsed, start, pause } = useTimer({ patchEntry })
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [standupOpenInternal, setStandupOpenInternal] = useState(false)
