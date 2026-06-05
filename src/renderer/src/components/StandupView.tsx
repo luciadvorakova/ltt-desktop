@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useLtt } from '../hooks/useLtt'
 import { useSettings } from '../hooks/useSettings'
 import type { TimeEntry } from '../../../types/index'
@@ -19,6 +19,121 @@ function getPreviousRange(): { start: number; end: number } {
     start.setDate(today.getDate() - 1) // any other day → yesterday
   }
   return { start: start.getTime(), end: today.getTime() }
+}
+
+function StandupCard({ text, onChange, onRemove, onDragStart, onDragOver, onDrop, dragOver, autoFocus }: {
+  text: string
+  onChange: (text: string) => void
+  onRemove: () => void
+  onDragStart: () => void
+  onDragOver: (e: React.DragEvent) => void
+  onDrop: () => void
+  dragOver: boolean
+  autoFocus?: boolean
+}) {
+  const spanRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (autoFocus && spanRef.current) {
+      spanRef.current.focus()
+      const range = document.createRange()
+      range.selectNodeContents(spanRef.current)
+      range.collapse(false)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+    }
+  }, [autoFocus])
+
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        background: 'rgba(255,255,255,0.07)',
+        border: dragOver ? '1px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
+        borderTop: dragOver ? '2px solid rgba(100,160,255,0.6)' : undefined,
+        borderRadius: 8, padding: '6px 8px', marginBottom: 4,
+      }}
+    >
+      <span
+        style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', cursor: 'grab', flexShrink: 0, lineHeight: 1 }}
+        draggable={false}
+      >
+        ⠿
+      </span>
+      <span
+        ref={spanRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={e => onChange((e.target as HTMLSpanElement).textContent ?? '')}
+        style={{ fontSize: 11, color: 'rgba(255,255,255,0.82)', flex: 1, outline: 'none' }}
+      >
+        {text}
+      </span>
+      <button
+        onClick={onRemove}
+        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 12, padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
+function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: string[]) => string[]) => void }) {
+  const dragIndexRef = useRef<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [autoFocusIndex, setAutoFocusIndex] = useState<number | null>(null)
+
+  const handleDrop = (toIndex: number) => {
+    const fromIndex = dragIndexRef.current
+    if (fromIndex === null || fromIndex === toIndex) { setDragOverIndex(null); return }
+    setCards(prev => {
+      const next = [...prev]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      return next
+    })
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
+  return (
+    <div>
+      {cards.map((text, i) => (
+        <StandupCard
+          key={i}
+          text={text}
+          autoFocus={autoFocusIndex === i}
+          onChange={val => setCards(prev => prev.map((c, j) => j === i ? val : c))}
+          onRemove={() => { setCards(prev => prev.filter((_, j) => j !== i)); setAutoFocusIndex(null) }}
+          onDragStart={() => { dragIndexRef.current = i; setDragOverIndex(null) }}
+          onDragOver={e => { e.preventDefault(); setDragOverIndex(i) }}
+          onDrop={() => handleDrop(i)}
+          dragOver={dragOverIndex === i}
+        />
+      ))}
+      <div
+        onClick={() => {
+          setCards(prev => [...prev, ''])
+          setAutoFocusIndex(cards.length)
+        }}
+        style={{
+          border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 8px',
+          background: 'rgba(255,255,255,0.04)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          fontSize: 10, color: 'rgba(255,255,255,0.25)',
+        }}
+      >
+        <span style={{ fontSize: 13, lineHeight: 1 }}>+</span>
+        <span>Add task</span>
+      </div>
+    </div>
+  )
 }
 
 export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack: () => void }) {
@@ -42,15 +157,17 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     return true
   })
 
-  const [accomplished, setAccomplished] = useState(() => previousEntries.map(formatEntry).join('\n'))
-  const [workingOn, setWorkingOn]       = useState(() => todayEntries.map(formatEntry).join('\n'))
-  const [problems, setProblems]         = useState('')
-  const [share, setShare]               = useState('')
-  const [sending, setSending]           = useState(false)
+  const [accomplishedCards, setAccomplishedCards] = useState<string[]>(() => previousEntries.map(formatEntry))
+  const [workingOnCards, setWorkingOnCards]       = useState<string[]>(() => todayEntries.map(formatEntry))
+  const [problems, setProblems]                   = useState('')
+  const [share, setShare]                         = useState('')
+  const [sending, setSending]                     = useState(false)
 
   const handleSend = async () => {
     if (sending) return
     setSending(true)
+    const accomplished = accomplishedCards.filter(Boolean).join('\n')
+    const workingOn = workingOnCards.filter(Boolean).join('\n')
     const result = await ltt.slackSendStandup({ channel, userId, accomplished, workingOn, problems, share })
     if (!result.success) console.error('[standup] send failed:', result.error)
     setSending(false)
@@ -121,13 +238,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
             <span style={labelStyle}>I accomplished</span>
             <span style={sourceStyle}>auto-filled from {new Date().getDay() === 1 ? 'friday' : 'yesterday'}</span>
           </div>
-          <textarea
-            className="standup-ta"
-            rows={4}
-            value={accomplished}
-            onChange={e => setAccomplished(e.target.value)}
-            style={taStyle}
-          />
+          <CardList cards={accomplishedCards} setCards={setAccomplishedCards} />
         </div>
 
         <div style={sectionStyle}>
@@ -136,13 +247,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
             <span style={labelStyle}>I will work on</span>
             <span style={sourceStyle}>auto-filled from today</span>
           </div>
-          <textarea
-            className="standup-ta"
-            rows={3}
-            value={workingOn}
-            onChange={e => setWorkingOn(e.target.value)}
-            style={taStyle}
-          />
+          <CardList cards={workingOnCards} setCards={setWorkingOnCards} />
         </div>
 
         <div style={sectionStyle}>
