@@ -264,7 +264,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [standupOpenInternal, setStandupOpenInternal] = useState(false)
-  const standupOpen = standupOpenProp ?? standupOpenInternal
+  const standupOpen = standupOpenProp === true ? true : standupOpenInternal
   const setStandupOpen = (v: boolean) => { setStandupOpenInternal(v); if (!v) onStandupClose?.() }
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
