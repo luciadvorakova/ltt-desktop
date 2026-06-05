@@ -124,6 +124,11 @@ export function BulkSendView({
         <div
           contentEditable
           suppressContentEditableWarning
+          ref={el => {
+            if (el && editingDescId !== entry.id) {
+              el.textContent = desc || ''
+            }
+          }}
           onFocus={() => setEditingDescId(entry.id)}
           onBlur={e => {
             const text = e.currentTarget.textContent?.trim() ?? ''
@@ -136,9 +141,7 @@ export function BulkSendView({
             color: desc || editingDescId === entry.id ? 'rgba(255,255,255,0.35)' : 'rgba(255,110,110,0.5)',
             fontStyle: !desc && editingDescId !== entry.id ? 'italic' : 'normal',
           }}
-        >
-          {editingDescId === entry.id ? desc : (desc || 'Add description...')}
-        </div>
+        />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingLeft: 23 }}>
           <span style={{

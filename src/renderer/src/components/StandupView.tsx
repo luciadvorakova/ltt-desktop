@@ -75,14 +75,17 @@ function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOve
         {checked && <span style={{ fontSize: 9, fontWeight: 700, color: '#7fd89a', lineHeight: 1 }}>✓</span>}
       </div>
       <span
-        ref={spanRef}
+        ref={el => {
+          (spanRef as React.MutableRefObject<HTMLSpanElement | null>).current = el
+          if (el && document.activeElement !== el) {
+            el.textContent = text
+          }
+        }}
         contentEditable
         suppressContentEditableWarning
         onInput={e => onChange((e.target as HTMLSpanElement).textContent ?? '')}
         style={{ fontSize: 11, color: checked ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.45)', flex: 1, outline: 'none' }}
-      >
-        {text}
-      </span>
+      />
     </div>
   )
 }
