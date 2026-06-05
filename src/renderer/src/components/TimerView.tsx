@@ -349,29 +349,46 @@ export function TimerView() {
 
   console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
 
+  const entryIds = entries.map(e => e.id).join(',')
   useEffect(() => {
     setOrderedEntries(
       [...todayEntries].sort((a, b) => {
         if (!a.jiraSent && b.jiraSent) return -1
         if (a.jiraSent && !b.jiraSent) return 1
-        if (a.sortOrder !== undefined && b.sortOrder !== undefined) return a.sortOrder - b.sortOrder
-        if (a.sortOrder !== undefined) return -1
-        if (b.sortOrder !== undefined) return 1
+        const aOrder = a.sortOrder ?? Infinity
+        const bOrder = b.sortOrder ?? Infinity
+        if (aOrder !== bOrder) return aOrder - bOrder
         return b.ts - a.ts
       })
     )
-  }, [entries])
+  }, [entryIds])
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
     const from = orderedEntries.findIndex(e => e.id === fromId)
     const to = orderedEntries.findIndex(e => e.id === toId)
     if (from === -1 || to === -1) return
+
+    // Build new order first
     const next = [...orderedEntries]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
     setOrderedEntries(next)
-    await Promise.all(next.map((e, i) => updateEntry({ ...e, sortOrder: i, updatedAt: new Date().toISOString() })))
+
+    // Compute midpoint sortOrder for the moved entry only
+    const idx = to < from ? to : next.indexOf(moved)
+    const above = next[idx - 1]
+    const below = next[idx + 1]
+    let newSortOrder: number
+    if (!above) {
+      newSortOrder = (below?.sortOrder ?? 0) - 1000
+    } else if (!below) {
+      newSortOrder = (above?.sortOrder ?? 0) + 1000
+    } else {
+      newSortOrder = ((above.sortOrder ?? 0) + (below.sortOrder ?? 0)) / 2
+    }
+
+    await updateEntry({ ...moved, sortOrder: newSortOrder, updatedAt: new Date().toISOString() })
   }
 
   const activeId = timerState?.activeEntryId ?? null

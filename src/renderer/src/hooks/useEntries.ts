@@ -39,12 +39,17 @@ export function useEntries(): UseEntriesResult {
   }, [ltt, reload])
 
   const addEntry = useCallback(async (entry: TimeEntry) => {
-    await ltt.saveEntry(entry)
     setEntries((prev) => {
-      const idx = prev.findIndex((e) => e.id === entry.id)
+      const unsentOrders = prev
+        .filter(e => !e.jiraSent && e.sortOrder !== undefined)
+        .map(e => e.sortOrder as number)
+      const lowestOrder = unsentOrders.length > 0 ? Math.min(...unsentOrders) : 1000
+      const withOrder: TimeEntry = { ...entry, sortOrder: lowestOrder - 1000 }
+      ltt.saveEntry(withOrder)
+      const idx = prev.findIndex((e) => e.id === withOrder.id)
       return idx > -1
-        ? prev.map((e) => (e.id === entry.id ? entry : e))
-        : [entry, ...prev]
+        ? prev.map((e) => (e.id === withOrder.id ? withOrder : e))
+        : [withOrder, ...prev]
     })
   }, [ltt])
 
