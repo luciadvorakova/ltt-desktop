@@ -87,9 +87,14 @@ export function useEntries(): UseEntriesResult {
   }, [ltt])
 
   const patchEntry = useCallback((id: number, ms?: number, clientName?: string) => {
+    console.log('[PATCH] id:', id, 'ms:', ms)
     setEntries((prev) => prev.map((e) => {
       if (Number(e.id) !== Number(id)) return e
-      return { ...e, ...(ms !== undefined ? { ms } : {}), ...(clientName !== undefined ? { clientName } : {}) }
+      return {
+        ...e,
+        ...(ms !== undefined ? { ms, updatedAt: new Date().toISOString() } : {}),
+        ...(clientName !== undefined ? { clientName } : {}),
+      }
     }))
   }, [])
 
