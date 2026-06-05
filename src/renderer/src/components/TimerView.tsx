@@ -352,19 +352,26 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
 
-  const entryIds = entries.map(e => e.id).join(',')
+
   useEffect(() => {
-    setOrderedEntries(
-      [...todayEntries].sort((a, b) => {
-        if (!a.jiraSent && b.jiraSent) return -1
-        if (a.jiraSent && !b.jiraSent) return 1
-        const aOrder = a.sortOrder ?? Infinity
-        const bOrder = b.sortOrder ?? Infinity
-        if (aOrder !== bOrder) return aOrder - bOrder
-        return b.ts - a.ts
-      })
-    )
-  }, [entryIds])
+    setOrderedEntries(prev => {
+      if (prev.length === 0) {
+        return [...todayEntries].sort((a, b) => {
+          if (!a.jiraSent && b.jiraSent) return -1
+          if (a.jiraSent && !b.jiraSent) return 1
+          const aOrder = a.sortOrder ?? Infinity
+          const bOrder = b.sortOrder ?? Infinity
+          if (aOrder !== bOrder) return aOrder - bOrder
+          return b.ts - a.ts
+        })
+      }
+      const updated = prev
+        .map(e => entries.find(x => x.id === e.id) ?? e)
+        .filter(e => todayEntries.some(t => t.id === e.id))
+      const newEntries = todayEntries.filter(t => !prev.some(e => e.id === t.id))
+      return [...newEntries, ...updated]
+    })
+  }, [entries])
 
   useEffect(() => {
     console.log('[SYNC] running, entries count:', entries.length)
