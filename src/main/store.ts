@@ -6,7 +6,7 @@ interface StoreSchema {
   settings: UserSettings | null
   timerState: TimerState | null
   deletedIds: number[]
-  deletedEntryNames: string[]
+  deletedEntryNames: { name: string; date: string }[]
   jiraAccessToken: string | null
   jiraRefreshToken: string | null
   jiraExpiresAt: number | null

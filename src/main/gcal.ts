@@ -61,7 +61,9 @@ export async function syncGoogleCalendar(): Promise<boolean> {
 
     const data = await res.json() as { items?: GCalEvent[] }
     const events = data.items ?? []
-    const deletedNames = new Set(store.get('deletedEntryNames') ?? [])
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const deletedEntries: { name: string; date: string }[] = store.get('deletedEntryNames') ?? []
+    const deletedNames = new Set(deletedEntries.filter(e => e.date === todayStr).map(e => e.name))
     let created = 0
 
     for (const event of events) {

@@ -57,9 +57,10 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     const idx = currentEntries.findIndex((e) => e.id === id)
     if (idx > -1) {
       const deleted = currentEntries[idx]
+      const todayStr = new Date().toISOString().slice(0, 10)
       const namesToRecord = [deleted.name, deleted.jiraDesc].filter(Boolean) as string[]
-      const existing = store.get('deletedEntryNames') ?? []
-      const next = [...new Set([...existing, ...namesToRecord])]
+      const existing: { name: string; date: string }[] = store.get('deletedEntryNames') ?? []
+      const next = [...existing, ...namesToRecord.map(name => ({ name, date: todayStr }))]
       store.set('deletedEntryNames', next)
       currentEntries.splice(idx, 1)
     }
