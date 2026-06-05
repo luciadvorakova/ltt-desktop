@@ -24,7 +24,14 @@ export function useEntries(): UseEntriesResult {
     const loaded = await ltt.loadEntries(userId)
     const deletedIds = await ltt.getDeletedIds()
     console.log('[useEntries] loaded:', loaded.length, 'deletedIds:', deletedIds.length)
-    setEntries(loaded.filter(e => !deletedIds.includes(e.id)))
+    const filtered = loaded.filter(e => !deletedIds.includes(e.id))
+    setEntries(prev => filtered.map(remote => {
+      const local = prev.find(e => e.id === remote.id)
+      if (local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt) {
+        return local
+      }
+      return remote
+    }))
   }, [ltt])
 
   // Load on mount
