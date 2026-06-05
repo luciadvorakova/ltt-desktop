@@ -369,13 +369,14 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   }, [entryIds])
 
   useEffect(() => {
+    console.log('[SYNC] running, entries count:', entries.length)
     for (const [id, el] of descRefs.current) {
       if (id === editingDescId) continue
       const entry = entriesRef.current.find(e => e.id === id)
       const expected = entry?.jiraDesc ?? ''
       if (el.textContent !== expected) el.textContent = expected
     }
-  })
+  }, [entries, editingDescId])
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
