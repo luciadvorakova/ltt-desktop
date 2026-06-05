@@ -63,10 +63,10 @@ export function useTimer({ patchEntry }: { patchEntry: (id: number, ms?: number)
   const pause = useCallback(async () => {
     await ltt.pauseTimer()
     const state = await ltt.getTimerState()
+    await refreshState()
     if (state && !state.running && state.activeEntryId !== null) {
       patchEntry(state.activeEntryId, state.baseMs)
     }
-    await refreshState()
   }, [ltt, refreshState, patchEntry])
 
   const stop = useCallback(async (): Promise<{ id: number; ms: number } | null> => {
