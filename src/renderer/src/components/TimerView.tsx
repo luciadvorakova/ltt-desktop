@@ -249,13 +249,12 @@ const formatMs = (ms: number): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-const formatMsShort = (ms: number): string => {
-  const totalMins = Math.floor(ms / 60000)
-  const h = Math.floor(totalMins / 60)
-  const m = totalMins % 60
-  if (h === 0) return `${m}m`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}m`
+
+const formatMsHHMM = (ms: number): string => {
+  const totalMinutes = Math.floor(ms / 60000)
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 export function TimerView() {
@@ -788,7 +787,7 @@ export function TimerView() {
                   fontVariantNumeric: 'tabular-nums',
                   letterSpacing: '0.02em',
                 }}>
-                  {formatMs(displayMs)}
+                  {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
                 </span>
 
                 <span draggable={false} onMouseDown={e => e.stopPropagation()}>
@@ -936,7 +935,7 @@ export function TimerView() {
             color: 'white',
             fontVariantNumeric: 'tabular-nums',
           }}>
-            {formatMsShort(totalMs)}
+            {formatMsHHMM(totalMs)}
           </span>
         </div>
       </div>
