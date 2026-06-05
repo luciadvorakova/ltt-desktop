@@ -41,8 +41,9 @@ interface LttAPI {
   gcalSync:   () => Promise<{ success: boolean; error?: string }>
 
   // APP
-  getDeletedIds: () => Promise<number[]>
-  addDeletedId:  (id: number) => Promise<void>
+  getDeletedIds:          () => Promise<number[]>
+  addDeletedId:           (id: number) => Promise<void>
+  clearDeletedEntryNames: () => Promise<void>
 
   // EVENTS
   on:  (channel: string, fn: (...args: unknown[]) => void) => void

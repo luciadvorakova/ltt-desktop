@@ -44,8 +44,9 @@ contextBridge.exposeInMainWorld('ltt', {
   gcalSync:   ()  => ipcRenderer.invoke('gcal:sync'),
 
   // ---- APP ----
-  getDeletedIds: ()                       => ipcRenderer.invoke('app:getDeletedIds'),
-  addDeletedId:  (id: number)             => ipcRenderer.invoke('app:addDeletedId', id),
+  getDeletedIds:          ()              => ipcRenderer.invoke('app:getDeletedIds'),
+  addDeletedId:           (id: number)   => ipcRenderer.invoke('app:addDeletedId', id),
+  clearDeletedEntryNames: ()             => ipcRenderer.invoke('app:clearDeletedEntryNames'),
 
   // ---- EVENTS (main → renderer) ----
   on:  (channel: string, fn: (...args: unknown[]) => void) =>

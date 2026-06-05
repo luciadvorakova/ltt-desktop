@@ -206,4 +206,8 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     const ids = store.get('deletedIds') ?? []
     if (!ids.includes(id)) store.set('deletedIds', [...ids, id])
   })
+
+  ipcMain.handle('app:clearDeletedEntryNames', () => {
+    store.set('deletedEntryNames', [])
+  })
 }
