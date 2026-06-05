@@ -77,7 +77,9 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
     e.stopPropagation()
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      setAbove(rect.bottom > window.innerHeight - 200)
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      setAbove(spaceBelow < 280 && spaceAbove > spaceBelow)
     }
     open ? onClose() : onOpen()
   }
