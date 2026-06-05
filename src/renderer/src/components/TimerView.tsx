@@ -842,22 +842,21 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 contentEditable
                 suppressContentEditableWarning
                 ref={el => {
-                  // Only set content when not editing — never overwrite user's in-progress input
                   if (el && editingDescId !== entry.id) {
-                    el.textContent = entry.jiraDesc || ''
+                    const current = entry.jiraDesc ?? ''
+                    if (el.textContent !== current) el.textContent = current
                   }
                 }}
-                onFocus={e => {
-                  setEditingDescId(entry.id)
-                  // Show placeholder-style empty content on focus if empty
-                  if (!e.currentTarget.textContent) e.currentTarget.textContent = ''
-                }}
+                onFocus={() => setEditingDescId(entry.id)}
                 onBlur={e => {
                   const text = e.currentTarget.textContent ?? ''
+                  if (text !== (entry.jiraDesc ?? '')) updateEntry({ ...entry, jiraDesc: text, updatedAt: new Date().toISOString() })
                   setEditingDescId(null)
-                  if (text !== (entry.jiraDesc ?? '')) updateEntry({ ...entry, jiraDesc: text })
                 }}
-                onKeyDown={e => { if (e.key === 'Escape') (e.currentTarget as HTMLElement).blur() }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur() }
+                  if (e.key === 'Escape') (e.currentTarget as HTMLElement).blur()
+                }}
                 style={{
                   fontSize: 10,
                   color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
