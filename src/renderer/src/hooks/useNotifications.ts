@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useLtt } from './useLtt'
 import { useSettings } from './useSettings'
 
@@ -23,15 +23,26 @@ export function useNotifications({
   const { settings, updateSetting } = useSettings()
   const [jiraConnected, setJiraConnected] = useState(true)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
+  const [standupDue, setStandupDue] = useState(false)
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
+  // Stable refs so callbacks never change identity
+  const updateSettingRef = useRef(updateSetting)
+  useEffect(() => { updateSettingRef.current = updateSetting }, [updateSetting])
+  const onJiraConnectRef = useRef(onJiraConnect)
+  useEffect(() => { onJiraConnectRef.current = onJiraConnect }, [onJiraConnect])
+  const onGcalConnectRef = useRef(onGcalConnect)
+  useEffect(() => { onGcalConnectRef.current = onGcalConnect }, [onGcalConnect])
+  const onOpenStandupRef = useRef(onOpenStandup)
+  useEffect(() => { onOpenStandupRef.current = onOpenStandup }, [onOpenStandup])
+
   const dismiss = useCallback((id: string) => {
     if (id === 'standup-not-sent') {
-      updateSetting('standupDismissedDate', todayStr)
+      updateSettingRef.current('standupDismissedDate', new Date().toISOString().slice(0, 10))
     }
     setDismissedIds(prev => new Set([...prev, id]))
-  }, [todayStr, updateSetting])
+  }, [])
 
   const checkJira = useCallback(async () => {
     const status = await ltt.jiraGetStatus()
@@ -52,53 +63,53 @@ export function useNotifications({
   }, [checkJira, ltt])
 
   // Standup time check — every minute
-  const [standupDue, setStandupDue] = useState(false)
+  const lastStandupDate = settings?.lastStandupDate
   useEffect(() => {
     const check = () => {
       const now = new Date()
       const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
-      const notSentToday = settings?.lastStandupDate !== todayStr
-      setStandupDue(afterCutoff && notSentToday)
+      const today = new Date().toISOString().slice(0, 10)
+      setStandupDue(afterCutoff && lastStandupDate !== today)
     }
     check()
     const interval = setInterval(check, 60_000)
     return () => clearInterval(interval)
-  }, [settings?.lastStandupDate, todayStr])
+  }, [lastStandupDate])
 
   const gcalConnected = !!settings?.gcalEmail
   const standupDismissed = settings?.standupDismissedDate === todayStr
 
-  const notifications: Notification[] = []
-
-  if (!jiraConnected && !dismissedIds.has('jira-disconnected')) {
-    notifications.push({
-      id: 'jira-disconnected',
-      title: 'Jira disconnected',
-      message: 'Reconnect to log time and search issues.',
-      actionLabel: 'Connect',
-      onAction: onJiraConnect,
-    })
-  }
-
-  if (!gcalConnected && !dismissedIds.has('gcal-disconnected')) {
-    notifications.push({
-      id: 'gcal-disconnected',
-      title: 'Google Calendar not connected',
-      message: 'Connect to import meetings as time entries.',
-      actionLabel: 'Connect',
-      onAction: onGcalConnect,
-    })
-  }
-
-  if (standupDue && !standupDismissed && !dismissedIds.has('standup-not-sent')) {
-    notifications.push({
-      id: 'standup-not-sent',
-      title: 'Standup not sent',
-      message: "It's past 10:30 AM — don't forget your standup.",
-      actionLabel: 'Open standup',
-      onAction: onOpenStandup,
-    })
-  }
+  const notifications = useMemo<Notification[]>(() => {
+    const result: Notification[] = []
+    if (!jiraConnected && !dismissedIds.has('jira-disconnected')) {
+      result.push({
+        id: 'jira-disconnected',
+        title: 'Jira disconnected',
+        message: 'Reconnect to log time and search issues.',
+        actionLabel: 'Connect',
+        onAction: () => onJiraConnectRef.current(),
+      })
+    }
+    if (!gcalConnected && !dismissedIds.has('gcal-disconnected')) {
+      result.push({
+        id: 'gcal-disconnected',
+        title: 'Google Calendar not connected',
+        message: 'Connect to import meetings as time entries.',
+        actionLabel: 'Connect',
+        onAction: () => onGcalConnectRef.current(),
+      })
+    }
+    if (standupDue && !standupDismissed && !dismissedIds.has('standup-not-sent')) {
+      result.push({
+        id: 'standup-not-sent',
+        title: 'Standup not sent',
+        message: "It's past 10:30 AM — don't forget your standup.",
+        actionLabel: 'Open standup',
+        onAction: () => onOpenStandupRef.current(),
+      })
+    }
+    return result
+  }, [jiraConnected, gcalConnected, standupDue, standupDismissed, dismissedIds])
 
   return { notifications, dismissNotification: dismiss, notificationCount: notifications.length }
 }
