@@ -220,7 +220,7 @@ export function SettingsView({
         {/* Sign out */}
         <button
           onClick={signOut}
-          style={{ fontSize: 11, padding: '6px 14px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontFamily: 'inherit', display: 'block', marginTop: 4 }}
+          style={{ fontSize: 9, padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'inherit', margin: '6px 14px' }}
         >
           Sign out
         </button>
