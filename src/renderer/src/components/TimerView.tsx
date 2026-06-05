@@ -851,7 +851,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 onBlur={e => {
                   const text = e.currentTarget.textContent ?? ''
                   if (text !== (entry.jiraDesc ?? '')) updateEntry({ ...entry, jiraDesc: text, updatedAt: new Date().toISOString() })
-                  setEditingDescId(null)
+                  setTimeout(() => setEditingDescId(null), 0)
                 }}
                 onKeyDown={e => {
                   if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur() }
