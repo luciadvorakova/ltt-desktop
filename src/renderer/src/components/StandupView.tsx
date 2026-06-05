@@ -3,6 +3,7 @@ import { useLtt } from '../hooks/useLtt'
 import { useSettings } from '../hooks/useSettings'
 import type { TimeEntry } from '../../../types/index'
 
+
 function formatEntry(e: TimeEntry): string {
   const prefix = e.clientName ?? (e.jiraKey ? (e.jiraSummary ?? e.name) : e.name)
   const desc = e.jiraDesc?.trim()
@@ -138,7 +139,7 @@ function CardList({ cards, setCards }: { cards: string[]; setCards: (fn: (prev: 
 
 export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack: () => void }) {
   const ltt = useLtt()
-  const { settings } = useSettings()
+  const { settings, updateSetting } = useSettings()
 
   const channel = settings?.slackChannel ?? ''
   const userId = settings?.slackUserId ?? ''
@@ -169,7 +170,11 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     const accomplished = accomplishedCards.filter(Boolean).join('\n')
     const workingOn = workingOnCards.filter(Boolean).join('\n')
     const result = await ltt.slackSendStandup({ channel, userId, accomplished, workingOn, problems, share })
-    if (!result.success) console.error('[standup] send failed:', result.error)
+    if (result.success) {
+      await updateSetting('lastStandupDate', new Date().toISOString().slice(0, 10))
+    } else {
+      console.error('[standup] send failed:', result.error)
+    }
     setSending(false)
     onBack()
   }

@@ -36,6 +36,8 @@ export interface UserSettings {
   manualTimerCleanup?: boolean
   jiraFavourites?: { jiraKey: string; jiraSummary?: string; clientName?: string }[]
   jiraRecent?: { jiraKey: string; jiraSummary?: string; clientName?: string }[]
+  lastStandupDate?: string
+  standupDismissedDate?: string
 }
 
 export interface TimerState {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { useLtt } from '../hooks/useLtt'
+import type { Notification } from '../hooks/useNotifications'
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
@@ -25,7 +26,17 @@ const disconnectBtnStyle: React.CSSProperties = { fontSize: 9, padding: '3px 8px
 const fieldLabelStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.32)', width: 56, flexShrink: 0 }
 const dividerStyle: React.CSSProperties = { height: 1, background: 'rgba(255,255,255,0.08)', margin: '6px 0' }
 
-export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
+export function SettingsView({
+  onClose,
+  notifications,
+  dismissNotification,
+  signOut,
+}: {
+  onClose: () => void
+  notifications: Notification[]
+  dismissNotification: (id: string) => void
+  signOut: () => Promise<void>
+}) {
   const { settings, updateSetting } = useSettings()
   const ltt = useLtt()
   const [slackChannel, setSlackChannel] = useState('')
@@ -60,7 +71,13 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '7px 14px', minHeight: 34, borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+      <div
+        onClick={onClose}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', minHeight: 34, borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0, cursor: 'pointer' }}
+      >
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+          ‹ Timer
+        </span>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
           Settings
         </span>
@@ -68,6 +85,35 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
+
+        {/* NOTIFICATIONS */}
+        {notifications.length > 0 && (
+          <>
+            <div style={sectionLabelStyle}>Notifications</div>
+            {notifications.map(n => (
+              <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 14px' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: n.id === 'standup-not-sent' ? '#e0a052' : '#e05252', flexShrink: 0, marginTop: 4 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={rowLabelStyle}>{n.title}</div>
+                  <div style={rowSubStyle}>{n.message}</div>
+                </div>
+                <button
+                  style={connectBtnStyle}
+                  onClick={() => { n.onAction(); if (n.id === 'standup-not-sent') onClose() }}
+                >
+                  {n.actionLabel}
+                </button>
+                <button
+                  style={disconnectBtnStyle}
+                  onClick={() => dismissNotification(n.id)}
+                >
+                  Dismiss
+                </button>
+              </div>
+            ))}
+            <div style={dividerStyle} />
+          </>
+        )}
 
         {/* CONNECTIONS */}
         <div style={sectionLabelStyle}>Connections</div>
@@ -88,7 +134,7 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Google Calendar — last row in section, no border */}
+        {/* Google Calendar */}
         <div style={rowStyle}>
           <div style={{ flex: 1 }}>
             <div style={rowLabelStyle}>Google Calendar</div>
@@ -127,7 +173,6 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
         {/* SLACK STANDUP */}
         <div style={sectionLabelStyle}>Slack standup</div>
 
-        {/* Channel */}
         <div style={rowStyle}>
           <span style={fieldLabelStyle}>Channel</span>
           <input
@@ -140,7 +185,6 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
           <button style={saveBtnStyle} onClick={() => updateSetting('slackChannel', slackChannel)}>Save</button>
         </div>
 
-        {/* Member ID — last row in section, no border */}
         <div style={rowStyle}>
           <span style={fieldLabelStyle}>Member ID</span>
           <input
@@ -172,6 +216,14 @@ export function SettingsView({ onClose: _onClose }: { onClose: () => void }) {
             onToggle={() => updateSetting('manualTimerCleanup', !(settings?.manualTimerCleanup ?? false))}
           />
         </div>
+
+        {/* Sign out */}
+        <button
+          onClick={signOut}
+          style={{ fontSize: 11, padding: '6px 14px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontFamily: 'inherit', display: 'block', marginTop: 4 }}
+        >
+          Sign out
+        </button>
 
       </div>
     </div>

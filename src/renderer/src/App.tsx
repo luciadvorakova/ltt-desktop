@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
+import { useNotifications } from './hooks/useNotifications'
+import { useLtt } from './hooks/useLtt'
 import { TimerView } from './components/TimerView'
 import { HistoryView } from './components/HistoryView'
 import { WeeklyView } from './components/WeeklyView'
@@ -35,25 +37,20 @@ function getUserInfo(accessToken: string): { name: string; email: string } {
 }
 
 function AppShell({ session, signOut }: { session: Session; signOut: () => Promise<void> }) {
+  const ltt = useLtt()
   const [tab, setTab] = useState<Tab>('timer')
   const [timerResetKey, setTimerResetKey] = useState(0)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [standupOpen, setStandupOpen] = useState(false)
 
   const initials = getInitials(session.access_token)
-  const { name, email } = getUserInfo(session.access_token)
+  const { name: _name, email: _email } = getUserInfo(session.access_token)
 
-  useEffect(() => {
-    if (!dropdownOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [dropdownOpen])
+  const { notifications, dismissNotification, notificationCount } = useNotifications({
+    onJiraConnect: () => ltt.jiraSignIn(),
+    onGcalConnect: () => ltt.gcalSignIn(),
+    onOpenStandup: () => { setSettingsOpen(false); setStandupOpen(true) },
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative' }}>
@@ -90,10 +87,10 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
           ))}
         </div>
 
-        {/* Avatar + dropdown */}
-        <div style={{ position: 'relative' }} ref={dropdownRef}>
+        {/* Avatar with notification badge */}
+        <div style={{ position: 'relative' }}>
           <button
-            onClick={() => setDropdownOpen((v) => !v)}
+            onClick={() => setSettingsOpen(true)}
             style={{
               width: 24,
               height: 24,
@@ -113,42 +110,25 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
           >
             {initials}
           </button>
-
-          {dropdownOpen && (
+          {notificationCount > 0 && (
             <div style={{
               position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              background: 'linear-gradient(145deg, #1e1850, #0e1830)',
-              border: '1px solid rgba(255,255,255,0.14)',
-              borderRadius: 12,
-              minWidth: 190,
-              boxShadow: '0 8px 28px rgba(0,0,0,0.6)',
-              zIndex: 1000,
-              overflow: 'hidden',
+              top: -3,
+              right: -3,
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              background: '#e05252',
+              border: '2px solid #0e1830',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 7,
+              fontWeight: 700,
+              color: 'white',
+              pointerEvents: 'none',
             }}>
-              {/* User info header */}
-              <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'white' }}>{name}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{email}</div>
-              </div>
-              {/* Menu items */}
-              <div style={{ padding: '4px 0' }}>
-                <button
-                  onClick={() => { setDropdownOpen(false); setSettingsOpen(true) }}
-                  style={menuItemStyle}
-                >
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center' }}>⚙</span>
-                  Settings
-                </button>
-                <button
-                  onClick={async () => { setDropdownOpen(false); await signOut() }}
-                  style={menuItemStyle}
-                >
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center' }}>↪</span>
-                  Sign out
-                </button>
-              </div>
+              {notificationCount}
             </div>
           )}
         </div>
@@ -156,28 +136,20 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {tab === 'timer' && <TimerView key={timerResetKey} />}
+        {tab === 'timer' && <TimerView key={timerResetKey} standupOpen={standupOpen} onStandupClose={() => setStandupOpen(false)} />}
         {tab === 'history' && <HistoryView />}
         {tab === 'weekly' && <WeeklyView />}
-        {settingsOpen && <SettingsView onClose={() => setSettingsOpen(false)} />}
+        {settingsOpen && (
+          <SettingsView
+            onClose={() => setSettingsOpen(false)}
+            notifications={notifications}
+            dismissNotification={dismissNotification}
+            signOut={signOut}
+          />
+        )}
       </div>
     </div>
   )
-}
-
-const menuItemStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  width: '100%',
-  textAlign: 'left',
-  padding: '8px 14px',
-  background: 'none',
-  border: 'none',
-  color: 'rgba(255,255,255,0.7)',
-  fontSize: 12,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
 }
 
 export default function App() {

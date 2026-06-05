@@ -257,13 +257,15 @@ const formatMsHHMM = (ms: number): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-export function TimerView() {
+export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { standupOpen?: boolean; onStandupClose?: () => void } = {}) {
   const ltt = useLtt()
   const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer()
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
-  const [standupOpen, setStandupOpen] = useState(false)
+  const [standupOpenInternal, setStandupOpenInternal] = useState(false)
+  const standupOpen = standupOpenProp ?? standupOpenInternal
+  const setStandupOpen = (v: boolean) => { setStandupOpenInternal(v); if (!v) onStandupClose?.() }
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const [addMode, setAddMode] = useState<'jira' | 'manual' | 'recent'>('jira')
   const [manualInput, setManualInput] = useState('')
