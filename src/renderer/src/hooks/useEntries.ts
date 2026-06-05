@@ -25,11 +25,12 @@ export function useEntries(): UseEntriesResult {
     const deletedIds = await ltt.getDeletedIds()
     console.log('[useEntries] loaded:', loaded.length, 'deletedIds:', deletedIds.length)
     const filtered = loaded.filter(e => !deletedIds.includes(e.id))
+    console.log('[RELOAD] about to overwrite entries, count:', filtered.length)
     setEntries(prev => filtered.map(remote => {
       const local = prev.find(e => e.id === remote.id)
-      if (local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt) {
-        return local
-      }
+      const keepLocal = !!(local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt)
+      console.log('[RELOAD] merging, local jiraDesc:', local?.jiraDesc, 'remote jiraDesc:', remote.jiraDesc, 'keeping local:', keepLocal)
+      if (keepLocal) return local!
       return remote
     }))
   }, [ltt])
@@ -62,7 +63,7 @@ export function useEntries(): UseEntriesResult {
 
   const updateEntry = useCallback(async (entry: TimeEntry) => {
     console.log('[UPDATE_ENTRY] called, id:', entry.id, 'ms:', entry.ms)
-    console.log('[UPDATE_ENTRY] about to call ltt.saveEntry, entry keys:', Object.keys(entry))
+    console.log('[UPDATE] setting jiraDesc:', entry.jiraDesc, 'for id:', entry.id)
     try {
       const result = await window.ltt.saveEntry(entry)
       console.log('[UPDATE_ENTRY] direct saveEntry result:', result)
@@ -71,6 +72,7 @@ export function useEntries(): UseEntriesResult {
     }
     setEntries(prev => {
       const next = prev.map(e => Number(e.id) === Number(entry.id) ? { ...entry } : e)
+      console.log('[UPDATE] after setEntries, jiraDesc for', entry.id, ':', next.find(e => e.id === entry.id)?.jiraDesc)
       return [...next]
     })
   }, [ltt])

@@ -279,6 +279,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const jiraProjectsRef = useRef<Map<string, string>>(new Map())
   const dragIdRef = useRef<number | null>(null)
   const dragOverIdRef = useRef<number | null>(null)
+  const descRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [dragOverId, setDragOverId] = useState<number | null>(null)
   const [orderedEntries, setOrderedEntries] = useState<TimeEntry[]>([])
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
@@ -364,6 +365,15 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       })
     )
   }, [entryIds])
+
+  useEffect(() => {
+    for (const [id, el] of descRefs.current) {
+      if (id === editingDescId) continue
+      const entry = entries.find(e => e.id === id)
+      const expected = entry?.jiraDesc ?? ''
+      if (el.textContent !== expected) el.textContent = expected
+    }
+  })
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
@@ -842,10 +852,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 contentEditable
                 suppressContentEditableWarning
                 ref={el => {
-                  if (el && editingDescId !== entry.id) {
-                    const current = entry.jiraDesc ?? ''
-                    if (el.textContent !== current) el.textContent = current
-                  }
+                  if (el) descRefs.current.set(entry.id, el as HTMLDivElement)
+                  else descRefs.current.delete(entry.id)
                 }}
                 onFocus={() => setEditingDescId(entry.id)}
                 onBlur={e => {
