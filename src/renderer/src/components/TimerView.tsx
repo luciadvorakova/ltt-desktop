@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useTimer } from '../hooks/useTimer'
 import { useSettings } from '../hooks/useSettings'
@@ -283,7 +283,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const entriesRef = useRef(entries)
   useEffect(() => { entriesRef.current = entries }, [entries])
   const [dragOverId, setDragOverId] = useState<number | null>(null)
-  const [orderedEntries, setOrderedEntries] = useState<TimeEntry[]>([])
+  const [dragOrderedEntries, setDragOrderedEntries] = useState<TimeEntry[] | null>(null)
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -352,38 +352,17 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
 
-
-  useEffect(() => {
-    if (entries.length === 0) return
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-    const freshTodayIds = new Set(
-      entries
-        .filter(e => {
-          if (e.removedFromTimer) return false
-          if (e.jiraSent) return (settings?.manualTimerCleanup || e.ts >= todayStart.getTime())
-          return true
-        })
-        .map(e => e.id)
-    )
-
-    setOrderedEntries(prev => {
-      if (prev.length === 0) {
-        return [...entries].filter(e => freshTodayIds.has(e.id)).sort((a, b) => {
-          if (!a.jiraSent && b.jiraSent) return -1
-          if (a.jiraSent && !b.jiraSent) return 1
-          const aOrder = a.sortOrder ?? Infinity
-          const bOrder = b.sortOrder ?? Infinity
-          if (aOrder !== bOrder) return aOrder - bOrder
-          return b.ts - a.ts
-        })
-      }
-      const updated = prev
-        .map(e => entries.find(x => x.id === e.id) ?? e)
-        .filter(e => freshTodayIds.has(e.id))
-      const newEntries = entries.filter(e => freshTodayIds.has(e.id) && !prev.some(p => p.id === e.id))
-      return [...newEntries, ...updated]
+  const orderedEntries = useMemo(() => {
+    const sorted = [...todayEntries].sort((a, b) => {
+      if (!a.jiraSent && b.jiraSent) return -1
+      if (a.jiraSent && !b.jiraSent) return 1
+      const aOrder = a.sortOrder ?? Infinity
+      const bOrder = b.sortOrder ?? Infinity
+      if (aOrder !== bOrder) return aOrder - bOrder
+      return b.ts - a.ts
     })
-  }, [entries, settings?.manualTimerCleanup])
+    return sorted
+  }, [todayEntries])
 
   useEffect(() => {
     console.log('[SYNC] running, entries count:', entries.length)
@@ -397,18 +376,18 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
-    const from = orderedEntries.findIndex(e => e.id === fromId)
-    const to = orderedEntries.findIndex(e => e.id === toId)
+    const base = dragOrderedEntries ?? orderedEntries
+    const from = base.findIndex(e => e.id === fromId)
+    const to = base.findIndex(e => e.id === toId)
     if (from === -1 || to === -1) return
 
-    // Build new order first
-    const next = [...orderedEntries]
+    const next = [...base]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
-    setOrderedEntries(next)
+    setDragOrderedEntries(next)
 
     // Compute midpoint sortOrder for the moved entry only
-    const idx = to < from ? to : next.indexOf(moved)
+    const idx = next.indexOf(moved)
     const above = next[idx - 1]
     const below = next[idx + 1]
     let newSortOrder: number
@@ -421,6 +400,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     }
 
     await updateEntry({ ...moved, sortOrder: newSortOrder, updatedAt: new Date().toISOString() })
+    setDragOrderedEntries(null)
   }
 
   const activeId = timerState?.activeEntryId ?? null
@@ -756,7 +736,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             No entries today
           </div>
         )}
-        {orderedEntries.map((entry) => {
+        {(dragOrderedEntries ?? orderedEntries).map((entry) => {
           const isActive = activeId === entry.id
           const isActiveRunning = isActive && isRunning
           const displayMs = isActiveRunning ? liveMs : entry.ms
