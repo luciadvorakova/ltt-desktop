@@ -6,6 +6,7 @@ import { signInWithGoogle, getSession } from './auth'
 import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira, getJiraIssueClientName } from './jira-auth'
 import { signInWithGCal } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
+import { scheduleMeetingNotifications } from './meeting-notifications'
 import {
   loadEntries,
   saveEntry,
@@ -35,7 +36,11 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   // ---- ENTRIES ----
 
-  ipcMain.handle('entries:load', (_event, userId: string) => loadEntries(userId))
+  ipcMain.handle('entries:load', async (_event, userId: string) => {
+    const entries = await loadEntries(userId)
+    scheduleMeetingNotifications(entries.filter(e => !!e.gcalEventId))
+    return entries
+  })
 
   ipcMain.handle('entries:save', async (_event, entry: TimeEntry) => {
     console.log('[IPC] entries:save called, id:', entry.id, 'ms:', entry.ms)

@@ -14,6 +14,8 @@ export interface TimeEntry {
   carriedOver: boolean
   removedFromTimer: boolean
   deletedFromBulk: boolean
+  gcalEventId?: string
+  gcalEndTime?: number
 }
 
 export interface UserSettings {

@@ -3,9 +3,11 @@ import { supabase } from './supabase'
 import { ensureSession } from './auth'
 import { currentEntries } from './timer'
 import { refreshGCalToken } from './gcal-auth'
+import { scheduleMeetingNotifications } from './meeting-notifications'
 import type { TimeEntry } from '../types/index'
 
 interface GCalEvent {
+  id?: string
   summary?: string
   start: { dateTime?: string; date?: string }
   end: { dateTime?: string; date?: string }
@@ -65,6 +67,7 @@ export async function syncGoogleCalendar(): Promise<boolean> {
     const deletedEntries: { name: string; date: string }[] = store.get('deletedEntryNames') ?? []
     const deletedNames = new Set(deletedEntries.filter(e => e.date === todayStr).map(e => e.name))
     let created = 0
+    const newEntries: TimeEntry[] = []
 
     for (const event of events) {
       const isDeclined = event.attendees?.find(a => a.self)?.responseStatus === 'declined'
@@ -83,6 +86,8 @@ export async function syncGoogleCalendar(): Promise<boolean> {
 
       const ms = 0
       const ts = new Date(event.start.dateTime!).getTime()
+      const gcalEndTime = new Date(event.end.dateTime!).getTime()
+      const gcalEventId = event.id ?? null
       const now = new Date().toISOString()
 
       const entryId = Date.now() + created
@@ -100,6 +105,10 @@ export async function syncGoogleCalendar(): Promise<boolean> {
           carried_over: false,
           removed_from_timer: false,
           deleted_from_bulk: false,
+          // gcal_event_id (text) and gcal_end_time (bigint) must be added to the
+          // time_entries table in the Supabase dashboard before these fields are stored.
+          gcal_event_id: gcalEventId,
+          gcal_end_time: gcalEndTime,
         })
         .select()
         .single()
@@ -117,13 +126,17 @@ export async function syncGoogleCalendar(): Promise<boolean> {
           carriedOver: false,
           removedFromTimer: false,
           deletedFromBulk: false,
+          gcalEventId: gcalEventId ?? undefined,
+          gcalEndTime,
         }
         currentEntries.push(entry)
+        newEntries.push(entry)
       }
       created++
     }
 
     console.log('[gcal] sync done, created:', created, 'of', events.length, 'events')
+    scheduleMeetingNotifications(newEntries)
 
     const updatedSettings = { ...freshSettings, gcalLastSyncDate: todayStr }
     store.set('settings', updatedSettings)
