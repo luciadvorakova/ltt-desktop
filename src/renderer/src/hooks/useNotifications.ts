@@ -67,6 +67,8 @@ export function useNotifications({
   useEffect(() => {
     const check = () => {
       const now = new Date()
+      const day = now.getDay()
+      if (day === 0 || day === 6) return
       const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
       const today = new Date().toISOString().slice(0, 10)
       setStandupDue(afterCutoff && lastStandupDate !== today)
