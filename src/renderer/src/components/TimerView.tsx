@@ -354,9 +354,20 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
 
   useEffect(() => {
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const freshTodayIds = new Set(
+      entries
+        .filter(e => {
+          if (e.removedFromTimer) return false
+          if (e.jiraSent) return (settings?.manualTimerCleanup || e.ts >= todayStart.getTime())
+          return true
+        })
+        .map(e => e.id)
+    )
+
     setOrderedEntries(prev => {
       if (prev.length === 0) {
-        return [...todayEntries].sort((a, b) => {
+        return [...entries].filter(e => freshTodayIds.has(e.id)).sort((a, b) => {
           if (!a.jiraSent && b.jiraSent) return -1
           if (a.jiraSent && !b.jiraSent) return 1
           const aOrder = a.sortOrder ?? Infinity
@@ -367,11 +378,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       }
       const updated = prev
         .map(e => entries.find(x => x.id === e.id) ?? e)
-        .filter(e => todayEntries.some(t => t.id === e.id))
-      const newEntries = todayEntries.filter(t => !prev.some(e => e.id === t.id))
+        .filter(e => freshTodayIds.has(e.id))
+      const newEntries = entries.filter(e => freshTodayIds.has(e.id) && !prev.some(p => p.id === e.id))
       return [...newEntries, ...updated]
     })
-  }, [entries])
+  }, [entries, settings?.manualTimerCleanup])
 
   useEffect(() => {
     console.log('[SYNC] running, entries count:', entries.length)
