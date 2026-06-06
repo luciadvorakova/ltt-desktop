@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useLtt } from '../hooks/useLtt'
 import { useSettings } from '../hooks/useSettings'
 import type { TimeEntry } from '../../../types/index'
@@ -33,20 +33,6 @@ function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOve
   dragOver: boolean
   autoFocus?: boolean
 }) {
-  const spanRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    if (autoFocus && spanRef.current) {
-      spanRef.current.focus()
-      const range = document.createRange()
-      range.selectNodeContents(spanRef.current)
-      range.collapse(false)
-      const sel = window.getSelection()
-      sel?.removeAllRanges()
-      sel?.addRange(range)
-    }
-  }, [autoFocus])
-
   return (
     <div
       draggable
@@ -74,17 +60,12 @@ function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOve
       >
         {checked && <span style={{ fontSize: 9, fontWeight: 700, color: '#7fd89a', lineHeight: 1 }}>✓</span>}
       </div>
-      <span
-        ref={el => {
-          (spanRef as React.MutableRefObject<HTMLSpanElement | null>).current = el
-          if (el && document.activeElement !== el) {
-            el.textContent = text
-          }
-        }}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={e => onChange((e.target as HTMLSpanElement).textContent ?? '')}
-        style={{ fontSize: 11, color: checked ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.45)', flex: 1, outline: 'none' }}
+      <input
+        type="text"
+        autoFocus={autoFocus}
+        value={text}
+        onChange={e => onChange(e.target.value)}
+        style={{ fontSize: 11, color: checked ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.45)', flex: 1, outline: 'none', background: 'transparent', border: 'none', fontFamily: 'inherit' }}
       />
     </div>
   )

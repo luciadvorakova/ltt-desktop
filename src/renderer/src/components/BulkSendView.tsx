@@ -45,7 +45,6 @@ export function BulkSendView({
   const [descs, setDescs] = useState<Map<number, string>>(
     () => new Map(eligible.map(e => [e.id, e.jiraDesc ?? '']))
   )
-  const [editingDescId, setEditingDescId] = useState<number | null>(null)
   const [sending, setSending] = useState(false)
 
   const selectedEntries = eligible.filter(e => checked.has(e.id))
@@ -121,25 +120,22 @@ export function BulkSendView({
           </span>
         </div>
 
-        <div
-          contentEditable
-          suppressContentEditableWarning
-          ref={el => {
-            if (el && editingDescId !== entry.id) {
-              el.textContent = desc || ''
-            }
-          }}
-          onFocus={() => setEditingDescId(entry.id)}
+        <input
+          type="text"
+          className="bulk-desc"
+          value={desc}
+          placeholder="Add a description…"
+          onChange={e => setDescs(prev => new Map(prev).set(entry.id, e.target.value))}
           onBlur={e => {
-            const text = e.currentTarget.textContent?.trim() ?? ''
+            const text = e.target.value.trim()
             setDescs(prev => new Map(prev).set(entry.id, text))
-            setEditingDescId(null)
           }}
           style={{
             paddingLeft: 23, fontSize: 10, outline: 'none', cursor: 'text',
+            background: 'transparent', border: 'none', width: '100%',
+            boxSizing: 'border-box', fontFamily: 'inherit',
             minHeight: '1.2em',
-            color: desc || editingDescId === entry.id ? 'rgba(255,255,255,0.35)' : 'rgba(255,110,110,0.5)',
-            fontStyle: !desc && editingDescId !== entry.id ? 'italic' : 'normal',
+            color: desc ? 'rgba(255,255,255,0.35)' : 'rgba(255,110,110,0.5)',
           }}
         />
 
@@ -164,6 +160,7 @@ export function BulkSendView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <style>{`.bulk-desc::placeholder { color: rgba(255,110,110,0.4); font-style: italic; }`}</style>
       <div
         onClick={onBack}
         style={{

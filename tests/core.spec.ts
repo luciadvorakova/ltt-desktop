@@ -84,7 +84,9 @@ test.describe.serial('LTT Desktop core flows', () => {
   })
 
   test('add a second task — existing descriptions remain intact', async () => {
-    const existingDescs = await page.locator('.desc-field').allTextContents()
+    const existingDescs = await page.locator('.desc-field').evaluateAll(
+      els => els.map(el => (el as HTMLInputElement).value)
+    )
 
     await page.getByRole('button', { name: '+' }).click()
     await page.getByRole('button', { name: 'Manual' }).click()
@@ -95,7 +97,9 @@ test.describe.serial('LTT Desktop core flows', () => {
 
     await expect(page.getByText(taskName)).toBeVisible({ timeout: 10_000 })
 
-    const updatedDescs = await page.locator('.desc-field').allTextContents()
+    const updatedDescs = await page.locator('.desc-field').evaluateAll(
+      els => els.map(el => (el as HTMLInputElement).value)
+    )
     for (const desc of existingDescs) {
       if (desc.trim()) expect(updatedDescs).toContain(desc)
     }
@@ -130,21 +134,20 @@ test.describe.serial('LTT Desktop core flows', () => {
     const testDesc = `e2e-desc-${Date.now()}`
 
     await descField.click()
-    await page.keyboard.press('Meta+A')
-    await page.keyboard.type(testDesc)
-    await page.keyboard.press('Escape')
+    await descField.fill(testDesc)
+    await page.keyboard.press('Enter')
 
-    await page.waitForTimeout(500)
-    await expect(descField).toHaveText(testDesc)
+    // toHaveValue retries until entry.jiraDesc updates (confirms Supabase write completed)
+    await expect(descField).toHaveValue(testDesc, { timeout: 10_000 })
   })
 
   // ── Restart: description persists ───────────────────────────────────────
 
   test('description persists after restart', async () => {
     // Give the Supabase save time to complete before closing
-    await page.waitForTimeout(1_500)
-    const savedDesc = await page.locator('.desc-field').first().textContent()
-    expect(savedDesc?.trim()).toBeTruthy()
+    await page.waitForTimeout(2_000)
+    const savedDesc = await page.locator('.desc-field').first().inputValue()
+    expect(savedDesc.trim()).toBeTruthy()
 
     await app.close()
     await launchAndAuth()
@@ -152,8 +155,15 @@ test.describe.serial('LTT Desktop core flows', () => {
     await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('.desc-field', { timeout: 20_000 })
 
-    const descTexts = await page.locator('.desc-field').allTextContents()
-    expect(descTexts.some(t => t.trim() === savedDesc?.trim())).toBe(true)
+    // Poll until the saved description appears in any desc-field (React may still be settling)
+    await page.waitForFunction(
+      (expected) => {
+        const inputs = Array.from(document.querySelectorAll('.desc-field')) as HTMLInputElement[]
+        return inputs.some(inp => inp.value.trim() === expected)
+      },
+      savedDesc.trim(),
+      { timeout: 10_000 }
+    )
   })
 
   // ── Restart: timer time persists ─────────────────────────────────────────
@@ -209,7 +219,9 @@ test.describe.serial('LTT Desktop core flows', () => {
   // ── Add from Recents ─────────────────────────────────────────────────────
 
   test('add from Recents — entry appears at top, existing descriptions intact', async () => {
-    const existingDescs = await page.locator('.desc-field').allTextContents()
+    const existingDescs = await page.locator('.desc-field').evaluateAll(
+      els => els.map(el => (el as HTMLInputElement).value)
+    )
 
     await page.getByRole('button', { name: '+' }).click()
     await expect(page.getByText('Add Task')).toBeVisible()
@@ -235,7 +247,9 @@ test.describe.serial('LTT Desktop core flows', () => {
       await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 10_000 })
 
       // Existing non-empty descriptions should still be in the list
-      const updatedDescs = await page.locator('.desc-field').allTextContents()
+      const updatedDescs = await page.locator('.desc-field').evaluateAll(
+        els => els.map(el => (el as HTMLInputElement).value)
+      )
       for (const desc of existingDescs) {
         if (desc.trim()) expect(updatedDescs).toContain(desc)
       }

@@ -271,15 +271,16 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const [manualInput, setManualInput] = useState('')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingDescId, setEditingDescId] = useState<number | null>(null)
+  const [localDesc, setLocalDesc] = useState('')
   const [linkJiraEntryId, setLinkJiraEntryId] = useState<number | null>(null)
   const [jiraQuery, setJiraQuery] = useState('')
   const [jiraResults, setJiraResults] = useState<{ key: string; summary: string }[]>([])
   const [jiraSearching, setJiraSearching] = useState(false)
   const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const escapeRef = useRef(false)
   const jiraProjectsRef = useRef<Map<string, string>>(new Map())
   const dragIdRef = useRef<number | null>(null)
   const dragOverIdRef = useRef<number | null>(null)
-  const descRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [dragOverId, setDragOverId] = useState<number | null>(null)
   const [dragOrderedEntries, setDragOrderedEntries] = useState<TimeEntry[] | null>(null)
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
@@ -362,20 +363,6 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     return sorted
   }, [todayEntries])
 
-  useEffect(() => {
-    console.log('[SYNC]', Date.now(), 'entries count:', entries.length, 'descRefs count:', descRefs.current.size)
-    for (const [id, el] of descRefs.current) {
-      const entry = entries.find(e => e.id === id)
-      console.log('[SYNC] id:', id, 'expected:', entry?.jiraDesc, 'current DOM:', el.textContent, 'will overwrite:', el.textContent !== (entry?.jiraDesc ?? ''))
-      if (id === editingDescId) continue
-      const expected = entry?.jiraDesc ?? ''
-      if (el.textContent !== expected) {
-        console.log('[REF2] overwriting id:', id, 'from:', el.textContent, 'to:', expected)
-        el.textContent = expected
-      }
-    }
-  }, [entries, editingDescId])
-
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
     const base = dragOrderedEntries ?? orderedEntries
@@ -431,7 +418,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <style>{`.desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
+      <style>{`.desc-field::placeholder { color: rgba(255,255,255,0.2); }`}</style>
 
       {/* Header */}
       <div style={{
@@ -464,7 +451,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       {/* Add panel */}
       {addPanelOpen && (
         <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
@@ -848,27 +835,26 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 </span>
               </div>
 
-              {/* Row 2: description — always editable on click */}
-              <div
+              {/* Row 2: description */}
+              <input
+                type="text"
                 className="desc-field"
-                data-placeholder="Add description..."
+                placeholder="Add description..."
                 draggable={false}
                 onMouseDown={e => e.stopPropagation()}
-                contentEditable
-                suppressContentEditableWarning
-                ref={el => {
-                  if (el) descRefs.current.set(entry.id, el as HTMLDivElement)
-                  else descRefs.current.delete(entry.id)
-                }}
-                onFocus={() => setEditingDescId(entry.id)}
-                onBlur={e => {
-                  const text = e.currentTarget.textContent ?? ''
-                  if (text !== (entry.jiraDesc ?? '')) updateEntry({ ...entry, jiraDesc: text, updatedAt: new Date().toISOString() })
-                  setTimeout(() => setEditingDescId(null), 0)
+                value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
+                onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
+                onChange={e => setLocalDesc(e.target.value)}
+                onBlur={() => {
+                  if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
+                    updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
+                  }
+                  escapeRef.current = false
+                  setEditingDescId(null)
                 }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLElement).blur() }
-                  if (e.key === 'Escape') (e.currentTarget as HTMLElement).blur()
+                  if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
+                  if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
                 }}
                 style={{
                   fontSize: 10,
@@ -877,8 +863,13 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   marginBottom: 5,
                   outline: 'none',
                   cursor: 'text',
+                  background: 'transparent',
+                  border: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
                   overflow: 'hidden',
-                  textOverflow: editingDescId === entry.id ? 'unset' : 'ellipsis',
+                  textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   minHeight: '1.2em',
                 }}
@@ -1018,7 +1009,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
             onMouseDown={closeLinkModal}
           >
-            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
+            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
             <div
               style={{ background: 'linear-gradient(145deg, #1e1850, #0e1830)', borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', maxHeight: '80%' }}
               onMouseDown={e => e.stopPropagation()}
