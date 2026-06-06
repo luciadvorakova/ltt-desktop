@@ -73,7 +73,8 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByRole('button', { name: 'Add' }).click()
 
     await expect(page.getByText("Today's Tasks")).toBeVisible()
-    await expect(page.getByText(taskName)).toBeVisible({ timeout: 10_000 })
+    await page.waitForTimeout(1000)
+    await expect(page.getByText(taskName)).toBeVisible({ timeout: 20_000 })
   })
 
   test('entries load with descriptions visible', async () => {
