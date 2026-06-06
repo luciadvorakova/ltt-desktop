@@ -431,6 +431,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <style>{`.desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
 
       {/* Header */}
       <div style={{
@@ -463,7 +464,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       {/* Add panel */}
       {addPanelOpen && (
         <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
 
           {/* Mode buttons */}
           <div style={{ display: 'flex', gap: 5, padding: '8px 14px 6px', flexShrink: 0 }}>
@@ -849,6 +850,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
               {/* Row 2: description — always editable on click */}
               <div
+                className="desc-field"
+                data-placeholder="Add description..."
                 draggable={false}
                 onMouseDown={e => e.stopPropagation()}
                 contentEditable
@@ -1015,7 +1018,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
             onMouseDown={closeLinkModal}
           >
-            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
+            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .desc-field:empty:not(:focus)::before { content: attr(data-placeholder); color: rgba(255,255,255,0.2); pointer-events: none; }`}</style>
             <div
               style={{ background: 'linear-gradient(145deg, #1e1850, #0e1830)', borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', maxHeight: '80%' }}
               onMouseDown={e => e.stopPropagation()}
