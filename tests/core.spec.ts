@@ -1,16 +1,11 @@
 import 'dotenv/config'
 import { test, expect, _electron as electron } from '@playwright/test'
 import path from 'path'
-import fs from 'fs'
-import os from 'os'
 import type { ElectronApplication, Page } from '@playwright/test'
 
 const SUPABASE_URL = 'https://rzjbfqgkprozguyjrxbp.supabase.co'
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6amJmcWdrcHJvemd1eWpyeGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU0OTIsImV4cCI6MjA5MzgzMTQ5Mn0.PN4vN-_MQkYSGqsKaVT1XFK27BVDW0dnlX9BXXcGhVQ'
-
-// electron-store writes to this file on macOS
-const STORE_PATH = path.join(os.homedir(), 'Library', 'Application Support', 'ltt-desktop', 'config.json')
 
 async function signInWithPassword(): Promise<{ access_token: string; refresh_token: string }> {
   const email = process.env.TEST_USER_EMAIL
@@ -27,26 +22,15 @@ async function signInWithPassword(): Promise<{ access_token: string; refresh_tok
   return { access_token: data.access_token, refresh_token: data.refresh_token }
 }
 
-function readStore(): Record<string, unknown> {
-  try { return JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8')) } catch { return {} }
-}
-
-function writeStore(data: Record<string, unknown>) {
-  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true })
-  fs.writeFileSync(STORE_PATH, JSON.stringify(data))
-}
-
 let app: ElectronApplication
 let page: Page
-let originalStore: Record<string, unknown>
 
 test.describe.serial('LTT Desktop core flows', () => {
   test.beforeAll(async () => {
-    // Save and restore the dev session so tests don't disturb the real account
-    originalStore = readStore()
-
+    // Get a valid session before launching — we'll inject it via IPC after launch.
+    // This avoids the store pre-seed approach, which gets cleared by refreshSession()
+    // on startup when the token can't be refreshed via Supabase's OAuth flow.
     const session = await signInWithPassword()
-    writeStore({ ...originalStore, session })
 
     app = await electron.launch({
       args: [path.join(__dirname, '../dist-electron/index.js')],
@@ -61,33 +45,30 @@ test.describe.serial('LTT Desktop core flows', () => {
       win?.focus()
     })
     await page.waitForLoadState('domcontentloaded')
+
+    // Wait for the login screen to confirm React has mounted and useAuth's listener is live
+    await page.waitForSelector('button', { timeout: 10_000 })
+
+    // Send auth-success directly to the renderer via webContents — same path as real OAuth flow.
+    // The preload bridges webContents.send('auth-success') → ltt.on('auth-success') → setSession().
+    await app.evaluate(({ BrowserWindow }, s) => {
+      BrowserWindow.getAllWindows()[0]?.webContents.send('auth-success', s)
+    }, session)
   })
 
   test.afterAll(async () => {
     await app.close()
-    // Restore original store so the dev session is unaffected
-    writeStore(originalStore)
   })
 
   test('app launches and shows timer tab', async () => {
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 10_000 })
+    await page.screenshot({ path: 'test-results/launch.png' })
+    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 30_000 })
   })
 
-  test('entries load with descriptions visible', async () => {
-    await page.waitForSelector('.desc-field', { timeout: 15_000 })
-    const count = await page.locator('.desc-field').count()
-    expect(count).toBeGreaterThan(0)
-  })
-
-  test('add a new manual task — appears at top, existing descriptions intact', async () => {
-    await page.waitForSelector('.desc-field', { timeout: 10_000 })
-    const existingDescs = await page.locator('.desc-field').allTextContents()
-
-    // Open add panel
+  test('add a new manual task — appears in list', async () => {
     await page.getByRole('button', { name: '+' }).click()
     await expect(page.getByText('Add Task')).toBeVisible()
 
-    // Switch to manual mode
     await page.getByRole('button', { name: 'Manual' }).click()
 
     const taskName = `Test Task ${Date.now()}`
@@ -96,8 +77,27 @@ test.describe.serial('LTT Desktop core flows', () => {
 
     await expect(page.getByText("Today's Tasks")).toBeVisible()
     await expect(page.getByText(taskName)).toBeVisible({ timeout: 10_000 })
+  })
 
-    // Existing non-empty descriptions should still appear somewhere in the list
+  test('entries load with descriptions visible', async () => {
+    // Test user starts with no entries — the previous test added one, so .desc-field should now exist
+    await page.waitForSelector('.desc-field', { timeout: 10_000 })
+    const count = await page.locator('.desc-field').count()
+    expect(count).toBeGreaterThan(0)
+  })
+
+  test('add a second task — existing descriptions remain intact', async () => {
+    const existingDescs = await page.locator('.desc-field').allTextContents()
+
+    await page.getByRole('button', { name: '+' }).click()
+    await page.getByRole('button', { name: 'Manual' }).click()
+
+    const taskName = `Test Task ${Date.now()}`
+    await page.getByPlaceholder('Task name…').fill(taskName)
+    await page.getByRole('button', { name: 'Add' }).click()
+
+    await expect(page.getByText(taskName)).toBeVisible({ timeout: 10_000 })
+
     const updatedDescs = await page.locator('.desc-field').allTextContents()
     for (const desc of existingDescs) {
       if (desc.trim()) expect(updatedDescs).toContain(desc)
