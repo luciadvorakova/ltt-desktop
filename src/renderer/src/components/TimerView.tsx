@@ -363,11 +363,16 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   }, [todayEntries])
 
   useEffect(() => {
+    console.log('[SYNC]', Date.now(), 'entries count:', entries.length, 'descRefs count:', descRefs.current.size)
     for (const [id, el] of descRefs.current) {
-      if (id === editingDescId) continue
       const entry = entries.find(e => e.id === id)
+      console.log('[SYNC] id:', id, 'expected:', entry?.jiraDesc, 'current DOM:', el.textContent, 'will overwrite:', el.textContent !== (entry?.jiraDesc ?? ''))
+      if (id === editingDescId) continue
       const expected = entry?.jiraDesc ?? ''
-      if (el.textContent !== expected) el.textContent = expected
+      if (el.textContent !== expected) {
+        console.log('[REF2] overwriting id:', id, 'from:', el.textContent, 'to:', expected)
+        el.textContent = expected
+      }
     }
   }, [entries, editingDescId])
 
@@ -727,7 +732,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       )}
 
       {/* Entry list */}
-      {!addPanelOpen && <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: addPanelOpen ? 'none' : 'flex', flexDirection: 'column' }}>
         {todayEntries.length === 0 && (
           <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
             No entries today
@@ -910,7 +915,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             </div>
           )
         })}
-      </div>}
+      </div>
 
       {/* Footer */}
       <div style={{
