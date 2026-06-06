@@ -280,8 +280,6 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const dragIdRef = useRef<number | null>(null)
   const dragOverIdRef = useRef<number | null>(null)
   const descRefs = useRef<Map<number, HTMLDivElement>>(new Map())
-  const entriesRef = useRef(entries)
-  useEffect(() => { entriesRef.current = entries }, [entries])
   const [dragOverId, setDragOverId] = useState<number | null>(null)
   const [dragOrderedEntries, setDragOrderedEntries] = useState<TimeEntry[] | null>(null)
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
@@ -365,10 +363,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   }, [todayEntries])
 
   useEffect(() => {
-    console.log('[SYNC] running, entries count:', entries.length)
     for (const [id, el] of descRefs.current) {
       if (id === editingDescId) continue
-      const entry = entriesRef.current.find(e => e.id === id)
+      const entry = entries.find(e => e.id === id)
       const expected = entry?.jiraDesc ?? ''
       if (el.textContent !== expected) el.textContent = expected
     }
