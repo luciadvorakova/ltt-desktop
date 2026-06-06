@@ -354,6 +354,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
 
   useEffect(() => {
+    if (entries.length === 0) return
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
     const freshTodayIds = new Set(
       entries
