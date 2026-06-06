@@ -48,8 +48,6 @@ function entryToRow(entry: TimeEntry, userId: string): Record<string, unknown> {
     carried_over:      entry.carriedOver,
     removed_from_timer: entry.removedFromTimer,
     deleted_from_bulk: entry.deletedFromBulk,
-    gcal_event_id:     entry.gcalEventId ?? null,
-    gcal_end_time:     entry.gcalEndTime ?? null,
   }
 }
 
@@ -138,7 +136,7 @@ export async function startTimer(entryId: number): Promise<void> {
   }
 }
 
-export function pauseTimer(): void {
+export async function pauseTimer(): Promise<void> {
   const state = store.get('timerState')
   if (!state?.running || state.startedAt === null) return
   const elapsed = Date.now() - state.startedAt
@@ -153,7 +151,7 @@ export function pauseTimer(): void {
   console.log('[PAUSE] baseMs set to:', newMs)
   if (flushInterval) { clearInterval(flushInterval); flushInterval = null }
   const entry = currentEntries.find(e => e.id === state.activeEntryId)
-  if (entry) saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
+  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
 }
 
 export async function stopTimer(): Promise<{ id: number; ms: number } | null> {

@@ -105,8 +105,6 @@ export async function syncGoogleCalendar(): Promise<boolean> {
           carried_over: false,
           removed_from_timer: false,
           deleted_from_bulk: false,
-          // gcal_event_id (text) and gcal_end_time (bigint) must be added to the
-          // time_entries table in the Supabase dashboard before these fields are stored.
           gcal_event_id: gcalEventId,
           gcal_end_time: gcalEndTime,
         })

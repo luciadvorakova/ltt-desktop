@@ -26,16 +26,19 @@ export function useEntries(): UseEntriesResult {
     console.log('[useEntries] loaded:', loaded.length, 'deletedIds:', deletedIds.length)
     const filtered = loaded.filter(e => !deletedIds.includes(e.id))
     console.log('[RELOAD] about to overwrite entries, count:', filtered.length)
-    setEntries(prev => filtered.map(remote => {
-      const local = prev.find(e => e.id === remote.id)
-      const keepLocal = !!(local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt)
-      console.log('[RELOAD] merging, local jiraDesc:', local?.jiraDesc, 'remote jiraDesc:', remote.jiraDesc, 'keeping local:', keepLocal)
-      if (remote.id === 1780690959953) {
-        console.log('[MERGE] local.updatedAt:', local?.updatedAt, 'remote.updatedAt:', remote.updatedAt, 'local.ms:', local?.ms, 'remote.ms:', remote.ms)
-      }
-      if (keepLocal) return local!
-      return remote
-    }))
+    setEntries(prev => {
+      const remoteById = new Map(filtered.map(e => [e.id, e]))
+      // Merge remote entries with local state
+      const merged = filtered.map(remote => {
+        const local = prev.find(e => e.id === remote.id)
+        const keepLocal = !!(local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt)
+        console.log('[RELOAD] merging, local jiraDesc:', local?.jiraDesc, 'remote jiraDesc:', remote.jiraDesc, 'keeping local:', keepLocal)
+        return keepLocal ? local! : remote
+      })
+      // Preserve local-only entries not yet confirmed in remote (optimistic adds)
+      const localOnly = prev.filter(e => !remoteById.has(e.id) && !deletedIds.includes(e.id))
+      return [...localOnly, ...merged]
+    })
   }, [ltt])
 
   // Load on mount
