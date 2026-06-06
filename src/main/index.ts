@@ -65,7 +65,16 @@ mb.on('ready', () => {
   autoUpdater.on('update-downloaded', () => {
     autoUpdater.quitAndInstall()
   })
-  refreshSession()
+  // In E2E tests, pre-seed the session from env var so refreshSession() doesn't
+  // clear it and so Supabase queries (loadEntries, saveEntry) have a valid session.
+  const e2eSession = process.env.E2E_TEST_SESSION
+    ? JSON.parse(process.env.E2E_TEST_SESSION) as { access_token: string; refresh_token: string }
+    : null
+  if (e2eSession) {
+    store.set('session', e2eSession)
+  } else {
+    refreshSession()
+  }
   startSessionRefreshInterval()
   startJiraRefreshInterval()
   authEmitter.on('auth-success', (session) => {
