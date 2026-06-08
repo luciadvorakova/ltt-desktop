@@ -28,7 +28,7 @@ console.log('[MAIN] setAsDefaultProtocolClient result:', protocolSet)
 const trayIconPath = app.isPackaged
   ? path.join(process.resourcesPath, 'public/digismoothie-logo-small.png')
   : path.join(__dirname, '../public/digismoothie-logo-small.png')
-const trayIcon = nativeImage.createFromPath(trayIconPath)
+const trayIcon = nativeImage.createFromPath(trayIconPath).resize({ width: 9, height: 16 })
 trayIcon.setTemplateImage(true)
 console.log('[MAIN] trayIcon path:', trayIconPath, 'empty:', trayIcon.isEmpty())
 
