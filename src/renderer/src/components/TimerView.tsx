@@ -47,7 +47,7 @@ function parseMin(input: string): number | null {
 }
 
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
@@ -56,6 +56,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   onLinkToJira?: () => void;
   onChangeJiraLink?: () => void;
   onRemoveFromTimer?: () => void;
+  onDuplicate?: () => void;
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -155,7 +156,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             {onChangeJiraLink && <MenuItem icon="⛓" label="Change Jira link" onAction={() => { onChangeJiraLink(); onClose() }} />}
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
-            <MenuItem icon="⧉" label="Duplicate as new task" />
+            <MenuItem icon="⧉" label="Duplicate as new task" onAction={onDuplicate ? () => { onDuplicate(); onClose() } : undefined} />
             <MenuItem icon="✕" label="Remove from timer" color="rgba(255,255,255,0.5)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />
           </div>
           {menuDivider}
@@ -835,6 +836,22 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                   onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
                   onRemoveFromTimer={() => updateEntry({ ...entry, removedFromTimer: true, updatedAt: new Date().toISOString() })}
+                  onDuplicate={() => addEntry({
+                    id: Date.now(),
+                    name: entry.name,
+                    ms: 0,
+                    ts: Date.now(),
+                    jiraKey: entry.jiraKey,
+                    jiraSummary: entry.jiraSummary,
+                    jiraDesc: entry.jiraDesc,
+                    clientName: entry.clientName,
+                    jiraSent: false,
+                    untracked: false,
+                    carriedOver: false,
+                    removedFromTimer: false,
+                    deletedFromBulk: false,
+                    updatedAt: new Date().toISOString(),
+                  })}
                 />
                 </span>
               </div>
