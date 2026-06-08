@@ -201,21 +201,23 @@ test.describe.serial('LTT Desktop core flows', () => {
   // ── Edit tracked time ────────────────────────────────────────────────────
 
   test('edit tracked time — persists after tracking resumes', async () => {
-    await page.locator('button', { hasText: '•••' }).first().click()
+    const firstEntryRow = page.locator('[style*="cursor: grab"]').first()
+
+    await firstEntryRow.locator('button', { hasText: '•••' }).click()
     await page.getByText('Edit tracked time').click()
     await expect(page.locator('button', { hasText: 'Save' }).first()).toBeVisible({ timeout: 3_000 })
 
     await page.keyboard.type('50')
     await page.keyboard.press('Enter')
 
-    await expect(page.locator('span[style*="tabular-nums"]').first()).toHaveText(/^00:50:00$/, { timeout: 5_000 })
+    await expect(firstEntryRow.locator('span[style*="tabular-nums"]')).toHaveText(/^00:50:00$/, { timeout: 5_000 })
 
-    await page.locator('button', { hasText: '▶' }).first().click()
+    await firstEntryRow.locator('button', { hasText: '▶' }).click()
     await page.waitForTimeout(2_000)
-    await page.locator('button', { hasText: '⏸' }).first().click()
-    await expect(page.locator('button', { hasText: '▶' }).first()).toBeVisible({ timeout: 5_000 })
+    await firstEntryRow.locator('button', { hasText: '⏸' }).click()
+    await expect(firstEntryRow.locator('button', { hasText: '▶' })).toBeVisible({ timeout: 5_000 })
 
-    const timeAfter = await page.locator('span[style*="tabular-nums"]').first().textContent()
+    const timeAfter = await firstEntryRow.locator('span[style*="tabular-nums"]').textContent()
     expect(timeAfter).toMatch(/^00:50:/)
     expect(timeAfter).not.toBe('00:50:00')
   })
@@ -223,14 +225,16 @@ test.describe.serial('LTT Desktop core flows', () => {
   // ── Add time manually ────────────────────────────────────────────────────
 
   test('add time manually — adds on top of existing time', async () => {
-    const timeBefore = await page.locator('span[style*="tabular-nums"]').first().textContent()
+    const firstEntryRow = page.locator('[style*="cursor: grab"]').first()
     const parseMs = (t: string) => {
       const [h, m, s] = t.split(':').map(Number)
       return ((h * 60 + m) * 60 + s) * 1_000
     }
+
+    const timeBefore = await firstEntryRow.locator('span[style*="tabular-nums"]').textContent()
     const msBefore = parseMs(timeBefore ?? '0:00:00')
 
-    await page.locator('button', { hasText: '•••' }).first().click()
+    await firstEntryRow.locator('button', { hasText: '•••' }).click()
     await page.getByText('Add time manually').click()
     await expect(page.locator('button', { hasText: 'Add' }).first()).toBeVisible({ timeout: 3_000 })
 
@@ -239,7 +243,7 @@ test.describe.serial('LTT Desktop core flows', () => {
 
     await page.waitForTimeout(500)
 
-    const timeAfter = await page.locator('span[style*="tabular-nums"]').first().textContent()
+    const timeAfter = await firstEntryRow.locator('span[style*="tabular-nums"]').textContent()
     const msAfter = parseMs(timeAfter ?? '0:00:00')
 
     const delta = msAfter - msBefore
