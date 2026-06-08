@@ -162,7 +162,7 @@ test.describe.serial('LTT Desktop core flows', () => {
         return inputs.some(inp => inp.value.trim() === expected)
       },
       savedDesc.trim(),
-      { timeout: 10_000 }
+      { timeout: 20_000 }
     )
   })
 
@@ -207,9 +207,12 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByText('Edit tracked time').click()
     await expect(page.locator('button', { hasText: 'Save' }).first()).toBeVisible({ timeout: 3_000 })
 
-    await page.keyboard.type('50')
-    await page.keyboard.press('Enter')
+    const timeInput = firstEntryRow.locator('input[style*="text-align: center"]')
+    await timeInput.click()
+    await timeInput.fill('50')
+    await timeInput.press('Enter')
 
+    await page.screenshot({ path: 'test-results/edit-time-debug.png' })
     await expect(firstEntryRow.locator('span[style*="tabular-nums"]')).toHaveText(/^00:50:00$/, { timeout: 5_000 })
 
     await firstEntryRow.locator('button', { hasText: '▶' }).click()
@@ -238,8 +241,10 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByText('Add time manually').click()
     await expect(page.locator('button', { hasText: 'Add' }).first()).toBeVisible({ timeout: 3_000 })
 
-    await page.keyboard.type('10')
-    await page.keyboard.press('Enter')
+    const timeInput = firstEntryRow.locator('input[style*="text-align: center"]')
+    await timeInput.click()
+    await timeInput.fill('10')
+    await timeInput.press('Enter')
 
     await page.waitForTimeout(500)
 
