@@ -41,7 +41,10 @@
           ]
         }
       ],
-      "icon": "public/app-icon.png"
+      "icon": "public/app-icon.png",
+      "extendInfo": {
+        "LSUIElement": 1
+      }
     },
     "dmg": {
       "title": "Digismoothie Time Tracker",
