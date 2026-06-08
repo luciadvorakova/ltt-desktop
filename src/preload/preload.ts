@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('ltt', {
   stopTimer:     ()                       => ipcRenderer.invoke('timer:stop'),
   getTimerState: ()                       => ipcRenderer.invoke('timer:getState'),
   flushTimer:    ()                       => ipcRenderer.invoke('timer:flush'),
+  setTimerBase:  (entryId: number, ms: number) => ipcRenderer.invoke('timer:setBase', entryId, ms),
 
   // ---- SETTINGS ----
   getSettings:   ()                       => ipcRenderer.invoke('settings:get'),

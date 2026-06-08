@@ -98,7 +98,7 @@ export async function startTimer(entryId: number): Promise<void> {
   console.log('[START] entryId:', entryId, 'existing state:', existing)
 
   if (existing?.paused && existing.activeEntryId === entryId) {
-    // Check if entry ms was updated while paused (e.g. manual time add)
+    // Use the stored entry ms if available — it reflects any manual edits while paused
     const entry = currentEntries.find((e) => e.id === entryId)
     const baseMs = Math.max(existing.baseMs, entry?.ms ?? 0)
     console.log('[START] resuming paused, existing.baseMs:', existing.baseMs, 'entry.ms:', entry?.ms, 'using:', baseMs)
@@ -203,4 +203,12 @@ export async function flushActiveTime(): Promise<void> {
 
 export function getTimerState(): TimerState | null {
   return store.get('timerState') ?? null
+}
+
+export function setTimerBase(entryId: number, ms: number): void {
+  const state = store.get('timerState')
+  if (state?.paused && state.activeEntryId === entryId) {
+    store.set('timerState', { ...state, baseMs: ms })
+    console.log('[SET_BASE] entryId:', entryId, 'ms:', ms)
+  }
 }

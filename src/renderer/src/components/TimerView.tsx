@@ -259,7 +259,7 @@ const formatMsHHMM = (ms: number): string => {
 
 export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { standupOpen?: boolean; onStandupClose?: () => void } = {}) {
   const ltt = useLtt()
-  const { entries, reload, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
+  const { entries, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer({ patchEntry })
   const { settings, updateSetting } = useSettings()
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
@@ -319,7 +319,6 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const handleStart = async (id: number) => {
     const prevSaved = await start(id)
     if (prevSaved) patchEntry(prevSaved.id, prevSaved.ms)
-    await reload()
   }
   const handlePause = async () => {
     await pause()
@@ -818,7 +817,12 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   onDelete={async () => { await deleteEntry(entry.id) }}
                   onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
                   onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
-                  onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
+                  onEditTime={async (newMs) => {
+                    await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
+                    if (timerState?.paused && timerState.activeEntryId === entry.id) {
+                      await ltt.setTimerBase(entry.id, newMs)
+                    }
+                  }}
                   onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
                     if ((cur ?? []).some(f => f.jiraKey === entry.jiraKey)) return cur ?? []
                     return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']

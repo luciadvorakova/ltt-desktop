@@ -15,6 +15,7 @@ import {
   stopTimer,
   getTimerState,
   flushActiveTime,
+  setTimerBase,
   currentEntries,
 } from './timer'
 import type { TimeEntry, UserSettings } from '../types/index'
@@ -88,6 +89,8 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
   ipcMain.handle('timer:getState', () => getTimerState())
 
   ipcMain.handle('timer:flush', () => flushActiveTime())
+
+  ipcMain.handle('timer:setBase', (_event, entryId: number, ms: number) => setTimerBase(entryId, ms))
 
   // ---- SETTINGS ----
 

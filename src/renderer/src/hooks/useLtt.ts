@@ -17,6 +17,7 @@ interface LttAPI {
   stopTimer:     () => Promise<{ id: number; ms: number } | null>
   getTimerState: () => Promise<TimerState | null>
   flushTimer:    () => Promise<void>
+  setTimerBase:  (entryId: number, ms: number) => Promise<void>
 
   // SETTINGS
   getSettings:  () => Promise<UserSettings | null>
