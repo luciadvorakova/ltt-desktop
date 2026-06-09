@@ -182,11 +182,11 @@ export function startJiraRefreshInterval(): void {
 export function getJiraStatus(): { connected: boolean; email?: string; cloudId?: string } {
   const s = getJiraSettings()
   if (!s.jiraAccessToken) return { connected: false }
-  return {
-    connected: true,
-    email: s.jiraUserEmail,
-    cloudId: s.jiraCloudId,
+  // Also treat as disconnected if token is expired and no refresh token available
+  if (s.jiraTokenExpiry && Date.now() > new Date(s.jiraTokenExpiry).getTime() && !s.jiraRefreshToken) {
+    return { connected: false }
   }
+  return { connected: true, email: s.jiraUserEmail, cloudId: s.jiraCloudId }
 }
 
 export function signOutJira(): void {
