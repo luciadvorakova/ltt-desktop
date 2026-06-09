@@ -951,7 +951,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 style={{
                   fontSize: 10,
                   color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
-                  paddingLeft: 29,
+                  paddingLeft: activeSubTab === 'today' ? 29 : 0,
                   marginBottom: 5,
                   outline: 'none',
                   cursor: 'text',
@@ -969,7 +969,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
               {/* Row 3: pills */}
               {(entry.clientName || entry.jiraKey) && (
-                <div style={{ display: 'flex', gap: 5, paddingLeft: 29 }}>
+                <div style={{ display: 'flex', gap: 5, paddingLeft: activeSubTab === 'today' ? 29 : 0 }}>
                   {entry.clientName && (
                     <span draggable={false} style={{
                       fontSize: 9,
