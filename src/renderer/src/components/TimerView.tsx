@@ -354,6 +354,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayEntries = entries.filter(e => {
     if (e.removedFromTimer) return false
+    if (!(e.tab === 'today' || !e.tab)) return false
     if (e.jiraSent) {
       if (settings?.manualTimerCleanup) return true
       return e.ts >= todayStart.getTime()
