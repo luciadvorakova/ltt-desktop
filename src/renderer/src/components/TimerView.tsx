@@ -300,6 +300,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const [dragOrderedEntries, setDragOrderedEntries] = useState<TimeEntry[] | null>(null)
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
   const [activeSubTab, setActiveSubTab] = useState<'today' | 'tomorrow' | 'later'>('today')
+  const [dragOverTab, setDragOverTab] = useState<'today' | 'tomorrow' | 'later' | null>(null)
+  const dragTabTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
@@ -401,6 +403,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
+    const draggedEntry = entries.find(e => e.id === fromId)
+    if (draggedEntry && (draggedEntry.tab ?? 'today') !== activeSubTab) return
     const base = dragOrderedEntries ?? orderedEntries
     const from = base.findIndex(e => e.id === fromId)
     const to = base.findIndex(e => e.id === toId)
@@ -491,11 +495,31 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             <button
               key={tab}
               onClick={() => { setActiveSubTab(tab); setAddPanelOpen(false) }}
+              onDragOver={e => {
+                e.preventDefault()
+                setDragOverTab(tab)
+                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                dragTabTimerRef.current = setTimeout(() => { setActiveSubTab(tab) }, 600)
+              }}
+              onDragLeave={() => {
+                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                setDragOverTab(null)
+              }}
+              onDrop={async () => {
+                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                setDragOverTab(null)
+                const draggedId = dragIdRef.current
+                if (draggedId === null) return
+                const draggedEntry = entries.find(e => e.id === draggedId)
+                if (!draggedEntry || (draggedEntry.tab ?? 'today') === tab) return
+                await updateEntry({ ...draggedEntry, tab, updatedAt: new Date().toISOString() })
+              }}
               style={{
                 fontSize: 10,
                 padding: '7px 12px',
                 marginBottom: -1,
-                background: 'none',
+                background: dragOverTab === tab ? 'rgba(255,255,255,0.08)' : 'none',
+                borderRadius: dragOverTab === tab ? 6 : 0,
                 border: 'none',
                 borderBottom: activeSubTab === tab ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
                 color: activeSubTab === tab ? 'white' : 'rgba(255,255,255,0.35)',
@@ -805,7 +829,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               onDragStart={() => { dragIdRef.current = entry.id }}
               onDragOver={e => { e.preventDefault(); dragOverIdRef.current = entry.id; setDragOverId(entry.id) }}
               onDragEnd={() => { setDragOverId(null); dragIdRef.current = null; dragOverIdRef.current = null }}
-              onDrop={() => { reorderEntries(dragIdRef.current, entry.id) }}
+              onDrop={() => { reorderEntries(dragIdRef.current, entry.id); setDragOverTab(null) }}
               style={{
                 padding: '8px 14px',
                 borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.08)',
