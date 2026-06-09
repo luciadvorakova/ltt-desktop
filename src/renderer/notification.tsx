@@ -1,14 +1,6 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 
-declare global {
-  interface Window {
-    ltt?: {
-      notificationClose: (gcalEventId?: string) => void
-      notificationStartTracking: (entryId: string, gcalEventId?: string) => void
-    }
-  }
-}
+declare const window: Window & { ltt?: { notificationClose: (gcalEventId?: string) => void; notificationStartTracking: (entryId: string, gcalEventId?: string) => void } }
 
 const params = new URLSearchParams(window.location.search)
 const type = (params.get('type') ?? '10min') as '10min' | '1min'
