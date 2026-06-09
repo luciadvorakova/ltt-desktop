@@ -2,6 +2,16 @@ console.log('PRELOAD RUNNING')
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TimeEntry, UserSettings } from '../types/index'
 
+declare global {
+  interface Window {
+    ltt: {
+      notificationClose: (gcalEventId?: string) => void
+      notificationStartTracking: (entryId: string, gcalEventId?: string) => void
+      [key: string]: unknown
+    }
+  }
+}
+
 contextBridge.exposeInMainWorld('ltt', {
   // ---- AUTH ----
   signIn:     ()                          => ipcRenderer.invoke('auth:signIn'),

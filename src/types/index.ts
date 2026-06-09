@@ -16,6 +16,8 @@ export interface TimeEntry {
   deletedFromBulk: boolean
   gcalEventId?: string
   gcalEndTime?: number
+  gcal_end_time?: string
+  description?: string
 }
 
 export interface UserSettings {

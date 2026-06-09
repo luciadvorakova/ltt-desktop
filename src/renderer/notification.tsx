@@ -1,6 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 
+declare global {
+  interface Window {
+    ltt?: {
+      notificationClose: (gcalEventId?: string) => void
+      notificationStartTracking: (entryId: string, gcalEventId?: string) => void
+    }
+  }
+}
+
 const params = new URLSearchParams(window.location.search)
 const type = (params.get('type') ?? '10min') as '10min' | '1min'
 const entryId = params.get('entryId') ?? ''
@@ -59,7 +68,7 @@ function NotificationPopup() {
           {label}
         </span>
         <button
-          onClick={() => window.ltt.notificationClose(gcalEventId)}
+          onClick={() => window.ltt?.notificationClose(gcalEventId)}
           style={{
             background: 'none',
             border: 'none',
@@ -97,7 +106,7 @@ function NotificationPopup() {
         </div>
         {type === '1min' && (
           <button
-            onClick={() => window.ltt.notificationStartTracking(entryId, gcalEventId)}
+            onClick={() => window.ltt?.notificationStartTracking(entryId, gcalEventId)}
             style={{
               width: '100%',
               padding: 7,
