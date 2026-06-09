@@ -28,7 +28,7 @@ export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'
     width: winWidth,
     height: winHeight,
     x: screenWidth - winWidth - 20,
-    y: 20,
+    y: 48,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
