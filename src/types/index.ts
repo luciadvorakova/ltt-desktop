@@ -18,6 +18,7 @@ export interface TimeEntry {
   gcalEndTime?: number
   gcal_end_time?: string
   description?: string
+  tab?: 'today' | 'tomorrow' | 'later'
 }
 
 export interface UserSettings {

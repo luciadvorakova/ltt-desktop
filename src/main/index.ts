@@ -9,8 +9,9 @@ import { jiraAuthEmitter, startJiraRefreshInterval } from './jira-auth'
 import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
-import { setupNotificationIpc } from './notification-window'
+import { setupNotificationIpc, clearDismissed } from './notification-window'
 import { store } from './store'
+import { supabase } from './supabase'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -99,6 +100,28 @@ mb.on('ready', () => {
   globalShortcut.register('CommandOrControl+Shift+I', () => {
     mb.window?.webContents.toggleDevTools()
   })
+
+  const runMidnightTasks = async () => {
+    clearDismissed()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await supabase
+        .from('time_entries')
+        .update({ tab: 'today' })
+        .eq('user_id', session.user.id)
+        .eq('tab', 'tomorrow')
+    }
+  }
+
+  const now = new Date()
+  const nextMidnight = new Date(now)
+  nextMidnight.setHours(24, 0, 0, 0)
+  const msUntilMidnight = nextMidnight.getTime() - now.getTime()
+
+  setTimeout(() => {
+    runMidnightTasks()
+    setInterval(runMidnightTasks, 24 * 60 * 60 * 1000)
+  }, msUntilMidnight)
 })
 
 mb.on('after-create-window', () => {
