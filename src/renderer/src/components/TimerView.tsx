@@ -324,6 +324,16 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const handlePause = async () => {
     await pause()
   }
+
+  const handleStartRef = useRef(handleStart)
+  useEffect(() => { handleStartRef.current = handleStart })
+  useEffect(() => {
+    const handler = (...args: unknown[]) => {
+      handleStartRef.current(parseInt(args[0] as string, 10))
+    }
+    ltt.on('start-tracking-from-notification', handler)
+    return () => ltt.off('start-tracking-from-notification', handler)
+  }, [ltt])
   const modifyFavourites = async (fn: (current: NonNullable<typeof settings>['jiraFavourites']) => NonNullable<typeof settings>['jiraFavourites'], label?: string) => {
     console.log('[FAV] called, label:', label)
     const latest = await ltt.getSettings()

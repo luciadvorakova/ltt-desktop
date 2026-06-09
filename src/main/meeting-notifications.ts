@@ -1,4 +1,5 @@
 import type { TimeEntry } from '../types/index'
+import { showMeetingNotification, isDismissed } from './notification-window'
 
 const scheduled = new Map<string, NodeJS.Timeout[]>()
 
@@ -18,14 +19,14 @@ export function scheduleMeetingNotifications(entries: TimeEntry[]): void {
     const tenMinBefore = entry.ts - 10 * 60 * 1000 - now
     if (tenMinBefore > 0) {
       timers.push(setTimeout(() => {
-        console.log('[MEETING] 10 min before', entry.name, entry.ts)
+        if (!isDismissed(entry.gcalEventId!)) showMeetingNotification(entry, '10min')
       }, tenMinBefore))
     }
 
     const oneMinBefore = entry.ts - 1 * 60 * 1000 - now
     if (oneMinBefore > 0) {
       timers.push(setTimeout(() => {
-        console.log('[MEETING] 1 min before', entry.name, entry.ts)
+        if (!isDismissed(entry.gcalEventId!)) showMeetingNotification(entry, '1min')
       }, oneMinBefore))
     }
 

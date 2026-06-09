@@ -9,6 +9,7 @@ import { jiraAuthEmitter, startJiraRefreshInterval } from './jira-auth'
 import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
+import { setupNotificationIpc } from './notification-window'
 import { store } from './store'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -103,6 +104,7 @@ mb.on('ready', () => {
 mb.on('after-create-window', () => {
   if (!ipcRegistered) {
     registerIpcHandlers(() => mb.window)
+    if (mb.window) setupNotificationIpc(mb.window)
     ipcRegistered = true
     console.log('[MAIN] IPC registered')
   }

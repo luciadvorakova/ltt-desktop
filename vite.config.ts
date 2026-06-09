@@ -5,6 +5,14 @@ import renderer from 'vite-plugin-electron-renderer'
 
 // https://electron-vite.org
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        index: 'index.html',
+        notification: 'notification.html',
+      },
+    },
+  },
   plugins: [
     react(),
     electron([
