@@ -27,6 +27,7 @@ function rowToEntry(row: Record<string, unknown>): TimeEntry {
     deletedFromBulk:  Boolean(row.deleted_from_bulk),
     gcalEventId:      (row.gcal_event_id as string) ?? undefined,
     gcalEndTime:      row.gcal_end_time != null ? Number(row.gcal_end_time) : undefined,
+    tab:              (row.tab as 'today' | 'tomorrow' | 'later') ?? 'today',
   }
 }
 
@@ -48,6 +49,7 @@ function entryToRow(entry: TimeEntry, userId: string): Record<string, unknown> {
     carried_over:      entry.carriedOver,
     removed_from_timer: entry.removedFromTimer,
     deleted_from_bulk: entry.deletedFromBulk,
+    tab:               entry.tab ?? 'today',
   }
 }
 
