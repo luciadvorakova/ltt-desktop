@@ -285,6 +285,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const [dragOverId, setDragOverId] = useState<number | null>(null)
   const [dragOrderedEntries, setDragOrderedEntries] = useState<TimeEntry[] | null>(null)
   const [selectedRecent, setSelectedRecent] = useState<Set<string>>(new Set())
+  const [activeSubTab, setActiveSubTab] = useState<'today' | 'tomorrow' | 'later'>('today')
 
   useEffect(() => {
     const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
@@ -311,6 +312,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       removedFromTimer: false,
       deletedFromBulk: false,
       updatedAt: new Date().toISOString(),
+      tab: activeSubTab,
     }
     await addEntry(entry)
     setManualInput('')
@@ -361,17 +363,26 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   console.log('[TODAY] entry ids:', todayEntries.map(e => e.id))
 
+  const tomorrowEntries = entries.filter(e =>
+    !e.removedFromTimer && !e.deletedFromBulk && e.tab === 'tomorrow'
+  )
+  const laterEntries = entries.filter(e =>
+    !e.removedFromTimer && !e.deletedFromBulk && e.tab === 'later'
+  )
+
   const orderedEntries = useMemo(() => {
-    const sorted = [...todayEntries].sort((a, b) => {
-      if (!a.jiraSent && b.jiraSent) return -1
-      if (a.jiraSent && !b.jiraSent) return 1
+    const source = activeSubTab === 'today' ? todayEntries : activeSubTab === 'tomorrow' ? tomorrowEntries : laterEntries
+    return [...source].sort((a, b) => {
+      if (activeSubTab === 'today') {
+        if (!a.jiraSent && b.jiraSent) return -1
+        if (a.jiraSent && !b.jiraSent) return 1
+      }
       const aOrder = a.sortOrder ?? Infinity
       const bOrder = b.sortOrder ?? Infinity
       if (aOrder !== bOrder) return aOrder - bOrder
       return b.ts - a.ts
     })
-    return sorted
-  }, [todayEntries])
+  }, [todayEntries, tomorrowEntries, laterEntries, activeSubTab])
 
   const reorderEntries = async (fromId: number | null, toId: number) => {
     if (fromId === null || fromId === toId) return
@@ -413,7 +424,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   if (bulkSendOpen) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <BulkSendView entries={entries} updateEntry={updateEntry} onBack={() => setBulkSendOpen(false)} />
+        <BulkSendView entries={entries.filter(e => !e.tab || e.tab === 'today')} updateEntry={updateEntry} onBack={() => setBulkSendOpen(false)} />
       </div>
     )
   }
@@ -421,7 +432,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   if (standupOpen) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <StandupView entries={entries} onBack={() => setStandupOpen(false)} />
+        <StandupView entries={entries.filter(e => !e.tab || e.tab === 'today')} onBack={() => setStandupOpen(false)} />
       </div>
     )
   }
@@ -439,7 +450,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
-          {addPanelOpen ? 'Add Task' : "Today's Tasks"}
+          {addPanelOpen ? 'Add Task' : activeSubTab === 'today' ? "Today's tasks" : activeSubTab === 'tomorrow' ? "Tomorrow's tasks" : 'Backlog'}
         </span>
         {addPanelOpen ? (
           <button
@@ -457,6 +468,32 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           </button>
         )}
       </div>
+
+      {/* Sub-tab bar */}
+      {!addPanelOpen && (
+        <div style={{ display: 'flex', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          {(['today', 'tomorrow', 'later'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => { setActiveSubTab(tab); setAddPanelOpen(false) }}
+              style={{
+                fontSize: 10,
+                padding: '7px 12px',
+                marginBottom: -1,
+                background: 'none',
+                border: 'none',
+                borderBottom: activeSubTab === tab ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
+                color: activeSubTab === tab ? 'white' : 'rgba(255,255,255,0.35)',
+                fontWeight: activeSubTab === tab ? 600 : 400,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              {tab === 'today' ? 'Today' : tab === 'tomorrow' ? 'Tomorrow' : 'Later'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Add panel */}
       {addPanelOpen && (
@@ -547,6 +584,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                           removedFromTimer: false,
                           deletedFromBulk: false,
                           updatedAt: new Date().toISOString(),
+                          tab: activeSubTab,
                         }
                         await addEntry(entry)
                         setJiraQuery('')
@@ -585,6 +623,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   removedFromTimer: false,
                   deletedFromBulk: false,
                   updatedAt: new Date().toISOString(),
+                  tab: activeSubTab,
                 })
                 return (
                   <>
@@ -682,6 +721,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   removedFromTimer: false,
                   deletedFromBulk: false,
                   updatedAt: new Date().toISOString(),
+                  tab: activeSubTab,
                 })
               }
               setSelectedRecent(new Set())
@@ -731,9 +771,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
       {/* Entry list */}
       <div style={{ flex: 1, overflowY: 'auto', display: addPanelOpen ? 'none' : 'flex', flexDirection: 'column' }}>
-        {todayEntries.length === 0 && (
+        {orderedEntries.length === 0 && (
           <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
-            No entries today
+            {activeSubTab === 'today' ? 'No entries today' : activeSubTab === 'tomorrow' ? 'No tasks for tomorrow yet.' : 'No backlog tasks yet. Add tasks you want to work on later.'}
           </div>
         )}
         {(dragOrderedEntries ?? orderedEntries).map((entry) => {
@@ -754,37 +794,39 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               style={{
                 padding: '8px 14px',
                 borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.08)',
-                background: isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
+                background: activeSubTab === 'today' && isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
                 opacity: entry.jiraSent ? 0.5 : 1,
                 cursor: 'grab',
               }}
             >
               {/* Row 1: controls + name + time + menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-                <button
-                  draggable={false}
-                  onMouseDown={e => e.stopPropagation()}
-                  onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
-                    border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
-                    color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
-                    cursor: entry.jiraSent ? 'default' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    fontSize: 8,
-                    padding: 0,
-                  }}
-                >
-                  {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
-                </button>
+                {activeSubTab === 'today' && (
+                  <button
+                    draggable={false}
+                    onMouseDown={e => e.stopPropagation()}
+                    onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
+                      border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
+                      color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
+                      cursor: entry.jiraSent ? 'default' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: 8,
+                      padding: 0,
+                    }}
+                  >
+                    {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
+                  </button>
+                )}
 
-                {isActiveRunning && (
+                {activeSubTab === 'today' && isActiveRunning && (
                   <div style={{
                     width: 6,
                     height: 6,
@@ -799,7 +841,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   fontSize: 12,
                   fontWeight: 600,
                   flex: 1,
-                  color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
+                  color: activeSubTab === 'today' && isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -807,17 +849,19 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   {entry.name}
                 </span>
 
-                <span style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
-                  flexShrink: 0,
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                  fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '0.02em',
-                }}>
-                  {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
-                </span>
+                {activeSubTab === 'today' && (
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
+                    flexShrink: 0,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '0.02em',
+                  }}>
+                    {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
+                  </span>
+                )}
 
                 <span draggable={false} onMouseDown={e => e.stopPropagation()}>
                 <EntryMenu
@@ -943,7 +987,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       </div>
 
       {/* Footer */}
-      <div style={{
+      {activeSubTab === 'today' && <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -999,7 +1043,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             {formatMsHHMM(totalMs)}
           </span>
         </div>
-      </div>
+      </div>}
 
       {/* Link to Jira modal */}
       {linkJiraEntryId !== null && (() => {
