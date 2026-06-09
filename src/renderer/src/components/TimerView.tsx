@@ -47,7 +47,7 @@ function parseMin(input: string): number | null {
 }
 
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate }: {
+function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate, onMoveTo, currentTab }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
@@ -57,6 +57,8 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   onChangeJiraLink?: () => void;
   onRemoveFromTimer?: () => void;
   onDuplicate?: () => void;
+  onMoveTo?: (tab: 'today' | 'tomorrow' | 'later') => void;
+  currentTab?: 'today' | 'tomorrow' | 'later';
 }) {
   const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -124,28 +126,40 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             overflow: 'hidden',
           }}
         >
-          <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
-            {expandedTime === 'add' && (
-              <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} style={timeInputStyle}
-                  onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onMouseDown={handleAdd}>Add</button>
+          {onMoveTo && (
+            <>
+              <div style={{ padding: '4px 0' }}>
+                {currentTab !== 'today' && <MenuItem icon="←" label="Move to Today" onAction={() => { onMoveTo('today'); onClose() }} />}
+                {currentTab !== 'tomorrow' && <MenuItem icon="→" label="Move to Tomorrow" onAction={() => { onMoveTo('tomorrow'); onClose() }} />}
+                {currentTab !== 'later' && <MenuItem icon="→" label="Move to Later" onAction={() => { onMoveTo('later'); onClose() }} />}
               </div>
-            )}
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
-            {ms > 0 && expandedTime === 'edit' && (
-              <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
-                  onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onMouseDown={handleEdit}>Save</button>
-              </div>
-            )}
-          </div>
-          {ms > 0 && onSendToJira && menuDivider}
-          {ms > 0 && onSendToJira && (
+              {menuDivider}
+            </>
+          )}
+          {currentTab === 'today' && (
+            <div style={{ padding: '4px 0' }}>
+              <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
+              {expandedTime === 'add' && (
+                <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
+                  <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} style={timeInputStyle}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
+                  <span style={timeHintStyle}>min</span>
+                  <button style={timeBtnStyle} onMouseDown={handleAdd}>Add</button>
+                </div>
+              )}
+              {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
+              {ms > 0 && expandedTime === 'edit' && (
+                <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
+                  <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
+                  <span style={timeHintStyle}>min</span>
+                  <button style={timeBtnStyle} onMouseDown={handleEdit}>Save</button>
+                </div>
+              )}
+            </div>
+          )}
+          {currentTab === 'today' && ms > 0 && onSendToJira && menuDivider}
+          {currentTab === 'today' && ms > 0 && onSendToJira && (
             <div style={{ padding: '4px 0' }}>
               <MenuItem icon="↑" label="Send to Jira" onAction={() => { onSendToJira(); onClose() }} />
             </div>
@@ -157,7 +171,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" onAction={onDuplicate ? () => { onDuplicate(); onClose() } : undefined} />
-            <MenuItem icon="✕" label="Remove from timer" color="rgba(255,255,255,0.5)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />
+            {currentTab === 'today' && <MenuItem icon="✕" label="Remove from timer" color="rgba(255,255,255,0.5)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />}
           </div>
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
@@ -907,6 +921,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     deletedFromBulk: false,
                     updatedAt: new Date().toISOString(),
                   })}
+                  currentTab={activeSubTab}
+                  onMoveTo={async (tab) => { await updateEntry({ ...entry, tab, updatedAt: new Date().toISOString() }) }}
                 />
                 </span>
               </div>
