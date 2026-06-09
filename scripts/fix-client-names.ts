@@ -78,20 +78,24 @@ async function getClientName(issueKey: string): Promise<string | null> {
   }
 
   const res = await fetch(
-    `https://api.atlassian.com/ex/jira/${jiraCloudId}/rest/api/3/issue/${issueKey}?fields=parent`,
+    `https://api.atlassian.com/ex/jira/${jiraCloudId}/rest/api/3/issue/${issueKey}?fields=parent,epic`,
     { headers }
   )
   if (!res.ok) return null
 
-  const data = await res.json() as { fields: { parent?: { key?: string } } }
-  const parentKey = data.fields.parent?.key
+  const data = await res.json() as {
+    fields?: { parent?: { key?: string }; epic?: { key?: string } }
+  }
+  const parentKey = data.fields?.parent?.key ?? data.fields?.epic?.key
   if (!parentKey) return null
 
   const parentRes = await fetch(
     `https://api.atlassian.com/ex/jira/${jiraCloudId}/rest/api/3/issue/${parentKey}?fields=summary,issuetype,customfield_10252`,
     { headers }
   )
-  if (!parentRes.ok) return null
+  if (!parentRes.ok) {
+    throw new Error(`parent fetch failed for ${parentKey}: HTTP ${parentRes.status}`)
+  }
 
   const parentData = await parentRes.json() as {
     fields: { summary?: string; customfield_10252?: string[] }
@@ -129,27 +133,32 @@ async function main() {
   let failed = 0
 
   for (const entry of entries) {
-    const newClientName = await getClientName(entry.jira_key)
+    try {
+      const newClientName = await getClientName(entry.jira_key)
 
-    if (newClientName === null) {
-      console.log(`[SKIP]  ${entry.jira_key}: could not fetch client name`)
-      failed++
-    } else if (newClientName === entry.client_name) {
-      alreadyCorrect++
-    } else {
-      console.log(`[FIX]   ${entry.jira_key}: "${entry.client_name ?? 'null'}" → "${newClientName}"`)
-      if (!DRY_RUN) {
-        const { error: updateError } = await supabase
-          .from('time_entries')
-          .update({ client_name: newClientName })
-          .eq('id', entry.id)
-        if (updateError) {
-          console.error(`        [ERROR] ${updateError.message}`)
-          failed++
-          continue
+      if (newClientName === null) {
+        console.log(`[SKIP]  ${entry.jira_key}: no parent or epic found`)
+        failed++
+      } else if (newClientName === entry.client_name) {
+        alreadyCorrect++
+      } else {
+        console.log(`[FIX]   ${entry.jira_key}: "${entry.client_name ?? 'null'}" → "${newClientName}"`)
+        if (!DRY_RUN) {
+          const { error: updateError } = await supabase
+            .from('time_entries')
+            .update({ client_name: newClientName })
+            .eq('id', entry.id)
+          if (updateError) {
+            console.error(`        [ERROR] ${updateError.message}`)
+            failed++
+            continue
+          }
         }
+        wouldUpdate++
       }
-      wouldUpdate++
+    } catch (err) {
+      console.log(`[SKIP]  ${entry.jira_key}: ${(err as Error).message}`)
+      failed++
     }
 
     await new Promise(resolve => setTimeout(resolve, 200))
