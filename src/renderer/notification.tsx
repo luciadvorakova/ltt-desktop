@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom/client'
 
-declare const window: Window & { ltt?: { notificationClose: (gcalEventId?: string) => void; notificationStartTracking: (entryId: string, gcalEventId?: string) => void } }
+declare const window: Window & { ltt?: { notificationClose: (gcalEventId?: string, type?: string) => void; notificationStartTracking: (entryId: string, gcalEventId?: string) => void } }
 
 const params = new URLSearchParams(window.location.search)
 const type = (params.get('type') ?? '10min') as '10min' | '1min'
@@ -60,7 +60,7 @@ function NotificationPopup() {
           {label}
         </span>
         <button
-          onClick={() => window.ltt?.notificationClose(gcalEventId)}
+          onClick={() => window.ltt?.notificationClose(gcalEventId, type)}
           style={{
             background: 'none',
             border: 'none',

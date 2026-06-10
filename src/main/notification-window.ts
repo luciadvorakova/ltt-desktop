@@ -5,8 +5,8 @@ import type { TimeEntry } from '../types/index'
 let notificationWindow: BrowserWindow | null = null
 const dismissed = new Set<string>()
 
-export function isDismissed(gcalEventId: string): boolean {
-  return dismissed.has(gcalEventId)
+export function isDismissed(gcalEventId: string, type: '10min' | '1min'): boolean {
+  return dismissed.has(`${gcalEventId}:${type}`)
 }
 
 export function clearDismissed(): void {
@@ -14,7 +14,7 @@ export function clearDismissed(): void {
 }
 
 export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'): void {
-  if (entry.gcalEventId && dismissed.has(entry.gcalEventId)) return
+  if (entry.gcalEventId && dismissed.has(`${entry.gcalEventId}:${type}`)) return
 
   if (notificationWindow && !notificationWindow.isDestroyed()) {
     notificationWindow.close()
@@ -65,8 +65,8 @@ export function setupNotificationIpc(mainWindow: BrowserWindow): void {
   if (notificationIpcRegistered) return
   notificationIpcRegistered = true
 
-  ipcMain.on('notification:close', (_e, gcalEventId?: string) => {
-    if (gcalEventId) dismissed.add(gcalEventId)
+  ipcMain.on('notification:close', (_e, gcalEventId?: string, type?: string) => {
+    if (gcalEventId && type) dismissed.add(`${gcalEventId}:${type}`)
     if (notificationWindow && !notificationWindow.isDestroyed()) {
       notificationWindow.close()
       notificationWindow = null
@@ -74,7 +74,10 @@ export function setupNotificationIpc(mainWindow: BrowserWindow): void {
   })
 
   ipcMain.on('notification:start-tracking', (_e, entryId: string, gcalEventId?: string) => {
-    if (gcalEventId) dismissed.add(gcalEventId)
+    if (gcalEventId) {
+      dismissed.add(`${gcalEventId}:10min`)
+      dismissed.add(`${gcalEventId}:1min`)
+    }
     if (notificationWindow && !notificationWindow.isDestroyed()) {
       notificationWindow.close()
       notificationWindow = null

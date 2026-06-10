@@ -51,7 +51,7 @@ contextBridge.exposeInMainWorld('ltt', {
   clearDeletedEntryNames: ()             => ipcRenderer.invoke('app:clearDeletedEntryNames'),
 
   // ---- NOTIFICATION ----
-  notificationClose:         (gcalEventId?: string)                   => ipcRenderer.send('notification:close', gcalEventId),
+  notificationClose:         (gcalEventId?: string, type?: string)     => ipcRenderer.send('notification:close', gcalEventId, type),
   notificationStartTracking: (entryId: string, gcalEventId?: string)  => ipcRenderer.send('notification:start-tracking', entryId, gcalEventId),
 
   // ---- EVENTS (main → renderer) ----
