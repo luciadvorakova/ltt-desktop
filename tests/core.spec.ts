@@ -59,7 +59,7 @@ test.describe.serial('LTT Desktop core flows', () => {
 
   test('app launches and shows timer tab', async () => {
     await page.screenshot({ path: 'test-results/launch.png' })
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 30_000 })
   })
 
   test('add a new manual task — appears in list', async () => {
@@ -72,7 +72,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByPlaceholder('Task name…').fill(taskName)
     await page.getByRole('button', { name: 'Add' }).click()
 
-    await expect(page.getByText("Today's Tasks")).toBeVisible()
+    await expect(page.getByText("Timer")).toBeVisible()
     await page.waitForTimeout(1000)
     await expect(page.getByText(taskName)).toBeVisible({ timeout: 20_000 })
   })
@@ -157,7 +157,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await app.close()
     await launchAndAuth()
 
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('.desc-field', { timeout: 20_000 })
 
     // Poll until the saved description appears in any desc-field (React may still be settling)
@@ -195,7 +195,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await app.close()
     await launchAndAuth()
 
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('span[style*="tabular-nums"]', { timeout: 20_000 })
 
     const restoredTime = await page.locator('span[style*="tabular-nums"]').first().textContent()
@@ -276,7 +276,7 @@ test.describe.serial('LTT Desktop core flows', () => {
 
     // Close without sending
     await page.getByText('‹ Timer').click()
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 5_000 })
   })
 
   // ── Add from Recents ─────────────────────────────────────────────────────
@@ -307,7 +307,7 @@ test.describe.serial('LTT Desktop core flows', () => {
       await expect(page.getByText(/selected/)).toBeVisible({ timeout: 3_000 })
       await page.getByRole('button', { name: 'Add' }).click()
 
-      await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 10_000 })
+      await expect(page.getByText("Timer")).toBeVisible({ timeout: 10_000 })
 
       // Existing non-empty descriptions should still be in the list
       const updatedDescs = await page.locator('.desc-field').evaluateAll(
@@ -353,7 +353,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await app.close()
     await launchAndAuth()
 
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('[draggable="true"]', { timeout: 20_000 })
 
     const reloadedFirst = await page.locator('[draggable="true"]').nth(0).textContent()
@@ -387,6 +387,6 @@ test.describe.serial('LTT Desktop core flows', () => {
 
     // Close standup — back nav is a div with span "‹ Timer", not a button
     await page.getByText('‹ Timer').click()
-    await expect(page.getByText("Today's Tasks")).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText("Timer")).toBeVisible({ timeout: 5_000 })
   })
 })
