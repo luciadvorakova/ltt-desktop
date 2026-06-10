@@ -533,11 +533,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       {/* Add panel */}
       {addPanelOpen && (
         <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .ltt-manual-input::placeholder { color: rgba(255,255,255,0.28); }`}</style>
 
           {/* Mode tabs + close button */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', paddingLeft: 14 }}>
               {(['jira', 'manual', 'recent'] as const).map((mode) => (
                 <button
                   key={mode}
@@ -570,7 +570,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           {/* Jira mode */}
           {addMode === 'jira' && (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ padding: '4px 14px 8px', flexShrink: 0 }}>
+              <div style={{ padding: '10px 14px 8px', flexShrink: 0 }}>
                 <input
                   autoFocus
                   placeholder="Search Jira issues…"
@@ -719,12 +719,13 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
           {/* Manual mode */}
           {addMode === 'manual' && (
-            <div style={{ display: 'flex', gap: 6, padding: '4px 14px 8px' }}>
+            <div style={{ display: 'flex', gap: 6, padding: '10px 14px 8px' }}>
               <input
                 value={manualInput}
                 onChange={e => setManualInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleAddEntry() }}
                 placeholder="Task name…"
+                className="ltt-manual-input"
                 style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
               />
               <button
