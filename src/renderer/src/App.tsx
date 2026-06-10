@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useNotifications } from './hooks/useNotifications'
 import { useLtt } from './hooks/useLtt'
@@ -42,6 +42,8 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
   const [timerResetKey, setTimerResetKey] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [standupOpen, setStandupOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
+  const navRef = useRef<HTMLDivElement>(null)
 
   const initials = getInitials(session.access_token)
   const { name: _name, email: _email } = getUserInfo(session.access_token)
@@ -52,85 +54,154 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
     onOpenStandup: () => { setSettingsOpen(false); setStandupOpen(true) },
   })
 
+  useEffect(() => {
+    if (!navOpen) return
+    const handler = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setNavOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [navOpen])
+
+  const tabLabel: Record<Tab, string> = { timer: 'Timer', history: 'History', weekly: 'Weekly' }
+
+  const navItems: { t: Tab; icon: ReactNode }[] = [
+    {
+      t: 'timer',
+      icon: <span style={{ fontSize: 8, lineHeight: 1 }}>▶</span>,
+    },
+    {
+      t: 'history',
+      icon: <span style={{ fontSize: 11, lineHeight: 1 }}>≡</span>,
+    },
+    {
+      t: 'weekly',
+      icon: (
+        <span style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, width: 7, height: 7 }}>
+          {[0,1,2,3].map(i => (
+            <span key={i} style={{ width: 2.5, height: 2.5, borderRadius: 0.5, background: 'currentColor', display: 'block' }} />
+          ))}
+        </span>
+      ),
+    },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative' }}>
 
       {/* Top nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
 
-        {/* Pill tab group */}
-        <div style={{
-          display: 'flex',
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 99,
-          padding: 3,
-          gap: 2,
-        }}>
-          {(['timer', 'history', 'weekly'] as Tab[]).map((t) => (
+        {/* View title */}
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+          {tabLabel[tab]}
+        </span>
+
+        {/* Right: avatar + hamburger */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+          {/* Avatar with notification badge */}
+          <div style={{ position: 'relative' }}>
             <button
-              key={t}
-              onClick={() => { if (t === 'timer' && tab === 'timer') setTimerResetKey(k => k + 1); setTab(t); setSettingsOpen(false) }}
+              onClick={() => setSettingsOpen(true)}
               style={{
-                fontSize: 10,
-                padding: '3px 10px',
-                borderRadius: 99,
-                color: tab === t ? 'white' : 'rgba(255,255,255,0.4)',
-                border: 'none',
-                background: tab === t ? 'rgba(255,255,255,0.18)' : 'none',
-                fontWeight: tab === t ? 600 : 400,
-                fontFamily: 'inherit',
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                fontSize: 9,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.7)',
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                fontFamily: 'inherit',
               }}
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {initials}
             </button>
-          ))}
-        </div>
+            {notificationCount > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: -3,
+                right: -3,
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: '#e05252',
+                border: '2px solid #0e1830',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 7,
+                fontWeight: 700,
+                color: 'white',
+                pointerEvents: 'none',
+              }}>
+                {notificationCount}
+              </div>
+            )}
+          </div>
 
-        {/* Avatar with notification badge */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              fontSize: 9,
-              fontWeight: 600,
-              color: 'rgba(255,255,255,0.7)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              fontFamily: 'inherit',
-            }}
-          >
-            {initials}
-          </button>
-          {notificationCount > 0 && (
-            <div style={{
-              position: 'absolute',
-              top: -3,
-              right: -3,
-              width: 14,
-              height: 14,
-              borderRadius: '50%',
-              background: '#e05252',
-              border: '2px solid #0e1830',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 7,
-              fontWeight: 700,
-              color: 'white',
-              pointerEvents: 'none',
-            }}>
-              {notificationCount}
-            </div>
-          )}
+          {/* Hamburger + dropdown */}
+          <div ref={navRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setNavOpen(o => !o)}
+              style={{ background: 'none', border: 'none', padding: 3, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 3.5, alignItems: 'center', justifyContent: 'center' }}
+            >
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{ display: 'block', width: 14, height: 1.5, background: 'rgba(255,255,255,0.4)', borderRadius: 2 }} />
+              ))}
+            </button>
+
+            {navOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                background: 'linear-gradient(145deg, #1e1850, #0e1830)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 12,
+                boxShadow: '0 8px 28px rgba(0,0,0,0.7)',
+                minWidth: 130,
+                padding: '4px 0',
+                zIndex: 200,
+              }}>
+                {navItems.map(({ t, icon }) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      if (t === 'timer' && tab === 'timer') setTimerResetKey(k => k + 1)
+                      setTab(t)
+                      setSettingsOpen(false)
+                      setNavOpen(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 9,
+                      padding: '7px 14px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: 11,
+                      fontWeight: tab === t ? 600 : 400,
+                      color: tab === t ? 'white' : 'rgba(255,255,255,0.55)',
+                      textAlign: 'left',
+                    }}
+                  >
+                    {icon}
+                    {tabLabel[t]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

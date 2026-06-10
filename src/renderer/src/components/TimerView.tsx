@@ -460,77 +460,67 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <style>{`.desc-field::placeholder { color: rgba(255,255,255,0.2); }`}</style>
 
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '7px 14px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-      }}>
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
-          {addPanelOpen ? 'Add Task' : activeSubTab === 'today' ? "Today's tasks" : activeSubTab === 'tomorrow' ? "Tomorrow's tasks" : 'Backlog'}
-        </span>
-        {addPanelOpen ? (
+      {/* Sub-tab bar + add button */}
+      {!addPanelOpen && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex' }}>
+            {(['today', 'tomorrow', 'later'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => { setActiveSubTab(tab); setAddPanelOpen(false) }}
+                onDragOver={e => {
+                  e.preventDefault()
+                  setDragOverTab(tab)
+                  if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                  dragTabTimerRef.current = setTimeout(() => { setActiveSubTab(tab) }, 600)
+                }}
+                onDragLeave={() => {
+                  if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                  setDragOverTab(null)
+                }}
+                onDrop={async () => {
+                  if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
+                  setDragOverTab(null)
+                  const draggedId = dragIdRef.current
+                  if (draggedId === null) return
+                  const draggedEntry = entries.find(e => e.id === draggedId)
+                  if (!draggedEntry || (draggedEntry.tab ?? 'today') === tab) return
+                  await updateEntry({ ...draggedEntry, tab, updatedAt: new Date().toISOString() })
+                }}
+                style={{
+                  fontSize: 10,
+                  padding: '11px 14px',
+                  marginBottom: -1,
+                  background: dragOverTab === tab ? 'rgba(255,255,255,0.08)' : 'none',
+                  borderRadius: dragOverTab === tab ? 6 : 0,
+                  border: 'none',
+                  borderBottom: activeSubTab === tab ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
+                  color: activeSubTab === tab ? 'white' : 'rgba(255,255,255,0.35)',
+                  fontWeight: activeSubTab === tab ? 600 : 400,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                {tab === 'today' ? 'Today' : tab === 'tomorrow' ? 'Tomorrow' : 'Later'}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setAddPanelOpen(true)}
+            style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 15, color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}
+          >
+            +
+          </button>
+        </div>
+      )}
+      {addPanelOpen && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <button
             onClick={() => { setAddPanelOpen(false); setSelectedRecent(new Set()) }}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
           >
             ×
           </button>
-        ) : (
-          <button
-            onClick={() => setAddPanelOpen(true)}
-            style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 15, color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
-          >
-            +
-          </button>
-        )}
-      </div>
-
-      {/* Sub-tab bar */}
-      {!addPanelOpen && (
-        <div style={{ display: 'flex', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          {(['today', 'tomorrow', 'later'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => { setActiveSubTab(tab); setAddPanelOpen(false) }}
-              onDragOver={e => {
-                e.preventDefault()
-                setDragOverTab(tab)
-                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
-                dragTabTimerRef.current = setTimeout(() => { setActiveSubTab(tab) }, 600)
-              }}
-              onDragLeave={() => {
-                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
-                setDragOverTab(null)
-              }}
-              onDrop={async () => {
-                if (dragTabTimerRef.current) clearTimeout(dragTabTimerRef.current)
-                setDragOverTab(null)
-                const draggedId = dragIdRef.current
-                if (draggedId === null) return
-                const draggedEntry = entries.find(e => e.id === draggedId)
-                if (!draggedEntry || (draggedEntry.tab ?? 'today') === tab) return
-                await updateEntry({ ...draggedEntry, tab, updatedAt: new Date().toISOString() })
-              }}
-              style={{
-                fontSize: 10,
-                padding: '7px 12px',
-                marginBottom: -1,
-                background: dragOverTab === tab ? 'rgba(255,255,255,0.08)' : 'none',
-                borderRadius: dragOverTab === tab ? 6 : 0,
-                border: 'none',
-                borderBottom: activeSubTab === tab ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
-                color: activeSubTab === tab ? 'white' : 'rgba(255,255,255,0.35)',
-                fontWeight: activeSubTab === tab ? 600 : 400,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-              }}
-            >
-              {tab === 'today' ? 'Today' : tab === 'tomorrow' ? 'Tomorrow' : 'Later'}
-            </button>
-          ))}
         </div>
       )}
 
