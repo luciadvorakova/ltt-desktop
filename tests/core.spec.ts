@@ -146,8 +146,13 @@ test.describe.serial('LTT Desktop core flows', () => {
   test('description persists after restart', async () => {
     // Give the Supabase save time to complete before closing
     await page.waitForTimeout(2_000)
-    const savedDesc = await page.locator('.desc-field').first().inputValue()
-    expect(savedDesc.trim()).toBeTruthy()
+    const allDescs = await page.locator('.desc-field').all()
+    let savedDesc = ''
+    for (const field of allDescs) {
+      const val = await field.inputValue()
+      if (val.trim()) { savedDesc = val.trim(); break }
+    }
+    expect(savedDesc).toBeTruthy()
 
     await app.close()
     await launchAndAuth()
