@@ -179,14 +179,22 @@ export function startJiraRefreshInterval(): void {
   }, 50 * 60 * 1000)
 }
 
-export function getJiraStatus(): { connected: boolean; email?: string; cloudId?: string } {
+export async function getJiraStatus(): Promise<{ connected: boolean; email?: string; cloudId?: string }> {
   const s = getJiraSettings()
   if (!s.jiraAccessToken) return { connected: false }
-  // Also treat as disconnected if token is expired and no refresh token available
-  if (s.jiraTokenExpiry && Date.now() > new Date(s.jiraTokenExpiry).getTime() && !s.jiraRefreshToken) {
-    return { connected: false }
-  }
-  return { connected: true, email: s.jiraUserEmail, cloudId: s.jiraCloudId }
+
+  const expiry = s.jiraTokenExpiry
+  const expiresAt = expiry
+    ? (isNaN(Number(expiry)) ? new Date(expiry).getTime() : Number(expiry))
+    : null
+  const nearExpiry = expiresAt !== null && Date.now() > expiresAt - 5 * 60 * 1000
+
+  if (!nearExpiry) return { connected: true, email: s.jiraUserEmail, cloudId: s.jiraCloudId }
+
+  const token = await ensureJiraToken()
+  if (!token) return { connected: false }
+  const fresh = getJiraSettings()
+  return { connected: true, email: fresh.jiraUserEmail, cloudId: fresh.jiraCloudId }
 }
 
 export function signOutJira(): void {
