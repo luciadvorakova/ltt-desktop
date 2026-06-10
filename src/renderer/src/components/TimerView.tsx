@@ -276,7 +276,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const ltt = useLtt()
   const { entries, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer({ patchEntry })
-  const { settings, updateSetting } = useSettings()
+  const { settings, updateSetting } = useSettings(entries)
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [standupOpenInternal, setStandupOpenInternal] = useState(false)
   const standupOpen = standupOpenProp === true ? true : standupOpenInternal

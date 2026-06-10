@@ -43,6 +43,7 @@ export interface UserSettings {
   jiraRecent?: { jiraKey: string; jiraSummary?: string; clientName?: string }[]
   lastStandupDate?: string
   standupDismissedDate?: string
+  clientColors?: Record<string, number>
 }
 
 export interface TimerState {

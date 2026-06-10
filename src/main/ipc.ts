@@ -106,7 +106,11 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     await ensureSession()
     const { error } = await supabase
       .from('user_settings')
-      .upsert({ user_id: userId, ...settings }, { onConflict: 'user_id' })
+      .upsert({
+        user_id: userId,
+        ...settings,
+        client_colors: settings.clientColors ? JSON.stringify(settings.clientColors) : null,
+      }, { onConflict: 'user_id' })
     if (error) console.error('[ipc] settings:push error:', error)
   })
 
@@ -139,6 +143,7 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
       manualTimerCleanup: row.manual_timer_cleanup as boolean | undefined,
       jiraFavourites:    typeof row.jira_favourites === 'string' ? JSON.parse(row.jira_favourites) : row.jira_favourites as string[] | undefined,
       jiraRecent:        typeof row.jira_recent === 'string' ? JSON.parse(row.jira_recent) : row.jira_recent as string[] | undefined,
+      clientColors:      typeof row.client_colors === 'string' ? JSON.parse(row.client_colors) : (row.client_colors as Record<string, number> | undefined),
     }
     // strip undefined fields so they don't overwrite valid local values on merge
     Object.keys(mapped).forEach(k => { if (mapped[k as keyof UserSettings] === undefined) delete mapped[k as keyof UserSettings] })

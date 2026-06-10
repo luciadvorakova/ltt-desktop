@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { UserSettings } from '../../../types/index'
+import type { UserSettings, TimeEntry } from '../../../types/index'
 import { useLtt } from './useLtt'
+import { assignClientColors } from '../lib/clientColors'
 
 interface UseSettingsResult {
   settings: UserSettings | null
@@ -9,10 +10,11 @@ interface UseSettingsResult {
   pushSettings: (userId: string) => Promise<void>
 }
 
-export function useSettings(): UseSettingsResult {
+export function useSettings(entries?: TimeEntry[]): UseSettingsResult {
   const ltt = useLtt()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const settingsRef = useRef<UserSettings | null>(null)
+  const userIdRef = useRef<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export function useSettings(): UseSettingsResult {
       try { userId = JSON.parse(atob(session.access_token.split('.')[1])).sub as string } catch { /* ignore */ }
 
       if (!userId) return
+      userIdRef.current = userId
 
       const remote = await ltt.pullSettings(userId)
       console.log('[SETTINGS] pulled:', JSON.stringify(remote?.jiraFavourites))
@@ -39,6 +42,18 @@ export function useSettings(): UseSettingsResult {
     }
     load()
   }, [ltt])
+
+  // Assign colors to any clientNames not yet in the map
+  useEffect(() => {
+    if (!entries?.length || !settingsRef.current || !userIdRef.current) return
+    const updated = assignClientColors(entries, settingsRef.current.clientColors ?? {})
+    if (!updated) return
+    const next = { ...settingsRef.current, clientColors: updated }
+    settingsRef.current = next
+    setSettings(next)
+    const userId = userIdRef.current
+    ltt.setSettings(next).then(() => ltt.pushSettings(userId))
+  }, [entries, ltt])
 
   const updateSetting = useCallback(
     async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
