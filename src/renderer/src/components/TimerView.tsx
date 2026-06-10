@@ -5,6 +5,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useLtt } from '../hooks/useLtt'
 import { BulkSendView } from './BulkSendView'
 import { StandupView } from './StandupView'
+import { getClientColor } from '../lib/clientColors'
 import type { TimeEntry } from '../../../types/index'
 
 function MenuItem({ icon, label, color, onAction }: { icon: string; label: string; color?: string; onAction?: () => void }) {
@@ -828,190 +829,205 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 cursor: 'grab',
               }}
             >
-              {/* Row 1: controls + name + time + menu */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-                {activeSubTab === 'today' && (
-                  <button
-                    draggable={false}
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
-                      border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
-                      color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
-                      cursor: entry.jiraSent ? 'default' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontSize: 8,
-                      padding: 0,
-                    }}
-                  >
-                    {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
-                  </button>
-                )}
+              {/* 2-column layout */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
 
-                {activeSubTab === 'today' && isActiveRunning && (
-                  <div style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: '#7fd89a',
-                    flexShrink: 0,
-                    animation: 'ltt-pulse 1.5s ease-in-out infinite',
-                  }} />
-                )}
+                {/* Left column: play button + entry body */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, flex: 1, minWidth: 0 }}>
 
-                <span style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  flex: 1,
-                  color: activeSubTab === 'today' && isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {entry.name}
-                </span>
-
-                {activeSubTab === 'today' && (
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
-                    flexShrink: 0,
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                    fontVariantNumeric: 'tabular-nums',
-                    letterSpacing: '0.02em',
-                  }}>
-                    {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
-                  </span>
-                )}
-
-                <span draggable={false} onMouseDown={e => e.stopPropagation()}>
-                <EntryMenu
-                  ms={entry.ms}
-                  open={openMenuId === entry.id}
-                  onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
-                  onClose={() => setOpenMenuId(null)}
-                  onDelete={async () => { await deleteEntry(entry.id) }}
-                  onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
-                  onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
-                  onEditTime={async (newMs) => {
-                    await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
-                    if (timerState?.paused && timerState.activeEntryId === entry.id) {
-                      await ltt.setTimerBase(entry.id, newMs)
-                    }
-                  }}
-                  onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
-                    if ((cur ?? []).some(f => f.jiraKey === entry.jiraKey)) return cur ?? []
-                    return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
-                  }, `add-entry:${entry.jiraKey}`) : undefined}
-                  onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
-                    const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
-                    if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
-                    else console.error('[jira] logTime failed:', result.error)
-                  } : undefined}
-                  onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-                  onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-                  onRemoveFromTimer={() => updateEntry({ ...entry, removedFromTimer: true, updatedAt: new Date().toISOString() })}
-                  onDuplicate={() => addEntry({
-                    id: Date.now(),
-                    name: entry.name,
-                    ms: 0,
-                    ts: Date.now(),
-                    jiraKey: entry.jiraKey,
-                    jiraSummary: entry.jiraSummary,
-                    jiraDesc: entry.jiraDesc,
-                    clientName: entry.clientName,
-                    jiraSent: false,
-                    untracked: false,
-                    carriedOver: false,
-                    removedFromTimer: false,
-                    deletedFromBulk: false,
-                    updatedAt: new Date().toISOString(),
-                  })}
-                  currentTab={activeSubTab}
-                  onMoveTo={async (tab) => { await updateEntry({ ...entry, tab, updatedAt: new Date().toISOString() }) }}
-                />
-                </span>
-              </div>
-
-              {/* Row 2: description */}
-              <input
-                type="text"
-                className="desc-field"
-                placeholder="Add description..."
-                draggable={false}
-                onMouseDown={e => e.stopPropagation()}
-                value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
-                onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
-                onChange={e => setLocalDesc(e.target.value)}
-                onBlur={() => {
-                  if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
-                    updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
-                  }
-                  escapeRef.current = false
-                  setEditingDescId(null)
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
-                  if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
-                }}
-                style={{
-                  fontSize: 10,
-                  color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
-                  paddingLeft: activeSubTab === 'today' ? 29 : 0,
-                  marginBottom: 5,
-                  outline: 'none',
-                  cursor: 'text',
-                  background: 'transparent',
-                  border: 'none',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  fontFamily: 'inherit',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  minHeight: '1.2em',
-                }}
-              />
-
-              {/* Row 3: pills */}
-              {(entry.clientName || entry.jiraKey) && (
-                <div style={{ display: 'flex', gap: 5, paddingLeft: activeSubTab === 'today' ? 29 : 0 }}>
-                  {entry.clientName && (
-                    <span draggable={false} style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 99,
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.09)',
-                      color: 'rgba(255,255,255,0.32)',
-                    }}>
-                      {entry.clientName}
-                    </span>
+                  {/* Play button (today only) */}
+                  {activeSubTab === 'today' && (
+                    <button
+                      draggable={false}
+                      onMouseDown={e => e.stopPropagation()}
+                      onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
+                        border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
+                        color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
+                        cursor: entry.jiraSent ? 'default' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        fontSize: 8,
+                        padding: 0,
+                        marginTop: 2,
+                      }}
+                    >
+                      {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
+                    </button>
                   )}
-                  {entry.jiraKey && (
-                    <span draggable={false} style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 99,
-                      background: 'rgba(255,255,255,0.1)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: 'rgba(255,255,255,0.5)',
-                    }}>
-                      {entry.jiraKey}
-                    </span>
-                  )}
+
+                  {/* Entry body */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+
+                    {/* Badges row */}
+                    {(entry.clientName || entry.jiraKey) && (
+                      <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {entry.clientName && (() => {
+                          const color = getClientColor(entry.clientName, settings?.clientColors)
+                          return (
+                            <span draggable={false} style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: 99,
+                              background: color ? color.bg : 'rgba(255,255,255,0.05)',
+                              border: `1px solid ${color ? color.border : 'rgba(255,255,255,0.09)'}`,
+                              color: color ? color.text : 'rgba(255,255,255,0.32)',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {entry.clientName}
+                            </span>
+                          )
+                        })()}
+                        {entry.jiraKey && (
+                          <span draggable={false} style={{
+                            fontSize: 9,
+                            fontWeight: 500,
+                            color: 'rgba(255,255,255,0.25)',
+                            letterSpacing: '0.02em',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {entry.jiraKey}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Task name with pulse dot */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, overflow: 'hidden' }}>
+                      {activeSubTab === 'today' && isActiveRunning && (
+                        <div style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: '#7fd89a',
+                          flexShrink: 0,
+                          animation: 'ltt-pulse 1.5s ease-in-out infinite',
+                        }} />
+                      )}
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        flex: 1,
+                        color: activeSubTab === 'today' && isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {entry.name}
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <input
+                      type="text"
+                      className="desc-field"
+                      placeholder="Add description..."
+                      draggable={false}
+                      onMouseDown={e => e.stopPropagation()}
+                      value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
+                      onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
+                      onChange={e => setLocalDesc(e.target.value)}
+                      onBlur={() => {
+                        if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
+                          updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
+                        }
+                        escapeRef.current = false
+                        setEditingDescId(null)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
+                        if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
+                      }}
+                      style={{
+                        fontSize: 10,
+                        color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
+                        outline: 'none',
+                        cursor: 'text',
+                        background: 'transparent',
+                        border: 'none',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minHeight: '1.2em',
+                        padding: 0,
+                      }}
+                    />
+                  </div>
                 </div>
-              )}
+
+                {/* Right column: time (today only) + menu */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                  {activeSubTab === 'today' && (
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                      fontVariantNumeric: 'tabular-nums',
+                      letterSpacing: '0.02em',
+                    }}>
+                      {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
+                    </span>
+                  )}
+                  <span draggable={false} onMouseDown={e => e.stopPropagation()}>
+                    <EntryMenu
+                      ms={entry.ms}
+                      open={openMenuId === entry.id}
+                      onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
+                      onClose={() => setOpenMenuId(null)}
+                      onDelete={async () => { await deleteEntry(entry.id) }}
+                      onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
+                      onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
+                      onEditTime={async (newMs) => {
+                        await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
+                        if (timerState?.paused && timerState.activeEntryId === entry.id) {
+                          await ltt.setTimerBase(entry.id, newMs)
+                        }
+                      }}
+                      onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
+                        if ((cur ?? []).some(f => f.jiraKey === entry.jiraKey)) return cur ?? []
+                        return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
+                      }, `add-entry:${entry.jiraKey}`) : undefined}
+                      onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
+                        const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
+                        if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
+                        else console.error('[jira] logTime failed:', result.error)
+                      } : undefined}
+                      onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+                      onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+                      onRemoveFromTimer={() => updateEntry({ ...entry, removedFromTimer: true, updatedAt: new Date().toISOString() })}
+                      onDuplicate={() => addEntry({
+                        id: Date.now(),
+                        name: entry.name,
+                        ms: 0,
+                        ts: Date.now(),
+                        jiraKey: entry.jiraKey,
+                        jiraSummary: entry.jiraSummary,
+                        jiraDesc: entry.jiraDesc,
+                        clientName: entry.clientName,
+                        jiraSent: false,
+                        untracked: false,
+                        carriedOver: false,
+                        removedFromTimer: false,
+                        deletedFromBulk: false,
+                        updatedAt: new Date().toISOString(),
+                      })}
+                      currentTab={activeSubTab}
+                      onMoveTo={async (tab) => { await updateEntry({ ...entry, tab, updatedAt: new Date().toISOString() }) }}
+                    />
+                  </span>
+                </div>
+              </div>
             </div>
           )
         })}
