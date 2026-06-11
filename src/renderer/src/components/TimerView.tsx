@@ -823,7 +823,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             {activeSubTab === 'today' ? 'No entries today' : activeSubTab === 'tomorrow' ? 'No tasks for tomorrow yet.' : 'No backlog tasks yet. Add tasks you want to work on later.'}
           </div>
         )}
-        {(dragOrderedEntries ?? orderedEntries).map((entry) => {
+        {(dragOrderedEntries ?? orderedEntries).map((entry, index) => {
           const isActive = activeId === entry.id
           const isActiveRunning = isActive && isRunning
           const displayMs = isActiveRunning ? liveMs : entry.ms
@@ -840,7 +840,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               onDrop={() => { reorderEntries(dragIdRef.current, entry.id); setDragOverTab(null) }}
               style={{
                 padding: '8px 14px',
-                borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.08)',
+                borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : index === 0 ? 'none' : '1px solid var(--border-entry)',
                 background: activeSubTab === 'today' && isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
                 opacity: entry.jiraSent ? 0.5 : 1,
                 cursor: 'grab',
