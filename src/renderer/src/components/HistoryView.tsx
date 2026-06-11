@@ -49,18 +49,18 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
   const [hovered, setHovered] = useState(false)
   return (
     <button
-      style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 13px', fontSize: 11, color: color ?? 'rgba(255,255,255,0.7)', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.07)' : 'none', border: 'none', width: '100%', textAlign: 'left', fontFamily: 'inherit' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 13px', fontSize: 11, color: color ?? 'var(--text-primary)', cursor: 'pointer', background: hovered ? 'var(--bg-btn-subtle)' : 'none', border: 'none', width: '100%', textAlign: 'left', fontFamily: 'inherit' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onMouseDown={onAction}
     >
-      <span style={{ fontSize: 12, color: color ? color : 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 12, color: color ? color : 'var(--text-muted)', width: 16, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
       {label}
     </button>
   )
 }
 
-const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+const menuDivider = <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
 
 function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime }: {
   ms: number; open: boolean; onOpen: () => void; onClose: () => void
@@ -90,9 +90,9 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
-  const timeInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'white', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
-  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.25)' }
-  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
+  const timeInputStyle: React.CSSProperties = { background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
+  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'var(--text-muted)' }
+  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
   const handleAdd = () => {
     const parsed = parseMin(addVal)
@@ -107,7 +107,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
     <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
       <button
         ref={btnRef}
-        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
+        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
         onMouseDown={handleClick}
       >
         •••
@@ -115,7 +115,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
       {open && (
         <div
           onMouseDown={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'linear-gradient(145deg, #1e1850, #0e1830)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 12, minWidth: 180, boxShadow: '0 8px 28px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden' }}
+          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: '0 8px 28px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden' }}
         >
           <div style={{ padding: '4px 0' }}>
             <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
@@ -178,7 +178,7 @@ export function HistoryView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
       {grouped.length === 0 && (
-        <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
           No entries yet
         </div>
       )}
@@ -187,17 +187,17 @@ export function HistoryView() {
         const hasUnsent = dayEntries.some(e => !e.jiraSent && !!e.jiraKey)
         return (
           <div key={key}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'sticky', top: 0, background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', zIndex: 10 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid var(--border-entry)', position: 'sticky', top: 0, background: 'var(--bg-card-solid)', zIndex: 10 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 {getDayLabel(ts)}
               </span>
               <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                 {hasUnsent && (
-                  <button style={{ fontSize: 9, padding: '3px 7px', borderRadius: 99, background: 'rgba(80,180,100,0.28)', border: '1px solid rgba(80,180,100,0.45)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                  <button style={{ fontSize: 9, padding: '3px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                     ↑ Jira
                   </button>
                 )}
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>
                   {formatMsShort(totalMs)}
                 </span>
               </div>
@@ -206,16 +206,16 @@ export function HistoryView() {
             {dayEntries.map((entry) => {
               const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined)
               return (
-                <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid var(--border-entry)' }}>
                   {(entry.clientName || entry.jiraKey) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
                       {entry.clientName && (
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, ...(clientColor ? { background: clientColor.bg, border: `1px solid ${clientColor.border}`, color: clientColor.text } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.32)' }) }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, ...(clientColor ? { background: clientColor.bg, border: `1px solid ${clientColor.border}`, color: clientColor.text } : { background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-entry)', color: 'var(--text-secondary)' }) }}>
                           {entry.clientName}
                         </span>
                       )}
                       {entry.jiraKey && (
-                        <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.25)' }}>
+                        <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>
                           {entry.jiraKey}
                         </span>
                       )}
@@ -223,15 +223,15 @@ export function HistoryView() {
                   )}
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                       {entry.name}
                     </span>
                     {entry.jiraSent && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'rgba(80,180,100,0.2)', border: '1px solid rgba(80,180,100,0.35)', color: '#7fd89a', flexShrink: 0 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', flexShrink: 0 }}>
                         ✓ sent
                       </span>
                     )}
-                    <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                       {formatMs(entry.ms)}
                     </span>
                     <EntryMenu
@@ -246,7 +246,7 @@ export function HistoryView() {
                   </div>
 
                   {entry.jiraDesc && (
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {entry.jiraDesc}
                     </div>
                   )}

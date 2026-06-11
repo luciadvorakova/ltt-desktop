@@ -87,15 +87,15 @@ export function WeeklyView() {
   const goBack = () => setWeekStart(d => { const nd = new Date(d); nd.setDate(d.getDate() - 7); return nd })
   const goForward = () => setWeekStart(d => { const nd = new Date(d); nd.setDate(d.getDate() + 7); return nd })
 
-  const navBtnStyle: React.CSSProperties = { width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
+  const navBtnStyle: React.CSSProperties = { width: 22, height: 22, borderRadius: '50%', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-entry)', color: 'var(--text-secondary)', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
 
       {/* Nav row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
         <button style={navBtnStyle} onClick={goBack}>‹</button>
-        <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.01em' }}>
+        <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-header)', letterSpacing: '0.01em' }}>
           {formatNavLabel(weekStart)}
         </span>
         <button style={navBtnStyle} onClick={goForward}>›</button>
@@ -105,10 +105,10 @@ export function WeeklyView() {
 
         {/* This week total */}
         <div style={{ padding: '16px 14px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
             This week
           </span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.3px' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
             {formatHHMM(weekTotalMs)}
           </span>
         </div>
@@ -122,13 +122,13 @@ export function WeeklyView() {
             const pct = (ms / weekMaxMs) * 100
             return (
               <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 9, fontWeight: isToday ? 700 : 500, color: isToday ? 'rgba(127,216,154,0.9)' : 'rgba(255,255,255,0.35)', width: 22, flexShrink: 0 }}>
+                <span style={{ fontSize: 9, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--accent)' : 'var(--text-muted)', width: 22, flexShrink: 0 }}>
                   {DAY_LABELS[i]}
                 </span>
-                <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ flex: 1, height: 6, background: 'var(--border-subtle)', borderRadius: 99, overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: isToday ? 'linear-gradient(90deg, rgba(127,216,154,0.8), rgba(80,200,130,0.5))' : 'linear-gradient(90deg, rgba(160,140,255,0.7), rgba(200,160,255,0.5))' }} />
                 </div>
-                <span style={{ fontSize: 9, fontWeight: isToday ? 600 : 400, color: isToday ? 'rgba(127,216,154,0.8)' : 'rgba(255,255,255,0.35)', width: 32, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 9, fontWeight: isToday ? 600 : 400, color: isToday ? 'var(--accent)' : 'var(--text-muted)', width: 32, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {ms > 0 ? formatHHMM(ms) : '—'}
                 </span>
               </div>
@@ -137,10 +137,10 @@ export function WeeklyView() {
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '10px 14px 12px' }} />
+        <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '10px 14px 12px' }} />
 
         {/* Previous weeks label */}
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', padding: '0 14px 10px' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0 14px 10px' }}>
           Previous weeks
         </div>
 
@@ -150,13 +150,13 @@ export function WeeklyView() {
             const pct = (totalMs / prevWeekMax) * 100
             return (
               <div key={monday.toISOString()} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 72, flexShrink: 0 }}>
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>
                   {formatWeekLabel(monday)}
                 </span>
-                <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ flex: 1, height: 6, background: 'var(--border-subtle)', borderRadius: 99, overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: 'rgba(160,140,255,0.35)' }} />
                 </div>
-                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 32, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', width: 32, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {totalMs > 0 ? formatHHMM(totalMs) : '—'}
                 </span>
               </div>
