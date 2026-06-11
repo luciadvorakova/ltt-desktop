@@ -479,8 +479,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
       {/* Sub-tab bar + add button */}
       {!addPanelOpen && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--border-subtle)', overflow: 'visible' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             {(['today', 'tomorrow', 'later'] as const).map(tab => (
               <button
                 key={tab}
