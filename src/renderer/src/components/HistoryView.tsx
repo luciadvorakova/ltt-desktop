@@ -187,7 +187,7 @@ export function HistoryView() {
         const hasUnsent = dayEntries.some(e => !e.jiraSent && !!e.jiraKey)
         return (
           <div key={key}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid var(--border-entry)', position: 'sticky', top: 0, background: 'var(--bg-card-solid)', zIndex: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid var(--border-entry)', position: 'sticky', top: 0, background: 'var(--bg-card-solid)', backdropFilter: 'blur(8px)', zIndex: 10 }}>
               <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 {getDayLabel(ts)}
               </span>
