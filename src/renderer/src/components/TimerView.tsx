@@ -18,9 +18,9 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
         gap: 9,
         padding: '7px 13px',
         fontSize: 11,
-        color: color ?? 'rgba(255,255,255,0.7)',
+        color: color ?? 'var(--text-primary)',
         cursor: 'pointer',
-        background: hovered ? 'rgba(255,255,255,0.07)' : 'none',
+        background: hovered ? 'var(--bg-btn-subtle)' : 'none',
         border: 'none',
         width: '100%',
         textAlign: 'left',
@@ -30,7 +30,7 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
       onMouseLeave={() => setHovered(false)}
       onMouseDown={onAction}
     >
-      <span style={{ fontSize: 12, color: color ? color : 'rgba(255,255,255,0.3)', width: 16, textAlign: 'center', flexShrink: 0 }}>
+      <span style={{ fontSize: 12, color: color ? color : 'var(--text-muted)', width: 16, textAlign: 'center', flexShrink: 0 }}>
         {icon}
       </span>
       {label}
@@ -38,7 +38,7 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
   )
 }
 
-const menuDivider = <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+const menuDivider = <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
 
 
 function parseMin(input: string): number | null {
@@ -89,9 +89,9 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
-  const timeInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'white', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
-  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'rgba(255,255,255,0.25)' }
-  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
+  const timeInputStyle: React.CSSProperties = { background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
+  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'var(--text-muted)' }
+  const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
   const handleAdd = () => {
     const parsed = parseMin(addVal)
@@ -188,21 +188,21 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: strin
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'var(--bg-btn-subtle)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
     >
-      {icon && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{icon}</span>}
-      <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+      {icon && <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{icon}</span>}
+      <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-entry)', color: 'var(--text-secondary)', flexShrink: 0 }}>
         {jiraKey}
       </span>
-      <span style={{ fontSize: 11, flex: 1, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 11, flex: 1, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {name}
       </span>
       {onUnfav && (
         <button
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
           onClick={e => { e.stopPropagation(); onUnfav() }}
         >
           ★
@@ -210,7 +210,7 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: strin
       )}
       {onFav && (
         <button
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11, padding: '0 2px', flexShrink: 0, lineHeight: 1, fontFamily: 'inherit' }}
           onClick={e => { e.stopPropagation(); onFav() }}
         >
           ☆
@@ -224,16 +224,16 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'var(--bg-btn-subtle)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onToggle}
     >
       <div style={{
         width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10,
-        border: selected ? '1.5px solid rgba(80,180,100,0.6)' : '1.5px solid rgba(255,255,255,0.25)',
-        background: selected ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.06)',
-        color: '#7fd89a',
+        border: selected ? '1.5px solid var(--accent-running-border)' : '1.5px solid var(--border-btn)',
+        background: selected ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
+        color: 'var(--accent)',
       }}>
         {selected ? '✓' : ''}
       </div>
@@ -245,9 +245,9 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
               return (
                 <span style={{
                   fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
-                  background: color ? color.bg : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${color ? color.border : 'rgba(255,255,255,0.09)'}`,
-                  color: color ? color.text : 'rgba(255,255,255,0.32)',
+                  background: color ? color.bg : 'var(--bg-btn-subtle)',
+                  border: `1px solid ${color ? color.border : 'var(--border-entry)'}`,
+                  color: color ? color.text : 'var(--text-secondary)',
                   whiteSpace: 'nowrap', flexShrink: 0,
                 }}>
                   {entry.clientName}
@@ -255,17 +255,17 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
               )
             })()}
             {entry.jiraKey && (
-              <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
                 {entry.jiraKey}
               </span>
             )}
           </div>
         )}
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
           {entry.name}
         </span>
         {entry.jiraDesc && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {entry.jiraDesc}
           </div>
         )}
@@ -475,11 +475,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <style>{`.desc-field::placeholder { color: rgba(255,255,255,0.2); }`}</style>
+      <style>{`.desc-field::placeholder { color: var(--text-muted); }`}</style>
 
       {/* Sub-tab bar + add button */}
       {!addPanelOpen && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex' }}>
             {(['today', 'tomorrow', 'later'] as const).map(tab => (
               <button
@@ -508,11 +508,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   fontSize: 10,
                   padding: '11px 14px',
                   marginBottom: -1,
-                  background: dragOverTab === tab ? 'rgba(255,255,255,0.08)' : 'none',
+                  background: dragOverTab === tab ? 'var(--bg-btn-subtle)' : 'none',
                   borderRadius: dragOverTab === tab ? 6 : 0,
                   border: 'none',
-                  borderBottom: activeSubTab === tab ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
-                  color: activeSubTab === tab ? 'white' : 'rgba(255,255,255,0.35)',
+                  borderBottom: activeSubTab === tab ? '2px solid var(--accent-tab)' : '2px solid transparent',
+                  color: activeSubTab === tab ? 'var(--text-header)' : 'var(--text-muted)',
                   fontWeight: activeSubTab === tab ? 600 : 400,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
@@ -524,7 +524,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           </div>
           <button
             onClick={() => setAddPanelOpen(true)}
-            style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 15, color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}
+            style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', fontSize: 15, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}
           >
             +
           </button>
@@ -533,10 +533,10 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       {/* Add panel */}
       {addPanelOpen && (
         <div className="ltt-panel-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); } .ltt-manual-input::placeholder { color: rgba(255,255,255,0.28); }`}</style>
+          <style>{`.ltt-panel-scroll::-webkit-scrollbar { display: none; } .ltt-panel-scroll { scrollbar-width: none; } .ltt-jira-search::placeholder { color: var(--text-muted); } .ltt-manual-input::placeholder { color: var(--text-muted); }`}</style>
 
           {/* Mode tabs + close button */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
             <div style={{ display: 'flex', paddingLeft: 14 }}>
               {(['jira', 'manual', 'recent'] as const).map((mode) => (
                 <button
@@ -548,8 +548,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     marginBottom: -1,
                     background: 'none',
                     border: 'none',
-                    borderBottom: addMode === mode ? '2px solid rgba(255,255,255,0.55)' : '2px solid transparent',
-                    color: addMode === mode ? 'white' : 'rgba(255,255,255,0.35)',
+                    borderBottom: addMode === mode ? '2px solid var(--accent-tab)' : '2px solid transparent',
+                    color: addMode === mode ? 'var(--text-header)' : 'var(--text-muted)',
                     fontWeight: addMode === mode ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
@@ -561,7 +561,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             </div>
             <button
               onClick={() => { setAddPanelOpen(false); setSelectedRecent(new Set()) }}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: '0 14px', lineHeight: 1, fontFamily: 'inherit' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, padding: '0 14px', lineHeight: 1, fontFamily: 'inherit' }}
             >
               ×
             </button>
@@ -588,21 +588,21 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     }, 300)
                   }}
                   className="ltt-jira-search"
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'rgba(255,255,255,0.85)', outline: 'none', fontFamily: 'inherit' }}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-secondary)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
               {jiraSearching && (
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 14px 8px', textAlign: 'center' }}>
                   Searching…
                 </div>
               )}
               {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && (
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 14px 8px', textAlign: 'center' }}>
                   No results
                 </div>
               )}
               {!jiraSearching && jiraResults.length > 0 && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ borderTop: '1px solid var(--border-entry)' }}>
                   {jiraResults.map(issue => {
                     const favs = settings?.jiraFavourites ?? []
                     const isFav = favs.some(f => f.jiraKey === issue.key)
@@ -674,7 +674,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   <>
                     {favKeys.length > 0 && (
                       <div style={{ padding: '8px 0 0' }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px' }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0 14px 5px' }}>
                           ★ Favourites
                         </div>
                         {favKeys.map(fav => (
@@ -693,7 +693,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       </div>
                     )}
                     {recentEntries.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
+                      <div style={{ borderTop: '1px solid var(--border-entry)', marginTop: 4 }}>
                         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px', marginTop: 8 }}>
                           ◷ Recent
                         </div>
@@ -726,11 +726,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 onKeyDown={e => { if (e.key === 'Enter') handleAddEntry() }}
                 placeholder="Task name…"
                 className="ltt-manual-input"
-                style={{ flex: 1, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'white', outline: 'none', fontFamily: 'inherit' }}
+                style={{ flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }}
               />
               <button
                 onClick={handleAddEntry}
-                style={{ fontSize: 10, padding: '6px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ fontSize: 10, padding: '6px 12px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', color: 'var(--text-header)', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Add
               </button>
@@ -774,7 +774,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               setAddPanelOpen(false)
             }
             return recent.length === 0 ? (
-              <div style={{ padding: '12px 14px', fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
+              <div style={{ padding: '12px 14px', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
                 No recent entries
               </div>
             ) : (
@@ -798,13 +798,13 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   })}
                 </div>
                 {selectedRecent.size > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(145deg, #1e1850, #0e1830)', position: 'sticky', bottom: 0, flexShrink: 0 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-overlay)', position: 'sticky', bottom: 0, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                       {selectedRecent.size} selected
                     </span>
                     <button
                       onClick={handleAddSelected}
-                      style={{ fontSize: 11, fontWeight: 700, padding: '5px 14px', borderRadius: 99, background: 'rgba(80,180,100,0.22)', border: '1px solid rgba(80,180,100,0.45)', color: '#7fd89a', cursor: 'pointer', fontFamily: 'inherit' }}
+                      style={{ fontSize: 11, fontWeight: 700, padding: '5px 14px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', cursor: 'pointer', fontFamily: 'inherit' }}
                     >
                       Add
                     </button>
@@ -1175,14 +1175,14 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     }, 300)
                   }}
                   className="ltt-jira-search"
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'rgba(255,255,255,0.85)', outline: 'none', fontFamily: 'inherit' }}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-secondary)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
               <div className="ltt-panel-scroll" style={{ overflowY: 'auto', flexShrink: 1 }}>
                 {jiraSearching && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>Searching…</div>}
                 {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>No results</div>}
                 {!jiraSearching && jiraResults.length > 0 && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ borderTop: '1px solid var(--border-entry)' }}>
                     {jiraResults.map(issue => {
                       const favs = settings?.jiraFavourites ?? []
                       const isFav = favs.some(f => f.jiraKey === issue.key)
@@ -1200,7 +1200,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   <>
                     {favKeys.length > 0 && (
                       <div style={{ padding: '8px 0 0' }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px' }}>★ Favourites</div>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0 14px 5px' }}>★ Favourites</div>
                         {favKeys.map(fav => (
                           <JiraRow key={fav.jiraKey} icon="" jiraKey={fav.jiraKey} name={fav.jiraSummary ?? fav.jiraKey}
                             onClick={() => handleLinkPick({ key: fav.jiraKey, summary: fav.jiraSummary ?? fav.jiraKey })} />
