@@ -85,7 +85,7 @@ export function BulkSendView({
         key={entry.id}
         style={{
           padding: '8px 14px',
-          borderTop: isFirst ? 'none' : '1px solid rgba(255,255,255,0.08)',
+          borderTop: isFirst ? 'none' : '1px solid var(--border-subtle)',
           display: 'flex',
           flexDirection: 'column',
           gap: 5,
@@ -97,23 +97,23 @@ export function BulkSendView({
             onClick={() => toggleCheck(entry.id)}
             style={{
               width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: `1.5px solid ${isChecked ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.25)'}`,
-              background: isChecked ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.06)',
+              border: `1.5px solid ${isChecked ? 'var(--accent-running-border)' : 'var(--border-btn)'}`,
+              background: isChecked ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer',
             }}
           >
-            {isChecked && <span style={{ fontSize: 9, color: '#7fd89a', fontWeight: 700 }}>✓</span>}
+            {isChecked && <span style={{ fontSize: 9, color: 'var(--accent)', fontWeight: 700 }}>✓</span>}
           </div>
           <span style={{
             fontSize: 12, fontWeight: 600, flex: 1,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            color: 'rgba(255,255,255,0.9)',
+            color: 'var(--text-primary)',
           }}>
             {entry.name}
           </span>
           <span style={{
-            fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
+            fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
             whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
           }}>
             {formatMs(entry.ms)}
@@ -135,21 +135,21 @@ export function BulkSendView({
             background: 'transparent', border: 'none', width: '100%',
             boxSizing: 'border-box', fontFamily: 'inherit',
             minHeight: '1.2em',
-            color: desc ? 'rgba(255,255,255,0.35)' : 'rgba(255,110,110,0.5)',
+            color: desc ? 'var(--text-muted)' : 'rgba(255,110,110,0.5)',
           }}
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingLeft: 23 }}>
           <span style={{
             fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 99,
-            background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.5)',
+            background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)',
+            color: 'var(--text-secondary)',
           }}>
             {entry.jiraKey}
           </span>
           <span style={{
             fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 99,
-            border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)',
+            border: '1px solid var(--border-entry)', color: 'var(--text-muted)',
           }}>
             {formatDate(entry.updatedAt)}
           </span>
@@ -166,17 +166,17 @@ export function BulkSendView({
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '7px 14px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid var(--border-subtle)',
           cursor: 'pointer',
         }}
       >
         <span style={{
           fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
-          color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase',
+          color: 'var(--text-muted)', textTransform: 'uppercase',
         }}>
           ‹ Timer
         </span>
-        <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(120,210,160,0.85)' }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)' }}>
           {selectedEntries.length} selected · {formatMsShort(totalMs)}
         </span>
       </div>
@@ -186,7 +186,7 @@ export function BulkSendView({
           <>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
-              color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase',
+              color: 'var(--text-muted)', textTransform: 'uppercase',
               padding: '8px 14px 4px',
             }}>
               Today
@@ -198,7 +198,7 @@ export function BulkSendView({
           <>
             <div style={{
               fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
-              color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase',
+              color: 'var(--text-muted)', textTransform: 'uppercase',
               padding: '8px 14px 4px',
             }}>
               Older (unsent)
@@ -208,7 +208,7 @@ export function BulkSendView({
         )}
         {eligible.length === 0 && (
           <div style={{
-            color: 'rgba(255,255,255,0.22)', fontSize: 12,
+            color: 'var(--text-muted)', fontSize: 12,
             padding: '28px 16px', textAlign: 'center',
           }}>
             No unsent entries with time
@@ -219,12 +219,12 @@ export function BulkSendView({
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '7px 14px',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
+        borderTop: '1px solid var(--border-subtle)',
         flexShrink: 0,
       }}>
         <span style={{
           fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
-          color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase',
+          color: 'var(--text-muted)', textTransform: 'uppercase',
         }}>
           {selectedEntries.length} selected · {formatMsShort(totalMs)}
         </span>
@@ -233,9 +233,9 @@ export function BulkSendView({
           disabled={selectedEntries.length === 0 || sending}
           style={{
             fontSize: 9, padding: '3px 7px', borderRadius: 99,
-            background: 'rgba(80,180,100,0.28)',
-            border: '1px solid rgba(80,180,100,0.45)',
-            color: '#7fd89a',
+            background: 'var(--accent-jira-bg)',
+            border: '1px solid var(--accent-jira-border)',
+            color: 'var(--accent-jira-text)',
             cursor: selectedEntries.length === 0 || sending ? 'not-allowed' : 'pointer',
             fontFamily: 'inherit', fontWeight: 600,
             opacity: selectedEntries.length === 0 || sending ? 0.5 : 1,

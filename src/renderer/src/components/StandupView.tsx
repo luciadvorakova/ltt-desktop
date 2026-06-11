@@ -41,8 +41,8 @@ function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOve
       onDrop={onDrop}
       style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        background: 'rgba(255,255,255,0.07)',
-        border: dragOver ? '1px solid rgba(100,160,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
+        background: 'var(--bg-btn-subtle)',
+        border: dragOver ? '1px solid rgba(100,160,255,0.6)' : '1px solid var(--border-entry)',
         borderTop: dragOver ? '2px solid rgba(100,160,255,0.6)' : undefined,
         borderRadius: 8, padding: '6px 8px', marginBottom: 4,
         opacity: checked ? 1 : 0.4,
@@ -54,18 +54,18 @@ function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOve
         style={{
           width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: checked ? '1.5px solid rgba(80,180,100,0.6)' : '1.5px solid rgba(255,255,255,0.25)',
-          background: checked ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.06)',
+          border: checked ? '1.5px solid var(--accent-running-border)' : '1.5px solid var(--border-btn)',
+          background: checked ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
         }}
       >
-        {checked && <span style={{ fontSize: 9, fontWeight: 700, color: '#7fd89a', lineHeight: 1 }}>✓</span>}
+        {checked && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>✓</span>}
       </div>
       <input
         type="text"
         autoFocus={autoFocus}
         value={text}
         onChange={e => onChange(e.target.value)}
-        style={{ fontSize: 11, color: checked ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.45)', flex: 1, outline: 'none', background: 'transparent', border: 'none', fontFamily: 'inherit' }}
+        style={{ fontSize: 11, color: checked ? 'var(--text-primary)' : 'var(--text-secondary)', flex: 1, outline: 'none', background: 'transparent', border: 'none', fontFamily: 'inherit' }}
       />
     </div>
   )
@@ -154,10 +154,10 @@ function CardList({ cards, setCards, onCheckedCardsChange }: {
       <div
         onClick={handleAdd}
         style={{
-          border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 8px',
-          background: 'rgba(255,255,255,0.04)', cursor: 'pointer',
+          border: '1px dashed var(--border-btn)', borderRadius: 8, padding: '6px 8px',
+          background: 'var(--bg-btn-subtle)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-          fontSize: 10, color: 'rgba(255,255,255,0.25)',
+          fontSize: 10, color: 'var(--text-muted)',
         }}
       >
         <span style={{ fontSize: 13, lineHeight: 1 }}>+</span>
@@ -213,10 +213,10 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
 
   const taStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'var(--bg-btn-subtle)',
+    border: '1px solid var(--border-entry)',
     borderRadius: 10,
-    color: 'rgba(255,255,255,0.82)',
+    color: 'var(--text-primary)',
     fontFamily: 'inherit',
     fontSize: 11,
     lineHeight: '1.6',
@@ -231,21 +231,21 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   }
   const labelStyle: React.CSSProperties = {
     fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
-    color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', flex: 1,
+    color: 'var(--text-muted)', textTransform: 'uppercase', flex: 1,
   }
   const sourceStyle: React.CSSProperties = {
-    fontSize: 8, color: 'rgba(255,255,255,0.18)', fontWeight: 600, letterSpacing: '0.04em',
+    fontSize: 8, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em',
   }
   const sectionStyle: React.CSSProperties = {
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid var(--border-entry)',
     padding: '9px 14px 10px',
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <style>{`
-        .standup-ta:focus { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; }
-        .standup-ta::placeholder { color: rgba(255,255,255,0.18); }
+        .standup-ta:focus { background: var(--bg-input) !important; border-color: var(--border-input) !important; }
+        .standup-ta::placeholder { color: var(--text-muted); }
       `}</style>
 
       {/* Header */}
@@ -254,14 +254,14 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '7px 14px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid var(--border-subtle)',
           cursor: 'pointer',
         }}
       >
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
           ‹ Timer
         </span>
-        <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
           {channel || '#standup'}
         </span>
       </div>
@@ -323,11 +323,11 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '8px 14px',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(0,0,0,0.15)',
+        borderTop: '1px solid var(--border-subtle)',
+        background: 'transparent',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.03em' }}>
+        <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.03em' }}>
           {channel || '#standup'}
         </span>
         <button

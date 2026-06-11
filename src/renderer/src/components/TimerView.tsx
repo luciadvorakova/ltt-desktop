@@ -106,7 +106,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
     <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
       <button
         ref={btnRef}
-        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
+        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
         onMouseDown={handleClick}
       >
         •••
@@ -118,8 +118,8 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             position: 'absolute',
             right: 0,
             ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
-            background: 'linear-gradient(145deg, #1e1850, #0e1830)',
-            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'var(--bg-overlay)',
+            border: '1px solid var(--border-card)',
             borderRadius: 12,
             minWidth: 180,
             boxShadow: '0 8px 28px rgba(0,0,0,0.6)',
@@ -172,7 +172,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
             <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
             <MenuItem icon="⧉" label="Duplicate as new task" onAction={onDuplicate ? () => { onDuplicate(); onClose() } : undefined} />
-            {currentTab === 'today' && <MenuItem icon="✕" label="Remove from timer" color="rgba(255,255,255,0.5)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />}
+            {currentTab === 'today' && <MenuItem icon="✕" label="Remove from timer" color="var(--text-secondary)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />}
           </div>
           {menuDivider}
           <div style={{ padding: '4px 0' }}>
@@ -841,7 +841,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               style={{
                 padding: '8px 14px',
                 borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : index === 0 ? 'none' : '1px solid var(--border-entry)',
-                background: activeSubTab === 'today' && isActiveRunning ? 'rgba(80,180,100,0.07)' : 'transparent',
+                background: activeSubTab === 'today' && isActiveRunning ? 'var(--bg-entry-running)' : 'transparent',
                 opacity: entry.jiraSent ? 0.5 : 1,
                 cursor: 'grab',
               }}
@@ -862,9 +862,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                         width: 22,
                         height: 22,
                         borderRadius: '50%',
-                        background: entry.jiraSent ? 'rgba(80,180,100,0.15)' : isActiveRunning ? 'rgba(80,180,100,0.3)' : 'rgba(255,255,255,0.1)',
-                        border: `1px solid ${entry.jiraSent ? 'rgba(80,180,100,0.3)' : isActiveRunning ? 'rgba(80,180,100,0.6)' : 'rgba(255,255,255,0.18)'}`,
-                        color: entry.jiraSent ? '#7fd89a' : isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.6)',
+                        background: entry.jiraSent ? 'var(--bg-entry-running)' : isActiveRunning ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
+                        border: `1px solid ${entry.jiraSent ? 'var(--accent-running-border)' : isActiveRunning ? 'var(--accent-running-border)' : 'var(--border-btn)'}`,
+                        color: entry.jiraSent || isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
                         cursor: entry.jiraSent ? 'default' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -893,9 +893,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                               fontWeight: 700,
                               padding: '2px 7px',
                               borderRadius: 99,
-                              background: color ? color.bg : 'rgba(255,255,255,0.05)',
-                              border: `1px solid ${color ? color.border : 'rgba(255,255,255,0.09)'}`,
-                              color: color ? color.text : 'rgba(255,255,255,0.32)',
+                              background: color ? color.bg : 'var(--bg-btn-subtle)',
+                              border: `1px solid ${color ? color.border : 'var(--border-entry)'}`,
+                              color: color ? color.text : 'var(--text-secondary)',
                               whiteSpace: 'nowrap',
                             }}>
                               {entry.clientName}
@@ -906,7 +906,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                           <span draggable={false} style={{
                             fontSize: 9,
                             fontWeight: 500,
-                            color: 'rgba(255,255,255,0.25)',
+                            color: 'var(--text-muted)',
                             letterSpacing: '0.02em',
                             whiteSpace: 'nowrap',
                           }}>
@@ -923,7 +923,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          background: '#7fd89a',
+                          background: 'var(--accent-pulse)',
                           flexShrink: 0,
                           animation: 'ltt-pulse 1.5s ease-in-out infinite',
                         }} />
@@ -932,7 +932,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                         fontSize: 12,
                         fontWeight: 600,
                         flex: 1,
-                        color: activeSubTab === 'today' && isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.9)',
+                        color: activeSubTab === 'today' && isActiveRunning ? 'var(--accent)' : 'var(--text-primary)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -964,7 +964,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       }}
                       style={{
                         fontSize: 10,
-                        color: editingDescId === entry.id ? 'rgba(255,255,255,0.55)' : entry.jiraDesc ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.2)',
+                        color: editingDescId === entry.id ? 'var(--text-secondary)' : entry.jiraDesc ? 'var(--text-muted)' : 'var(--text-muted)',
                         outline: 'none',
                         cursor: 'text',
                         background: 'transparent',
@@ -988,7 +988,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     <span style={{
                       fontSize: 11,
                       fontWeight: 600,
-                      color: isActiveRunning ? '#7fd89a' : 'rgba(255,255,255,0.55)',
+                      color: isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
                       fontVariantNumeric: 'tabular-nums',
                       letterSpacing: '0.02em',
@@ -1056,14 +1056,14 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '9px 14px',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
+        borderTop: '1px solid var(--border-subtle)',
       }}>
         <span style={{
           fontSize: 9,
           fontWeight: 700,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.32)',
+          color: 'var(--text-muted)',
         }}>
           Total Today
         </span>
@@ -1074,9 +1074,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               fontSize: 9,
               padding: '3px 7px',
               borderRadius: 99,
-              background: 'rgba(80,180,100,0.28)',
-              border: '1px solid rgba(80,180,100,0.45)',
-              color: '#7fd89a',
+              background: 'var(--accent-jira-bg)',
+              border: '1px solid var(--accent-jira-border)',
+              color: 'var(--accent-jira-text)',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontWeight: 600,
@@ -1089,9 +1089,9 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               fontSize: 9,
               padding: '3px 7px',
               borderRadius: 99,
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.13)',
-              color: 'rgba(255,255,255,0.5)',
+              background: 'var(--bg-btn-subtle)',
+              border: '1px solid var(--border-btn)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontWeight: 600,
@@ -1101,7 +1101,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           <span style={{
             fontSize: 13,
             fontWeight: 700,
-            color: 'white',
+            color: 'var(--text-header)',
             fontVariantNumeric: 'tabular-nums',
           }}>
             {formatMsHHMM(totalMs)}
