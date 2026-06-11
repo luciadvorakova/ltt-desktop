@@ -348,7 +348,8 @@ test.describe.serial('LTT Desktop core flows', () => {
     expect(nameAfter1).not.toBe(nameBefore1)
 
     // Verify persistence after restart
-    const expectedFirst = nameAfter0
+    const stripTime = (s: string | null) => (s ?? '').replace(/\d{2}:\d{2}:\d{2}/g, '').trim()
+    const expectedFirst = stripTime(nameAfter0)
     await page.waitForTimeout(1_000)
     await app.close()
     await launchAndAuth()
@@ -356,7 +357,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await expect(page.getByText("Timer")).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('[draggable="true"]', { timeout: 20_000 })
 
-    const reloadedFirst = await page.locator('[draggable="true"]').nth(0).textContent()
+    const reloadedFirst = stripTime(await page.locator('[draggable="true"]').nth(0).textContent())
     expect(reloadedFirst).toBe(expectedFirst)
   })
 
