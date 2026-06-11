@@ -1081,7 +1081,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               fontFamily: 'inherit',
               fontWeight: 600,
             }}>
-            Send to Jira
+            ↑ Jira
           </button>
           <button
             onClick={() => setStandupOpen(true)}
