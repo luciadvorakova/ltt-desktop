@@ -817,7 +817,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
       )}
 
       {/* Entry list */}
-      <div style={{ flex: 1, overflowY: 'auto', display: addPanelOpen ? 'none' : 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: addPanelOpen ? 'none' : 'flex', flexDirection: 'column', paddingTop: 4 }}>
         {orderedEntries.length === 0 && (
           <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
             {activeSubTab === 'today' ? 'No entries today' : activeSubTab === 'tomorrow' ? 'No tasks for tomorrow yet.' : 'No backlog tasks yet. Add tasks you want to work on later.'}
