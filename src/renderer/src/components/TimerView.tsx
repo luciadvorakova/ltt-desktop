@@ -507,7 +507,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                 style={{
                   fontSize: 10,
                   padding: '11px 14px',
-                  marginBottom: -1,
+                  marginBottom: -2,
                   background: dragOverTab === tab ? 'var(--bg-btn-subtle)' : 'none',
                   borderRadius: dragOverTab === tab ? 6 : 0,
                   border: 'none',
