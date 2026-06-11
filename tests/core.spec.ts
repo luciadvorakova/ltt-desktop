@@ -264,7 +264,7 @@ test.describe.serial('LTT Desktop core flows', () => {
   // ── Bulk send view ───────────────────────────────────────────────────────
 
   test('Send to Jira opens bulk send view', async () => {
-    await page.getByRole('button', { name: 'Send to Jira' }).click()
+    await page.getByRole('button', { name: '↑ Jira' }).click()
 
     // BulkSendView header contains "‹ Timer" as the back button
     await expect(page.getByText('‹ Timer')).toBeVisible({ timeout: 5_000 })
