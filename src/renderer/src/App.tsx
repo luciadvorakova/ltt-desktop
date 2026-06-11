@@ -63,6 +63,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
     return () => document.removeEventListener('mousedown', handler)
   }, [navOpen])
 
+  const [titleHovered, setTitleHovered] = useState(false)
   const tabLabel: Record<Tab, string> = { timer: 'Timer', history: 'History', weekly: 'Weekly' }
 
   const navItems: { t: Tab; icon: ReactNode }[] = [
@@ -93,9 +94,21 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
 
         {/* View title */}
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
-          {tabLabel[tab]}
-        </span>
+        {tab === 'timer' ? (
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+            Timer
+          </span>
+        ) : (
+          <div
+            onClick={() => setTab('timer')}
+            onMouseEnter={() => setTitleHovered(true)}
+            onMouseLeave={() => setTitleHovered(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', opacity: titleHovered ? 0.7 : 1 }}
+          >
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>‹</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{tabLabel[tab]}</span>
+          </div>
+        )}
 
         {/* Right: avatar + hamburger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
