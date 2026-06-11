@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useNotifications } from './hooks/useNotifications'
 import { useLtt } from './hooks/useLtt'
+import { useTheme } from './hooks/useTheme'
 import { TimerView } from './components/TimerView'
 import { HistoryView } from './components/HistoryView'
 import { WeeklyView } from './components/WeeklyView'
@@ -38,6 +39,7 @@ function getUserInfo(accessToken: string): { name: string; email: string } {
 
 function AppShell({ session, signOut }: { session: Session; signOut: () => Promise<void> }) {
   const ltt = useLtt()
+  useTheme()
   const [tab, setTab] = useState<Tab>('timer')
   const [timerResetKey, setTimerResetKey] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -91,11 +93,11 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative' }}>
 
       {/* Top nav */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
 
         {/* View title */}
         {tab === 'timer' ? (
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-header)' }}>
             Timer
           </span>
         ) : (
@@ -105,8 +107,8 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
             onMouseLeave={() => setTitleHovered(false)}
             style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', opacity: titleHovered ? 0.7 : 1 }}
           >
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>‹</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{tabLabel[tab]}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>‹</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-header)' }}>{tabLabel[tab]}</span>
           </div>
         )}
 
@@ -121,11 +123,11 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                 width: 24,
                 height: 24,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'var(--bg-btn-subtle)',
+                border: '1px solid var(--border-btn)',
                 fontSize: 9,
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.7)',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -145,7 +147,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                 height: 14,
                 borderRadius: '50%',
                 background: '#e05252',
-                border: '2px solid #0e1830',
+                border: '2px solid var(--notif-badge-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -166,7 +168,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
               style={{ background: 'none', border: 'none', padding: 3, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 3.5, alignItems: 'center', justifyContent: 'center' }}
             >
               {[0, 1, 2].map(i => (
-                <span key={i} style={{ display: 'block', width: 14, height: 1.5, background: 'rgba(255,255,255,0.4)', borderRadius: 2 }} />
+                <span key={i} style={{ display: 'block', width: 14, height: 1.5, background: 'var(--text-muted)', borderRadius: 2 }} />
               ))}
             </button>
 
@@ -175,8 +177,8 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
                 right: 0,
-                background: 'linear-gradient(145deg, #1e1850, #0e1830)',
-                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 12,
                 boxShadow: '0 8px 28px rgba(0,0,0,0.7)',
                 minWidth: 130,
@@ -204,7 +206,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                       fontFamily: 'inherit',
                       fontSize: 11,
                       fontWeight: tab === t ? 600 : 400,
-                      color: tab === t ? 'white' : 'rgba(255,255,255,0.55)',
+                      color: tab === t ? 'var(--text-primary)' : 'var(--text-secondary)',
                       textAlign: 'left',
                     }}
                   >
@@ -239,6 +241,10 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
 export default function App() {
   const { session, loading, signIn, signOut } = useAuth()
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'dark')
+  }, [])
+
   if (loading) {
     return (
       <div style={{ alignItems: 'center', display: 'flex', height: '100vh', justifyContent: 'center' }}>
@@ -249,15 +255,15 @@ export default function App() {
 
   if (!session) {
     return (
-      <div style={{ background: 'linear-gradient(145deg, #1e1850 0%, #0e1830 100%)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'var(--bg-card)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 320, padding: '40px 32px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <img src="/digismoothie-logo.svg" style={{ width: 160, marginBottom: 28, opacity: 0.92 }} />
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>
             Agency Time Tracker
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: 1.7, marginBottom: 32 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.7, marginBottom: 32 }}>
             Your hours will log themselves. Almost.<br />
-            <span style={{ color: 'rgba(255,255,255,0.18)' }}>— LD</span>
+            <span style={{ color: 'var(--text-muted)' }}>— LD</span>
           </div>
           <button
             onClick={signIn}
