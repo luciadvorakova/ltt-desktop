@@ -44,6 +44,7 @@ export interface UserSettings {
   lastStandupDate?: string
   standupDismissedDate?: string
   clientColors?: Record<string, number>
+  theme?: 'dark' | 'light'
 }
 
 export interface TimerState {
