@@ -90,7 +90,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'inherit', position: 'relative', zIndex: 1 }}>
 
       {/* Top nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid var(--border-subtle)' }}>

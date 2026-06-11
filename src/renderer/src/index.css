@@ -83,6 +83,17 @@ body {
   border-radius: 12px;
   overflow: hidden;
 }
+#root::after {
+  content: '';
+  position: fixed;
+  bottom: -60px;
+  left: -20%;
+  right: -20%;
+  height: 320px;
+  background: var(--card-bloom);
+  pointer-events: none;
+  z-index: 0;
+}
 ::-webkit-scrollbar {
   width: 4px;
 }
