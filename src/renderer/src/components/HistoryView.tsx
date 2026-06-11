@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useEntries } from '../hooks/useEntries'
+import { useSettings } from '../hooks/useSettings'
+import { getClientColor } from '../lib/clientColors'
 import type { TimeEntry } from '../../../types/index'
 
 const formatMs = (ms: number): string => {
@@ -156,11 +158,13 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
 
 export function HistoryView() {
   const { entries, deleteEntry, updateEntry } = useEntries()
+  const { settings } = useSettings(entries)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
 
   const grouped = useMemo(() => {
     const map = new Map<string, { ts: number; entries: TimeEntry[] }>()
     for (const e of entries) {
+      if (e.ms < 1000) continue
       const key = getDayKey(e.ts)
       if (!map.has(key)) map.set(key, { ts: e.ts, entries: [] })
       map.get(key)!.entries.push(e)
@@ -199,11 +203,27 @@ export function HistoryView() {
               </div>
             </div>
 
-            {dayEntries.map((entry) => (
-              <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {dayEntries.map((entry) => {
+              const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined)
+              return (
+                <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  {(entry.clientName || entry.jiraKey) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                      {entry.clientName && (
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, ...(clientColor ? { background: clientColor.bg, border: `1px solid ${clientColor.border}`, color: clientColor.text } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.32)' }) }}>
+                          {entry.clientName}
+                        </span>
+                      )}
+                      {entry.jiraKey && (
+                        <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.25)' }}>
+                          {entry.jiraKey}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                       {entry.name}
                     </span>
                     {entry.jiraSent && (
@@ -211,43 +231,28 @@ export function HistoryView() {
                         ✓ sent
                       </span>
                     )}
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                      {formatMs(entry.ms)}
+                    </span>
+                    <EntryMenu
+                      ms={entry.ms}
+                      open={openMenuId === entry.id}
+                      onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
+                      onClose={() => setOpenMenuId(null)}
+                      onDelete={async () => { await deleteEntry(entry.id) }}
+                      onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
+                      onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
+                    />
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-                    {formatMs(entry.ms)}
-                  </span>
-                  <EntryMenu
-                    ms={entry.ms}
-                    open={openMenuId === entry.id}
-                    onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
-                    onClose={() => setOpenMenuId(null)}
-                    onDelete={async () => { await deleteEntry(entry.id) }}
-                    onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
-                    onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
-                  />
+
+                  {entry.jiraDesc && (
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {entry.jiraDesc}
+                    </div>
+                  )}
                 </div>
-
-                {entry.jiraDesc && (
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {entry.jiraDesc}
-                  </div>
-                )}
-
-                {(entry.clientName || entry.jiraKey) && (
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {entry.clientName && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.32)' }}>
-                        {entry.clientName}
-                      </span>
-                    )}
-                    {entry.jiraKey && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}>
-                        {entry.jiraKey}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )
       })}
