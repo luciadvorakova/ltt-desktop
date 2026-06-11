@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { useLtt } from '../hooks/useLtt'
+import { useTheme } from '../hooks/useTheme'
 import type { Notification } from '../hooks/useNotifications'
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
@@ -39,6 +40,7 @@ export function SettingsView({
 }) {
   const { settings, updateSetting } = useSettings()
   const ltt = useLtt()
+  const { theme, setTheme } = useTheme()
   const [slackChannel, setSlackChannel] = useState('')
   const [slackUserId, setSlackUserId] = useState('')
   const [jiraStatus, setJiraStatus] = useState<{ connected: boolean; email?: string; cloudId?: string }>({ connected: false })
@@ -215,6 +217,39 @@ export function SettingsView({
             on={settings?.manualTimerCleanup ?? false}
             onToggle={() => updateSetting('manualTimerCleanup', !(settings?.manualTimerCleanup ?? false))}
           />
+        </div>
+
+        <div style={dividerStyle} />
+
+        {/* APPEARANCE */}
+        <div style={sectionLabelStyle}>Appearance</div>
+
+        <div style={rowStyle}>
+          <div style={{ flex: 1 }}>
+            <div style={rowLabelStyle}>Theme</div>
+            <div style={rowSubStyle}>Switch between dark and light mode.</div>
+          </div>
+          <div style={{ display: 'flex', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', borderRadius: 99, padding: 2, gap: 1 }}>
+            {(['dark', 'light'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                style={{
+                  fontSize: 9,
+                  padding: '3px 9px',
+                  borderRadius: 99,
+                  border: theme === t ? '1px solid var(--accent-jira-border)' : 'none',
+                  background: theme === t ? 'var(--accent-jira-bg)' : 'none',
+                  color: theme === t ? 'var(--accent-jira-text)' : 'var(--text-muted)',
+                  fontWeight: theme === t ? 600 : 400,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {t === 'dark' ? 'Dark' : 'Light'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Sign out */}
