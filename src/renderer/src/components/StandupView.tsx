@@ -3,6 +3,11 @@ import { useLtt } from '../hooks/useLtt'
 import { useSettings } from '../hooks/useSettings'
 import type { TimeEntry } from '../../../types/index'
 
+function getLocalDateStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 
 function formatEntry(e: TimeEntry): string {
   const prefix = e.clientName ?? (e.jiraKey ? (e.jiraSummary ?? e.name) : e.name)
@@ -183,7 +188,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     const dayOfWeek = d.getDay()
     if (dayOfWeek === 1) d.setDate(d.getDate() - 3) // Monday → Friday
     else d.setDate(d.getDate() - 1)
-    return d.toISOString().slice(0, 10)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   })()
 
   const previousEntries = entries.filter(e => {
@@ -213,7 +218,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     const workingOn = checkedWorkingOn.join('\n')
     const result = await ltt.slackSendStandup({ channel, userId, accomplished, workingOn, problems, share })
     if (result.success) {
-      await updateSetting('lastStandupDate', new Date().toISOString().slice(0, 10))
+      await updateSetting('lastStandupDate', getLocalDateStr())
     } else {
       console.error('[standup] send failed:', result.error)
     }

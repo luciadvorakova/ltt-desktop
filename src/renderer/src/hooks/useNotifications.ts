@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useLtt } from './useLtt'
 import { useSettings } from './useSettings'
 
+function getLocalDateStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export type Notification = {
   id: 'jira-disconnected' | 'gcal-disconnected' | 'standup-not-sent'
   title: string
@@ -25,7 +30,7 @@ export function useNotifications({
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [standupDue, setStandupDue] = useState(false)
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = getLocalDateStr()
 
   // Stable refs so callbacks never change identity
   const updateSettingRef = useRef(updateSetting)
@@ -39,7 +44,7 @@ export function useNotifications({
 
   const dismiss = useCallback((id: string) => {
     if (id === 'standup-not-sent') {
-      updateSettingRef.current('standupDismissedDate', new Date().toISOString().slice(0, 10))
+      updateSettingRef.current('standupDismissedDate', getLocalDateStr())
     }
     setDismissedIds(prev => new Set([...prev, id]))
   }, [])
@@ -70,7 +75,7 @@ export function useNotifications({
       const day = now.getDay()
       if (day === 0 || day === 6) return
       const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
-      const today = new Date().toISOString().slice(0, 10)
+      const today = getLocalDateStr()
       setStandupDue(afterCutoff && lastStandupDate !== today)
     }
     check()
