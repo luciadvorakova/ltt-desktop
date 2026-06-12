@@ -160,6 +160,7 @@ export function HistoryView() {
   const { entries, deleteEntry, updateEntry } = useEntries()
   const { settings } = useSettings(entries)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+  const theme = (document.documentElement.getAttribute('data-theme') ?? 'dark') as 'dark' | 'light'
 
   const grouped = useMemo(() => {
     const map = new Map<string, { ts: number; entries: TimeEntry[] }>()
@@ -204,7 +205,7 @@ export function HistoryView() {
             </div>
 
             {dayEntries.map((entry) => {
-              const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined)
+              const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined, theme)
               return (
                 <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid var(--border-entry)' }}>
                   {(entry.clientName || entry.jiraKey) && (

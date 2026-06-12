@@ -222,6 +222,7 @@ function JiraRow({ icon, jiraKey, name, onClick, onUnfav, onFav }: { icon: strin
 
 function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEntry; selected: boolean; onToggle: () => void; clientColors?: Record<string, number> }) {
   const [hovered, setHovered] = useState(false)
+  const theme = (document.documentElement.getAttribute('data-theme') ?? 'dark') as 'dark' | 'light'
   return (
     <div
       style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer', background: hovered ? 'var(--bg-btn-subtle)' : 'transparent' }}
@@ -241,7 +242,7 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
         {(entry.clientName || entry.jiraKey) && (
           <div style={{ display: 'flex', gap: 4, marginBottom: 3, alignItems: 'center', flexWrap: 'wrap' }}>
             {entry.clientName && (() => {
-              const color = getClientColor(entry.clientName, clientColors)
+              const color = getClientColor(entry.clientName, clientColors, theme)
               return (
                 <span style={{
                   fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
@@ -294,6 +295,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const { entries, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
   const { timerState, elapsed, start, pause } = useTimer({ patchEntry })
   const { settings, updateSetting } = useSettings(entries)
+  const theme = (document.documentElement.getAttribute('data-theme') ?? 'dark') as 'dark' | 'light'
   const [bulkSendOpen, setBulkSendOpen] = useState(false)
   const [standupOpenInternal, setStandupOpenInternal] = useState(false)
   const standupOpen = standupOpenProp === true ? true : standupOpenInternal
@@ -886,7 +888,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     {(entry.clientName || entry.jiraKey) && (
                       <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                         {entry.clientName && (() => {
-                          const color = getClientColor(entry.clientName, settings?.clientColors)
+                          const color = getClientColor(entry.clientName, settings?.clientColors, theme)
                           return (
                             <span draggable={false} style={{
                               fontSize: 9,
