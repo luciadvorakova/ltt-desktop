@@ -115,7 +115,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
       {open && (
         <div
           onMouseDown={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: '0 8px 28px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden' }}
+          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: 'var(--shadow-dropdown)', zIndex: 100, overflow: 'hidden' }}
         >
           <div style={{ padding: '4px 0' }}>
             <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />

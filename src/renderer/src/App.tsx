@@ -184,7 +184,7 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
                 background: 'var(--bg-overlay)',
                 border: '1px solid var(--border-card)',
                 borderRadius: 12,
-                boxShadow: '0 8px 28px rgba(0,0,0,0.7)',
+                boxShadow: 'var(--shadow-dropdown)',
                 minWidth: 130,
                 padding: '4px 0',
                 zIndex: 200,
