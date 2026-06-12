@@ -31,7 +31,10 @@ export function useEntries(): UseEntriesResult {
       // Merge remote entries with local state
       const merged = filtered.map(remote => {
         const local = prev.find(e => e.id === remote.id)
-        const keepLocal = !!(local && local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt)
+        const keepLocal = !!(local && (
+          (local.updatedAt && remote.updatedAt && local.updatedAt > remote.updatedAt) ||
+          (local.jiraSent && !remote.jiraSent)
+        ))
         console.log('[RELOAD] merging, local jiraDesc:', local?.jiraDesc, 'remote jiraDesc:', remote.jiraDesc, 'keeping local:', keepLocal)
         return keepLocal ? local! : remote
       })
