@@ -178,9 +178,9 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   const { start: prevStart, end: prevEnd } = getPreviousRange()
 
   const previousEntries = entries.filter(e => {
-    if (!e.jiraSent) return false
-    const updated = new Date(e.updatedAt).getTime()
-    return updated >= prevStart && updated < prevEnd
+    if (e.ms < 1000) return false
+    if (e.removedFromTimer) return false
+    return e.ts >= prevStart && e.ts < prevEnd
   })
   const todayEntries = entries.filter(e => {
     if (e.removedFromTimer) return false
