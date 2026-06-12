@@ -177,9 +177,19 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const { start: prevStart, end: prevEnd } = getPreviousRange()
 
+  const prevDateStr = (() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    const dayOfWeek = d.getDay()
+    if (dayOfWeek === 1) d.setDate(d.getDate() - 3) // Monday → Friday
+    else d.setDate(d.getDate() - 1)
+    return d.toISOString().slice(0, 10)
+  })()
+
   const previousEntries = entries.filter(e => {
     if (e.ms < 1000) return false
     if (e.removedFromTimer) return false
+    if (e.lastTrackedDate) return e.lastTrackedDate === prevDateStr
     return e.ts >= prevStart && e.ts < prevEnd
   })
   const todayEntries = entries.filter(e => {

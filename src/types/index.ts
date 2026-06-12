@@ -19,6 +19,7 @@ export interface TimeEntry {
   gcal_end_time?: string
   description?: string
   tab?: 'today' | 'tomorrow' | 'later'
+  lastTrackedDate?: string  // ISO date string YYYY-MM-DD
 }
 
 export interface UserSettings {

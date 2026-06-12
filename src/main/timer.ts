@@ -28,6 +28,7 @@ function rowToEntry(row: Record<string, unknown>): TimeEntry {
     gcalEventId:      (row.gcal_event_id as string) ?? undefined,
     gcalEndTime:      row.gcal_end_time != null ? Number(row.gcal_end_time) : undefined,
     tab:              (row.tab as 'today' | 'tomorrow' | 'later') ?? 'today',
+    lastTrackedDate:  (row.last_tracked_date as string) ?? undefined,
   }
 }
 
@@ -50,6 +51,7 @@ function entryToRow(entry: TimeEntry, userId: string): Record<string, unknown> {
     removed_from_timer: entry.removedFromTimer,
     deleted_from_bulk: entry.deletedFromBulk,
     tab:               entry.tab ?? 'today',
+    last_tracked_date: entry.lastTrackedDate ?? null,
   }
 }
 
@@ -153,7 +155,7 @@ export async function pauseTimer(): Promise<void> {
   console.log('[PAUSE] baseMs set to:', newMs)
   if (flushInterval) { clearInterval(flushInterval); flushInterval = null }
   const entry = currentEntries.find(e => e.id === state.activeEntryId)
-  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
+  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString(), lastTrackedDate: new Date().toISOString().slice(0, 10) })
 }
 
 export async function stopTimer(): Promise<{ id: number; ms: number } | null> {
@@ -195,6 +197,7 @@ export async function flushActiveTime(): Promise<void> {
     ...currentEntries[idx],
     ms: state.baseMs + elapsed,
     updatedAt: new Date(now).toISOString(),
+    lastTrackedDate: new Date().toISOString().slice(0, 10),
   }
   await saveEntry(updated)
   currentEntries[idx] = updated
