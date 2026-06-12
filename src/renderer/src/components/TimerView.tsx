@@ -479,7 +479,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
       {/* Sub-tab bar + add button */}
       {!addPanelOpen && (
-        <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--border-subtle)', overflow: 'visible' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--border-subtle)', overflow: 'visible' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             {(['today', 'tomorrow', 'later'] as const).map(tab => (
               <button
@@ -524,7 +524,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           </div>
           <button
             onClick={() => setAddPanelOpen(true)}
-            style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', fontSize: 15, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}
+            style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', fontSize: 14, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, paddingBottom: 1, lineHeight: '1', fontFamily: 'inherit', flexShrink: 0 }}
           >
             +
           </button>
