@@ -245,6 +245,12 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
 export default function App() {
   const { session, loading, signIn, signOut } = useAuth()
 
+  useEffect(() => {
+    if (!session) {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    }
+  }, [session])
+
   if (loading) {
     return (
       <div style={{ alignItems: 'center', display: 'flex', height: '100vh', justifyContent: 'center' }}>
