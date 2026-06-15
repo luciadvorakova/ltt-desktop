@@ -13,6 +13,10 @@ import { setupNotificationIpc, clearDismissed } from './notification-window'
 import { store } from './store'
 import { supabase } from './supabase'
 
+if (!app.isPackaged) {
+  app.setPath('userData', path.join(app.getPath('userData'), 'dev'))
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 process.env.APP_ROOT = path.join(__dirname, '..')

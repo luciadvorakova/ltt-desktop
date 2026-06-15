@@ -136,7 +136,7 @@ export async function startTimer(entryId: number): Promise<void> {
   }
 
   if (!flushInterval) {
-    flushInterval = setInterval(() => { flushActiveTime() }, 60_000)
+    flushInterval = setInterval(() => { flushActiveTime() }, 10_000)
   }
 }
 
