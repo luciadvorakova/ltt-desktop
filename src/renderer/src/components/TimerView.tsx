@@ -592,7 +592,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     }, 300)
                   }}
                   className="ltt-jira-search"
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-secondary)', outline: 'none', fontFamily: 'inherit' }}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
               {jiraSearching && (
@@ -1152,14 +1152,14 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
             onMouseDown={closeLinkModal}
           >
-            <style>{`.ltt-jira-search::placeholder { color: rgba(255,255,255,0.3); }`}</style>
+            <style>{`.ltt-jira-search::placeholder { color: var(--text-muted); }`}</style>
             <div
-              style={{ background: 'linear-gradient(145deg, #1e1850, #0e1830)', borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', maxHeight: '80%' }}
+              style={{ background: 'var(--bg-overlay)', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', maxHeight: '80%' }}
               onMouseDown={e => e.stopPropagation()}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px 6px', flexShrink: 0 }}>
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>{linkEntry.jiraKey ? 'Change Jira link' : 'Link to Jira'}</span>
-                <button onMouseDown={closeLinkModal} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{linkEntry.jiraKey ? 'Change Jira link' : 'Link to Jira'}</span>
+                <button onMouseDown={closeLinkModal} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
               </div>
               <div style={{ padding: '4px 14px 8px', flexShrink: 0 }}>
                 <input
@@ -1179,12 +1179,12 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     }, 300)
                   }}
                   className="ltt-jira-search"
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-secondary)', outline: 'none', fontFamily: 'inherit' }}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 99, padding: '7px 12px', fontSize: 11, color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
               <div className="ltt-panel-scroll" style={{ overflowY: 'auto', flexShrink: 1 }}>
-                {jiraSearching && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>Searching…</div>}
-                {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '2px 14px 8px', textAlign: 'center' }}>No results</div>}
+                {jiraSearching && <div style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 14px 8px', textAlign: 'center' }}>Searching…</div>}
+                {!jiraSearching && jiraQuery.trim() && jiraResults.length === 0 && <div style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 14px 8px', textAlign: 'center' }}>No results</div>}
                 {!jiraSearching && jiraResults.length > 0 && (
                   <div style={{ borderTop: '1px solid var(--border-entry)' }}>
                     {jiraResults.map(issue => {
@@ -1212,8 +1212,8 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       </div>
                     )}
                     {recentEntries.length > 0 && (
-                      <div style={{ borderTop: favKeys.length > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none', marginTop: favKeys.length > 0 ? 4 : 0 }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', padding: '0 14px 5px', marginTop: 8 }}>◷ Recent</div>
+                      <div style={{ borderTop: favKeys.length > 0 ? '1px solid var(--border-entry)' : 'none', marginTop: favKeys.length > 0 ? 4 : 0 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0 14px 5px', marginTop: 8 }}>◷ Recent</div>
                         {recentEntries.map(e => (
                           <JiraRow key={e.jiraKey} icon="" jiraKey={e.jiraKey!} name={e.jiraSummary ?? e.name}
                             onClick={() => handleLinkPick({ key: e.jiraKey!, summary: e.jiraSummary ?? e.name })} />
@@ -1221,7 +1221,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       </div>
                     )}
                     {favKeys.length === 0 && recentEntries.length === 0 && (
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', padding: '12px 14px', textAlign: 'center' }}>No favourites or recent Jira tasks</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', padding: '12px 14px', textAlign: 'center' }}>No favourites or recent Jira tasks</div>
                     )}
                   </>
                 )}
