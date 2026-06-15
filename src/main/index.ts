@@ -105,6 +105,14 @@ mb.on('ready', () => {
     mb.window?.webContents.toggleDevTools()
   })
 
+  globalShortcut.register('CommandOrControl+Shift+T', () => {
+    if (mb.window?.isVisible()) {
+      mb.hideWindow()
+    } else {
+      mb.showWindow()
+    }
+  })
+
   const runMidnightTasks = async () => {
     clearDismissed()
     const { data: { session } } = await supabase.auth.getSession()
