@@ -143,6 +143,23 @@ export async function refreshJiraToken(): Promise<string | null> {
       jiraTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
     })
     console.log('[jira] token refreshed')
+    // Push refreshed tokens to Supabase so they persist across restarts
+    try {
+      await ensureSession()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        const settings = getJiraSettings()
+        await supabase.from('user_settings').upsert({
+          user_id: user.id,
+          jira_access_token: settings.jiraAccessToken,
+          jira_refresh_token: settings.jiraRefreshToken,
+          jira_token_expiry: settings.jiraTokenExpiry,
+        }, { onConflict: 'user_id' })
+        console.log('[jira] refreshed tokens pushed to Supabase')
+      }
+    } catch (err) {
+      console.error('[jira] failed to push refreshed tokens to Supabase:', err)
+    }
     return tokens.access_token
   } catch (err) {
     console.error('[jira] refreshJiraToken error:', err)
