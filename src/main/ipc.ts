@@ -230,11 +230,15 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   ipcMain.handle('window:expand', () => {
     const win = getWindow?.()
-    if (win) win.setSize(380, 780)
+    if (!win) return
+    const bounds = win.getBounds()
+    win.setBounds({ ...bounds, height: 720 }, true)
   })
 
   ipcMain.handle('window:restore', () => {
     const win = getWindow?.()
-    if (win) win.setSize(380, 600)
+    if (!win) return
+    const bounds = win.getBounds()
+    win.setBounds({ ...bounds, height: 600 }, true)
   })
 }
