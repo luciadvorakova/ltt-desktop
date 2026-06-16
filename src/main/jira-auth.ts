@@ -151,9 +151,7 @@ export async function refreshJiraToken(): Promise<string | null> {
         const settings = getJiraSettings()
         await supabase.from('user_settings').upsert({
           user_id: user.id,
-          jira_access_token: settings.jiraAccessToken,
-          jira_refresh_token: settings.jiraRefreshToken,
-          jira_token_expiry: settings.jiraTokenExpiry,
+          settings: settings,
         }, { onConflict: 'user_id' })
         console.log('[jira] refreshed tokens pushed to Supabase')
       }
