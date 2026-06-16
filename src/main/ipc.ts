@@ -108,21 +108,9 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
       .from('user_settings')
       .upsert({
         user_id: userId,
-        ...settings,
+        settings: settings,
         client_colors: settings.clientColors ? JSON.stringify(settings.clientColors) : null,
         theme: settings.theme ?? 'dark',
-        jira_access_token:    settings.jiraAccessToken ?? null,
-        jira_refresh_token:   settings.jiraRefreshToken ?? null,
-        jira_token_expiry:    settings.jiraTokenExpiry ?? null,
-        jira_cloud_id:        settings.jiraCloudId ?? null,
-        jira_user_email:      settings.jiraUserEmail ?? null,
-        gcal_email:           settings.gcalEmail ?? null,
-        gcal_access_token:    settings.gcalAccessToken ?? null,
-        gcal_refresh_token:   settings.gcalRefreshToken ?? null,
-        gcal_token_expiry:    settings.gcalTokenExpiry ?? null,
-        slack_channel:        settings.slackChannel ?? null,
-        slack_user_id:        settings.slackUserId ?? null,
-        manual_timer_cleanup: settings.manualTimerCleanup ?? null,
       }, { onConflict: 'user_id' })
     if (error) console.error('[ipc] settings:push error:', error)
   })
