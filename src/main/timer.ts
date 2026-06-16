@@ -155,7 +155,7 @@ export async function pauseTimer(): Promise<void> {
   console.log('[PAUSE] baseMs set to:', newMs)
   if (flushInterval) { clearInterval(flushInterval); flushInterval = null }
   const entry = currentEntries.find(e => e.id === state.activeEntryId)
-  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString(), lastTrackedDate: new Date().toISOString().slice(0, 10) })
+  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString(), lastTrackedDate: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })() })
 }
 
 export async function stopTimer(): Promise<{ id: number; ms: number } | null> {
