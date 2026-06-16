@@ -392,7 +392,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     if (!(e.tab === 'today' || !e.tab)) return false
     if (e.jiraSent) {
       if (settings?.manualTimerCleanup) return true
-      const todayStr = todayStart.toISOString().slice(0, 10)
+      const todayStr = `${todayStart.getFullYear()}-${String(todayStart.getMonth() + 1).padStart(2, '0')}-${String(todayStart.getDate()).padStart(2, '0')}`
       if (e.lastTrackedDate) return e.lastTrackedDate === todayStr
       return e.ts >= todayStart.getTime()
     }

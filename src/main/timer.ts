@@ -197,7 +197,7 @@ export async function flushActiveTime(): Promise<void> {
     ...currentEntries[idx],
     ms: state.baseMs + elapsed,
     updatedAt: new Date(now).toISOString(),
-    lastTrackedDate: new Date().toISOString().slice(0, 10),
+    lastTrackedDate: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })(),
   }
   await saveEntry(updated)
   currentEntries[idx] = updated
