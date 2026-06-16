@@ -83,7 +83,7 @@ body {
   height: 100%;
   background: var(--bg-card);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 #root::after {
   content: '';

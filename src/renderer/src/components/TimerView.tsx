@@ -123,7 +123,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             borderRadius: 12,
             minWidth: 180,
             boxShadow: 'var(--shadow-dropdown)',
-            zIndex: 100,
+            zIndex: 1000,
             overflow: 'hidden',
           }}
         >
