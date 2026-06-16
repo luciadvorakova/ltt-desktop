@@ -1,7 +1,7 @@
 {
   "name": "ltt-desktop",
   "private": true,
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "dist-electron/index.js",
   "scripts": {
     "dev": "vite",
