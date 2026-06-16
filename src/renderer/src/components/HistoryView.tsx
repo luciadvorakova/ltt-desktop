@@ -86,8 +86,14 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
       setAbove(rect.bottom > window.innerHeight - 250)
+      if (!open) {
+        const dropdownHeight = 320
+        const spaceBelow = window.innerHeight - rect.bottom
+        const extra = Math.max(0, dropdownHeight - spaceBelow + 20)
+        if (extra > 0) window.ltt.expandWindowBy(extra)
+      }
     }
-    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen(); window.ltt.expandWindow() }
+    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen() }
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
@@ -116,7 +122,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
       {open && (
         <div
           onMouseDown={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: 'var(--shadow-dropdown)', zIndex: 1000, overflow: 'hidden' }}
+          style={{ position: 'absolute', right: 0, ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }), background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: 'var(--shadow-dropdown)', zIndex: 2000, overflow: 'hidden' }}
         >
           <div style={{ padding: '4px 0' }}>
             <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />

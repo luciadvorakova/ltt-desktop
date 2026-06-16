@@ -85,8 +85,13 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
       const spaceBelow = window.innerHeight - rect.bottom
       const spaceAbove = rect.top
       setAbove(spaceBelow < 280 && spaceAbove > spaceBelow)
+      if (!open) {
+        const dropdownHeight = 320
+        const extra = Math.max(0, dropdownHeight - spaceBelow + 20)
+        if (extra > 0) window.ltt.expandWindowBy(extra)
+      }
     }
-    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen(); window.ltt.expandWindow() }
+    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen() }
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
@@ -124,7 +129,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
             borderRadius: 12,
             minWidth: 180,
             boxShadow: 'var(--shadow-dropdown)',
-            zIndex: 1000,
+            zIndex: 2000,
             overflow: 'hidden',
           }}
         >

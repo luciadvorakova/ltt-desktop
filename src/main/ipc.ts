@@ -228,11 +228,11 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   // ---- WINDOW ----
 
-  ipcMain.handle('window:expand', () => {
+  ipcMain.handle('window:expandBy', (_event, pixels: number) => {
     const win = getWindow?.()
     if (!win) return
     const bounds = win.getBounds()
-    win.setBounds({ ...bounds, height: 720 }, true)
+    win.setBounds({ ...bounds, height: Math.min(bounds.height + pixels, 820) }, true)
   })
 
   ipcMain.handle('window:restore', () => {
