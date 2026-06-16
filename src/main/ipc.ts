@@ -225,4 +225,16 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
   ipcMain.handle('app:clearDeletedEntryNames', () => {
     store.set('deletedEntryNames', [])
   })
+
+  // ---- WINDOW ----
+
+  ipcMain.handle('window:expand', () => {
+    const win = getWindow?.()
+    if (win) win.setSize(380, 780)
+  })
+
+  ipcMain.handle('window:restore', () => {
+    const win = getWindow?.()
+    if (win) win.setSize(380, 600)
+  })
 }

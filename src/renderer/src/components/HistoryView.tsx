@@ -76,8 +76,9 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
 
   useEffect(() => {
     if (!open) return
-    document.addEventListener('mousedown', onClose)
-    return () => document.removeEventListener('mousedown', onClose)
+    const handler = () => { window.ltt.restoreWindow(); onClose() }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [open, onClose])
 
   const handleClick = (e: React.MouseEvent) => {
@@ -86,7 +87,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime 
       const rect = btnRef.current.getBoundingClientRect()
       setAbove(rect.bottom > window.innerHeight - 250)
     }
-    open ? onClose() : onOpen()
+    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen(); window.ltt.expandWindow() }
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
