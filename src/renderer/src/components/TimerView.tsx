@@ -61,7 +61,6 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
   onMoveTo?: (tab: 'today' | 'tomorrow' | 'later') => void;
   currentTab?: 'today' | 'tomorrow' | 'later';
 }) {
-  const [above, setAbove] = useState(false)
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
   const [addVal, setAddVal] = useState('')
   const [editVal, setEditVal] = useState('')
@@ -73,7 +72,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
 
   useEffect(() => {
     if (!open) return
-    const handler = () => { window.ltt.restoreWindow(); onClose() }
+    const handler = () => { window.ltt?.restoreWindow(); onClose() }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open, onClose])
@@ -82,16 +81,15 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
     e.stopPropagation()
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      const spaceAbove = rect.top
-      setAbove(spaceBelow < 280 && spaceAbove > spaceBelow)
-      if (!open) {
-        const dropdownHeight = 320
-        const extra = Math.max(0, dropdownHeight - spaceBelow + 20)
-        if (extra > 0) window.ltt.expandWindowBy(extra)
+      const dropdownHeight = 340
+      const windowHeight = 600 // always use base window height, not current
+      const spaceBelow = windowHeight - rect.bottom - 50 // 50px for footer
+      const extra = Math.max(0, dropdownHeight - spaceBelow + 16)
+      if (extra > 0) {
+        window.ltt?.expandWindowBy(extra)
       }
     }
-    if (open) { window.ltt.restoreWindow(); onClose() } else { onOpen() }
+    if (open) { window.ltt?.restoreWindow(); onClose() } else { onOpen() }
   }
 
   const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
@@ -123,7 +121,7 @@ function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime,
           style={{
             position: 'absolute',
             right: 0,
-            ...(above ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
+            top: '100%', marginTop: 4,
             background: 'var(--bg-overlay)',
             border: '1px solid var(--border-card)',
             borderRadius: 12,
