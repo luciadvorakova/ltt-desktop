@@ -140,6 +140,12 @@ export async function refreshJiraToken(): Promise<string | null> {
     })
     const tokens = await res.json() as { access_token: string; refresh_token: string; expires_in: number }
     console.log('[JIRA] refresh response status:', res.status, JSON.stringify(tokens).slice(0, 200))
+    if (res.status === 400 || res.status === 403) {
+      console.error('[jira] refresh token invalid, clearing Jira auth')
+      patchJiraSettings({ jiraAccessToken: undefined, jiraRefreshToken: undefined, jiraTokenExpiry: undefined })
+      jiraAuthEmitter.emit('jira-auth-expired')
+      return null
+    }
     if (!tokens.access_token) { console.error('[jira] refresh failed:', tokens); return null }
 
     patchJiraSettings({
@@ -191,12 +197,13 @@ export async function ensureJiraToken(): Promise<string | null> {
 
 export function startJiraRefreshInterval(): void {
   setInterval(async () => {
-    const tokenExpiry = getJiraSettings().jiraTokenExpiry
-    if (!tokenExpiry) return
-    if (Date.now() > new Date(tokenExpiry).getTime() - 5 * 60 * 1000) {
+    const s = getJiraSettings()
+    if (!s.jiraRefreshToken || !s.jiraTokenExpiry) return
+    const expiresAt = isNaN(Number(s.jiraTokenExpiry)) ? new Date(s.jiraTokenExpiry).getTime() : Number(s.jiraTokenExpiry)
+    if (Date.now() > expiresAt - 10 * 60 * 1000) {
       await ensureJiraToken()
     }
-  }, 50 * 60 * 1000)
+  }, 5 * 60 * 1000)
 }
 
 export async function getJiraStatus(): Promise<{ connected: boolean; email?: string; cloudId?: string }> {
