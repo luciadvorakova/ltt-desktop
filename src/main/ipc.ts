@@ -226,19 +226,4 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     store.set('deletedEntryNames', [])
   })
 
-  // ---- WINDOW ----
-
-  ipcMain.handle('window:expandBy', (_event, pixels: number) => {
-    const win = getWindow?.()
-    if (!win) return
-    const bounds = win.getBounds()
-    win.setBounds({ ...bounds, height: Math.min(bounds.height + pixels, 820) }, true)
-  })
-
-  ipcMain.handle('window:restore', () => {
-    const win = getWindow?.()
-    if (!win) return
-    const bounds = win.getBounds()
-    win.setBounds({ ...bounds, height: 600 }, true)
-  })
 }

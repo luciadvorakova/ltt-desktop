@@ -38,153 +38,110 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
   )
 }
 
-const menuDivider = <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
-
-
 function parseMin(input: string): number | null {
   const n = parseInt(input.trim(), 10)
   if (isNaN(n) || n < 0) return null
   return n * 60000
 }
 
+function EntryMenu({ open, onOpen, onClose }: {
+  open: boolean; onOpen: () => void; onClose: () => void;
+}) {
+  return (
+    <button
+      style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
+      onMouseDown={(e) => { e.stopPropagation(); open ? onClose() : onOpen() }}
+    >
+      •••
+    </button>
+  )
+}
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate, onMoveTo, currentTab }: {
-  ms: number; open: boolean; onOpen: () => void; onClose: () => void;
+function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate, onMoveTo, currentTab, ms }: {
+  open: boolean; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
-  onAddToFavourites?: () => void;
-  onSendToJira?: () => void;
-  onLinkToJira?: () => void;
-  onChangeJiraLink?: () => void;
-  onRemoveFromTimer?: () => void;
-  onDuplicate?: () => void;
+  onAddToFavourites?: () => void; onSendToJira?: () => void;
+  onLinkToJira?: () => void; onChangeJiraLink?: () => void;
+  onRemoveFromTimer?: () => void; onDuplicate?: () => void;
   onMoveTo?: (tab: 'today' | 'tomorrow' | 'later') => void;
-  currentTab?: 'today' | 'tomorrow' | 'later';
+  currentTab?: 'today' | 'tomorrow' | 'later'; ms: number;
 }) {
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
   const [addVal, setAddVal] = useState('')
   const [editVal, setEditVal] = useState('')
-  const btnRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    if (!open) setExpandedTime(null)
-  }, [open])
+  useEffect(() => { if (!open) { setExpandedTime(null); setAddVal(''); setEditVal('') } }, [open])
 
-  useEffect(() => {
-    if (!open) return
-    const handler = () => { window.ltt?.restoreWindow(); onClose() }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open, onClose])
+  if (!open) return null
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      const dropdownHeight = 340
-      const windowHeight = 600 // always use base window height, not current
-      const spaceBelow = windowHeight - rect.bottom - 50 // 50px for footer
-      const extra = Math.max(0, dropdownHeight - spaceBelow + 16)
-      if (extra > 0) {
-        window.ltt?.expandWindowBy(extra)
-      }
-    }
-    if (open) { window.ltt?.restoreWindow(); onClose() } else { onOpen() }
-  }
-
-  const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
   const timeInputStyle: React.CSSProperties = { background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
-  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'var(--text-muted)' }
   const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
-  const handleAdd = () => {
-    const parsed = parseMin(addVal)
-    if (parsed !== null) { onAddTime(parsed); onClose() }
-  }
-  const handleEdit = () => {
-    const parsed = parseMin(editVal)
-    if (parsed !== null) { onEditTime(parsed); onClose() }
-  }
+  const handleAdd = () => { const p = parseMin(addVal); if (p !== null) { onAddTime(p); onClose() } }
+  const handleEdit = () => { const p = parseMin(editVal); if (p !== null) { onEditTime(p); onClose() } }
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-      <button
-        ref={btnRef}
-        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
-        onMouseDown={handleClick}
+    <>
+      <div
+        onMouseDown={onClose}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100, borderRadius: 20, cursor: 'pointer' }}
+      />
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '68%', overflowY: 'auto', background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: '16px 16px 0 0', zIndex: 101, scrollbarWidth: 'none' }}
       >
-        •••
-      </button>
-      {open && (
-        <div
-          onMouseDown={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: '100%', marginTop: 4,
-            background: 'var(--bg-overlay)',
-            border: '1px solid var(--border-card)',
-            borderRadius: 12,
-            minWidth: 180,
-            boxShadow: 'var(--shadow-dropdown)',
-            zIndex: 2000,
-            overflow: 'hidden',
-          }}
-        >
-          {onMoveTo && (
-            <>
-              <div style={{ padding: '4px 0' }}>
-                {currentTab !== 'today' && <MenuItem icon="←" label="Move to Today" onAction={() => { onMoveTo('today'); onClose() }} />}
-                {currentTab !== 'tomorrow' && <MenuItem icon="→" label="Move to Tomorrow" onAction={() => { onMoveTo('tomorrow'); onClose() }} />}
-                {currentTab !== 'later' && <MenuItem icon="→" label="Move to Later" onAction={() => { onMoveTo('later'); onClose() }} />}
+        {onMoveTo && (
+          <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+            {currentTab !== 'today' && <MenuItem icon="←" label="Move to Today" onAction={() => { onMoveTo('today'); onClose() }} />}
+            {currentTab !== 'tomorrow' && <MenuItem icon="→" label="Move to Tomorrow" onAction={() => { onMoveTo('tomorrow'); onClose() }} />}
+            {currentTab !== 'later' && <MenuItem icon="→" label="Move to Later" onAction={() => { onMoveTo('later'); onClose() }} />}
+          </div>
+        )}
+        {currentTab === 'today' && (
+          <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+            <MenuItem icon="⏱" label="Add time manually" onAction={() => setExpandedTime(expandedTime === 'add' ? null : 'add')} />
+            {expandedTime === 'add' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }}>
+                <input style={timeInputStyle} placeholder="60" value={addVal} onChange={e => setAddVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>min</span>
+                <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
               </div>
-              {menuDivider}
-            </>
-          )}
-          {currentTab === 'today' && (
-            <div style={{ padding: '4px 0' }}>
-              <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
-              {expandedTime === 'add' && (
-                <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                  <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} style={timeInputStyle}
-                    onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                  <span style={timeHintStyle}>min</span>
-                  <button style={timeBtnStyle} onMouseDown={handleAdd}>Add</button>
-                </div>
-              )}
-              {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
-              {ms > 0 && expandedTime === 'edit' && (
-                <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                  <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                  <span style={timeHintStyle}>min</span>
-                  <button style={timeBtnStyle} onMouseDown={handleEdit}>Save</button>
-                </div>
-              )}
-            </div>
-          )}
-          {currentTab === 'today' && ms > 0 && onSendToJira && menuDivider}
-          {currentTab === 'today' && ms > 0 && onSendToJira && (
-            <div style={{ padding: '4px 0' }}>
-              <MenuItem icon="↑" label="Send to Jira" onAction={() => { onSendToJira(); onClose() }} />
-            </div>
-          )}
-          {menuDivider}
-          <div style={{ padding: '4px 0' }}>
-            {onLinkToJira && <MenuItem icon="⛓" label="Link to Jira" onAction={() => { onLinkToJira(); onClose() }} />}
-            {onChangeJiraLink && <MenuItem icon="⛓" label="Change Jira link" onAction={() => { onChangeJiraLink(); onClose() }} />}
-            <MenuItem icon="✏" label="Edit description" onAction={() => { onClose(); onEditDesc() }} />
-            <MenuItem icon="★" label="Add to favourites" onAction={onAddToFavourites ? () => { onAddToFavourites(); onClose() } : undefined} />
-            <MenuItem icon="⧉" label="Duplicate as new task" onAction={onDuplicate ? () => { onDuplicate(); onClose() } : undefined} />
-            {currentTab === 'today' && <MenuItem icon="✕" label="Remove from timer" color="var(--text-secondary)" onAction={onRemoveFromTimer ? () => { onRemoveFromTimer(); onClose() } : undefined} />}
+            )}
+            <MenuItem icon="✎" label="Edit tracked time" onAction={() => setExpandedTime(expandedTime === 'edit' ? null : 'edit')} />
+            {expandedTime === 'edit' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }}>
+                <input style={timeInputStyle} placeholder={String(Math.round(ms / 60000))} value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleEdit()} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>min</span>
+                <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
+              </div>
+            )}
           </div>
-          {menuDivider}
-          <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="✕" label="Delete task" color="rgba(220,100,100,0.88)" onAction={onDelete} />
+        )}
+        {currentTab === 'today' && onSendToJira && (
+          <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+            <MenuItem icon="↑" label="Send to Jira" onAction={() => { onSendToJira(); onClose() }} />
           </div>
+        )}
+        <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+          {onLinkToJira && <MenuItem icon="⌗" label="Link to Jira" onAction={() => { onLinkToJira(); onClose() }} />}
+          {onChangeJiraLink && <MenuItem icon="⌗" label="Change Jira link" onAction={() => { onChangeJiraLink(); onClose() }} />}
+          <MenuItem icon="✎" label="Edit description" onAction={() => { onEditDesc(); onClose() }} />
+          {onAddToFavourites && <MenuItem icon="★" label="Add to favourites" onAction={() => { onAddToFavourites(); onClose() }} />}
+          {onDuplicate && <MenuItem icon="⧉" label="Duplicate as new task" onAction={() => { onDuplicate(); onClose() }} />}
+          {onRemoveFromTimer && <MenuItem icon="✕" label="Remove from timer" onAction={() => { onRemoveFromTimer(); onClose() }} />}
         </div>
-      )}
-    </div>
+        <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+          <MenuItem icon="✕" label="Delete task" color="rgba(220,100,100,0.88)" onAction={() => { onDelete(); onClose() }} />
+        </div>
+        <div
+          onMouseDown={onClose}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer' }}
+        >
+          Cancel
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -482,7 +439,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <style>{`.desc-field::placeholder { color: var(--text-muted); }`}</style>
 
       {/* Sub-tab bar + add button */}
@@ -1004,53 +961,11 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
                     </span>
                   )}
-                  <span draggable={false} onMouseDown={e => e.stopPropagation()}>
-                    <EntryMenu
-                      ms={entry.ms}
-                      open={openMenuId === entry.id}
-                      onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
-                      onClose={() => setOpenMenuId(null)}
-                      onDelete={async () => { await deleteEntry(entry.id) }}
-                      onEditDesc={() => { setEditingDescId(entry.id); setOpenMenuId(null) }}
-                      onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
-                      onEditTime={async (newMs) => {
-                        await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() })
-                        if (timerState?.paused && timerState.activeEntryId === entry.id) {
-                          await ltt.setTimerBase(entry.id, newMs)
-                        }
-                      }}
-                      onAddToFavourites={entry.jiraKey ? () => modifyFavourites(cur => {
-                        if ((cur ?? []).some(f => f.jiraKey === entry.jiraKey)) return cur ?? []
-                        return [{ jiraKey: entry.jiraKey!, jiraSummary: entry.jiraSummary, clientName: entry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
-                      }, `add-entry:${entry.jiraKey}`) : undefined}
-                      onSendToJira={entry.jiraKey && entry.ms > 0 ? async () => {
-                        const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, entry.jiraDesc)
-                        if (result.success) await updateEntry({ ...entry, jiraSent: true, updatedAt: new Date().toISOString() })
-                        else console.error('[jira] logTime failed:', result.error)
-                      } : undefined}
-                      onLinkToJira={!entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-                      onChangeJiraLink={entry.jiraKey ? () => { setLinkJiraEntryId(entry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-                      onRemoveFromTimer={() => updateEntry({ ...entry, removedFromTimer: true, updatedAt: new Date().toISOString() })}
-                      onDuplicate={() => addEntry({
-                        id: Date.now(),
-                        name: entry.name,
-                        ms: 0,
-                        ts: Date.now(),
-                        jiraKey: entry.jiraKey,
-                        jiraSummary: entry.jiraSummary,
-                        jiraDesc: entry.jiraDesc,
-                        clientName: entry.clientName,
-                        jiraSent: false,
-                        untracked: false,
-                        carriedOver: false,
-                        removedFromTimer: false,
-                        deletedFromBulk: false,
-                        updatedAt: new Date().toISOString(),
-                      })}
-                      currentTab={activeSubTab}
-                      onMoveTo={async (tab) => { await updateEntry({ ...entry, tab, updatedAt: new Date().toISOString() }) }}
-                    />
-                  </span>
+                  <EntryMenu
+                    open={openMenuId === entry.id}
+                    onOpen={() => setOpenMenuId(entry.id)}
+                    onClose={() => setOpenMenuId(null)}
+                  />
                 </div>
               </div>
             </div>
@@ -1116,6 +1031,58 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           </span>
         </div>
       </div>}
+
+      {(() => {
+        const menuEntry = openMenuId !== null ? (dragOrderedEntries ?? orderedEntries).find(e => e.id === openMenuId) ?? null : null
+        return (
+          <BottomSheet
+            open={openMenuId !== null}
+            onClose={() => setOpenMenuId(null)}
+            ms={menuEntry?.ms ?? 0}
+            currentTab={activeSubTab}
+            onDelete={async () => { if (menuEntry) await deleteEntry(menuEntry.id) }}
+            onEditDesc={() => { if (menuEntry) setEditingDescId(menuEntry.id) }}
+            onAddTime={async (added) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: menuEntry.ms + added, updatedAt: new Date().toISOString() }) }}
+            onEditTime={async (newMs) => {
+              if (menuEntry) {
+                await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
+                if (timerState?.paused && timerState.activeEntryId === menuEntry.id) {
+                  await ltt.setTimerBase(menuEntry.id, newMs)
+                }
+              }
+            }}
+            onAddToFavourites={menuEntry?.jiraKey ? () => modifyFavourites(cur => {
+              if ((cur ?? []).some(f => f.jiraKey === menuEntry.jiraKey)) return cur ?? []
+              return [{ jiraKey: menuEntry.jiraKey!, jiraSummary: menuEntry.jiraSummary, clientName: menuEntry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
+            }, `add-entry:${menuEntry.jiraKey}`) : undefined}
+            onSendToJira={menuEntry?.jiraKey && menuEntry.ms > 0 ? async () => {
+              const result = await ltt.jiraLogTime(menuEntry.jiraKey!, menuEntry.ms, menuEntry.jiraDesc)
+              if (result.success) await updateEntry({ ...menuEntry, jiraSent: true, updatedAt: new Date().toISOString() })
+              else console.error('[jira] logTime failed:', result.error)
+            } : undefined}
+            onLinkToJira={menuEntry && !menuEntry.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+            onChangeJiraLink={menuEntry?.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+            onRemoveFromTimer={menuEntry ? () => updateEntry({ ...menuEntry, removedFromTimer: true, updatedAt: new Date().toISOString() }) : undefined}
+            onDuplicate={menuEntry ? () => addEntry({
+              id: Date.now(),
+              name: menuEntry.name,
+              ms: 0,
+              ts: Date.now(),
+              jiraKey: menuEntry.jiraKey,
+              jiraSummary: menuEntry.jiraSummary,
+              jiraDesc: menuEntry.jiraDesc,
+              clientName: menuEntry.clientName,
+              jiraSent: false,
+              untracked: false,
+              carriedOver: false,
+              removedFromTimer: false,
+              deletedFromBulk: false,
+              updatedAt: new Date().toISOString(),
+            }) : undefined}
+            onMoveTo={menuEntry ? async (tab) => { await updateEntry({ ...menuEntry, tab, updatedAt: new Date().toISOString() }) } : undefined}
+          />
+        )
+      })()}
 
       {/* Link to Jira modal */}
       {linkJiraEntryId !== null && (() => {

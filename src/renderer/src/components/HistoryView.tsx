@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useEntries } from '../hooks/useEntries'
 import { useSettings } from '../hooks/useSettings'
 import { getClientColor } from '../lib/clientColors'
@@ -60,105 +60,78 @@ function MenuItem({ icon, label, color, onAction }: { icon: string; label: strin
   )
 }
 
-const menuDivider = <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
+function EntryMenu({ open, onOpen, onClose }: {
+  open: boolean; onOpen: () => void; onClose: () => void;
+}) {
+  return (
+    <button
+      style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
+      onMouseDown={(e) => { e.stopPropagation(); open ? onClose() : onOpen() }}
+    >
+      •••
+    </button>
+  )
+}
 
-function EntryMenu({ ms, open, onOpen, onClose, onDelete, onAddTime, onEditTime }: {
-  ms: number; open: boolean; onOpen: () => void; onClose: () => void
-  onDelete: () => void; onAddTime: (ms: number) => void; onEditTime: (ms: number) => void
+function HistoryBottomSheet({ open, onClose, onDelete, onAddTime, onEditTime, ms }: {
+  open: boolean; onClose: () => void;
+  onDelete: () => void;
+  onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
+  ms: number;
 }) {
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
   const [addVal, setAddVal] = useState('')
   const [editVal, setEditVal] = useState('')
-  const btnRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => { if (!open) setExpandedTime(null) }, [open])
+  useEffect(() => { if (!open) { setExpandedTime(null); setAddVal(''); setEditVal('') } }, [open])
 
-  useEffect(() => {
-    if (!open) return
-    const handler = () => { window.ltt?.restoreWindow(); onClose() }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open, onClose])
+  if (!open) return null
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      const dropdownHeight = 340
-      const windowHeight = 600 // always use base window height, not current
-      const spaceBelow = windowHeight - rect.bottom - 50 // 50px for footer
-      const extra = Math.max(0, dropdownHeight - spaceBelow + 16)
-      if (extra > 0) {
-        window.ltt?.expandWindowBy(extra)
-      }
-    }
-    if (open) { window.ltt?.restoreWindow(); onClose() } else { onOpen() }
-  }
-
-  const timeRowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }
   const timeInputStyle: React.CSSProperties = { background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 11, fontFamily: 'inherit', padding: '3px 7px', width: 52, textAlign: 'center', outline: 'none' }
-  const timeHintStyle: React.CSSProperties = { fontSize: 9, color: 'var(--text-muted)' }
   const timeBtnStyle: React.CSSProperties = { fontSize: 9, padding: '4px 10px', borderRadius: 99, background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }
 
-  const handleAdd = () => {
-    const parsed = parseMin(addVal)
-    if (parsed !== null) { onAddTime(parsed); onClose() }
-  }
-  const handleEdit = () => {
-    const parsed = parseMin(editVal)
-    if (parsed !== null) { onEditTime(parsed); onClose() }
-  }
+  const handleAdd = () => { const p = parseMin(addVal); if (p !== null) { onAddTime(p); onClose() } }
+  const handleEdit = () => { const p = parseMin(editVal); if (p !== null) { onEditTime(p); onClose() } }
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-      <button
-        ref={btnRef}
-        style={{ background: 'none', border: 'none', padding: 0, paddingBottom: 1, margin: 0, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, lineHeight: 1, flexShrink: 0, letterSpacing: 1 }}
-        onMouseDown={handleClick}
+    <>
+      <div
+        onMouseDown={onClose}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100, borderRadius: 20, cursor: 'pointer' }}
+      />
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '68%', overflowY: 'auto', background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: '16px 16px 0 0', zIndex: 101, scrollbarWidth: 'none' }}
       >
-        •••
-      </button>
-      {open && (
-        <div
-          onMouseDown={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: 12, minWidth: 180, boxShadow: 'var(--shadow-dropdown)', zIndex: 2000, overflow: 'hidden' }}
-        >
-          <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="⏱" label="Add time manually" onAction={() => { setAddVal(''); setExpandedTime(prev => prev === 'add' ? null : 'add') }} />
-            {expandedTime === 'add' && (
-              <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                <input autoFocus value={addVal} onChange={e => setAddVal(e.target.value)} style={timeInputStyle} onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
-              </div>
-            )}
-            {ms > 0 && <MenuItem icon="✎" label="Edit tracked time" onAction={() => { setExpandedTime(prev => prev === 'edit' ? null : 'edit'); setEditVal('') }} />}
-            {ms > 0 && expandedTime === 'edit' && (
-              <div style={timeRowStyle} onMouseDown={e => e.stopPropagation()}>
-                <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} style={timeInputStyle} onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setExpandedTime(null) }} />
-                <span style={timeHintStyle}>min</span>
-                <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
-              </div>
-            )}
-          </div>
-          {ms > 0 && menuDivider}
-          {ms > 0 && (
-            <div style={{ padding: '4px 0' }}>
-              <MenuItem icon="↑" label="Send to Jira" />
+        <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+          <MenuItem icon="⏱" label="Add time manually" onAction={() => setExpandedTime(expandedTime === 'add' ? null : 'add')} />
+          {expandedTime === 'add' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }}>
+              <input style={timeInputStyle} placeholder="60" value={addVal} onChange={e => setAddVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
+              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>min</span>
+              <button style={timeBtnStyle} onClick={handleAdd}>Add</button>
             </div>
           )}
-          {menuDivider}
-          <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="★" label="Add to favourites" />
-            <MenuItem icon="⧉" label="Duplicate as new task" />
-          </div>
-          {menuDivider}
-          <div style={{ padding: '4px 0' }}>
-            <MenuItem icon="✕" label="Delete task" color="rgba(220,100,100,0.88)" onAction={onDelete} />
-          </div>
+          <MenuItem icon="✎" label="Edit tracked time" onAction={() => setExpandedTime(expandedTime === 'edit' ? null : 'edit')} />
+          {expandedTime === 'edit' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 13px 7px 38px' }}>
+              <input style={timeInputStyle} placeholder={String(Math.round(ms / 60000))} value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleEdit()} />
+              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>min</span>
+              <button style={timeBtnStyle} onClick={handleEdit}>Save</button>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+        <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+          <MenuItem icon="✕" label="Delete task" color="rgba(220,100,100,0.88)" onAction={() => { onDelete(); onClose() }} />
+        </div>
+        <div
+          onMouseDown={onClose}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 16px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer' }}
+        >
+          Cancel
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -182,87 +155,95 @@ export function HistoryView() {
     return Array.from(map.entries()).sort((a, b) => b[1].ts - a[1].ts)
   }, [entries])
 
+  const menuEntry = openMenuId !== null ? entries.find(e => e.id === openMenuId) ?? null : null
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-      {grouped.length === 0 && (
-        <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
-          No entries yet
-        </div>
-      )}
-      {grouped.map(([key, { ts, entries: dayEntries }]) => {
-        const totalMs = dayEntries.reduce((sum, e) => sum + e.ms, 0)
-        const hasUnsent = dayEntries.some(e => !e.jiraSent && !!e.jiraKey)
-        return (
-          <div key={key}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid var(--border-entry)', position: 'sticky', top: 0, background: 'var(--bg-card-solid)', backdropFilter: 'blur(8px)', zIndex: 10 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                {getDayLabel(ts)}
-              </span>
-              <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                {hasUnsent && (
-                  <button style={{ fontSize: 9, padding: '3px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-                    ↑ Jira
-                  </button>
-                )}
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>
-                  {formatMsShort(totalMs)}
-                </span>
-              </div>
-            </div>
-
-            {dayEntries.map((entry) => {
-              const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined, theme)
-              return (
-                <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid var(--border-entry)' }}>
-                  {(entry.clientName || entry.jiraKey) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                      {entry.clientName && (
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, ...(clientColor ? { background: clientColor.bg, border: `1px solid ${clientColor.border}`, color: clientColor.text } : { background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-entry)', color: 'var(--text-secondary)' }) }}>
-                          {entry.clientName}
-                        </span>
-                      )}
-                      {entry.jiraKey && (
-                        <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>
-                          {entry.jiraKey}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                      {entry.name}
-                    </span>
-                    {entry.jiraSent && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', flexShrink: 0 }}>
-                        ✓ sent
-                      </span>
-                    )}
-                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-                      {formatMs(entry.ms)}
-                    </span>
-                    <EntryMenu
-                      ms={entry.ms}
-                      open={openMenuId === entry.id}
-                      onOpen={() => setOpenMenuId(prev => prev === entry.id ? null : entry.id)}
-                      onClose={() => setOpenMenuId(null)}
-                      onDelete={async () => { await deleteEntry(entry.id) }}
-                      onAddTime={async (added) => { await updateEntry({ ...entry, ms: entry.ms + added, updatedAt: new Date().toISOString() }) }}
-                      onEditTime={async (newMs) => { await updateEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString() }) }}
-                    />
-                  </div>
-
-                  {entry.jiraDesc && (
-                    <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {entry.jiraDesc}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {grouped.length === 0 && (
+          <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '28px 16px', textAlign: 'center' }}>
+            No entries yet
           </div>
-        )
-      })}
+        )}
+        {grouped.map(([key, { ts, entries: dayEntries }]) => {
+          const totalMs = dayEntries.reduce((sum, e) => sum + e.ms, 0)
+          const hasUnsent = dayEntries.some(e => !e.jiraSent && !!e.jiraKey)
+          return (
+            <div key={key}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px 6px', borderBottom: '1px solid var(--border-entry)', position: 'sticky', top: 0, background: 'var(--bg-card-solid)', backdropFilter: 'blur(8px)', zIndex: 10 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  {getDayLabel(ts)}
+                </span>
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                  {hasUnsent && (
+                    <button style={{ fontSize: 9, padding: '3px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                      ↑ Jira
+                    </button>
+                  )}
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    {formatMsShort(totalMs)}
+                  </span>
+                </div>
+              </div>
+
+              {dayEntries.map((entry) => {
+                const clientColor = getClientColor(entry.clientName, settings?.clientColors ?? undefined, theme)
+                return (
+                  <div key={entry.id} style={{ padding: '7px 14px', borderTop: '1px solid var(--border-entry)' }}>
+                    {(entry.clientName || entry.jiraKey) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                        {entry.clientName && (
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, ...(clientColor ? { background: clientColor.bg, border: `1px solid ${clientColor.border}`, color: clientColor.text } : { background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-entry)', color: 'var(--text-secondary)' }) }}>
+                            {entry.clientName}
+                          </span>
+                        )}
+                        {entry.jiraKey && (
+                          <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>
+                            {entry.jiraKey}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        {entry.name}
+                      </span>
+                      {entry.jiraSent && (
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: 'var(--accent-jira-bg)', border: '1px solid var(--accent-jira-border)', color: 'var(--accent-jira-text)', flexShrink: 0 }}>
+                          ✓ sent
+                        </span>
+                      )}
+                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatMs(entry.ms)}
+                      </span>
+                      <EntryMenu
+                        open={openMenuId === entry.id}
+                        onOpen={() => setOpenMenuId(entry.id)}
+                        onClose={() => setOpenMenuId(null)}
+                      />
+                    </div>
+
+                    {entry.jiraDesc && (
+                      <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.jiraDesc}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+      <HistoryBottomSheet
+        open={openMenuId !== null}
+        onClose={() => setOpenMenuId(null)}
+        ms={menuEntry?.ms ?? 0}
+        onDelete={async () => { if (menuEntry) await deleteEntry(menuEntry.id) }}
+        onAddTime={async (added) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: menuEntry.ms + added, updatedAt: new Date().toISOString() }) }}
+        onEditTime={async (newMs) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() }) }}
+      />
     </div>
   )
 }
