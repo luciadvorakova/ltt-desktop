@@ -36,6 +36,16 @@ export function useSettings(entries?: TimeEntry[]): UseSettingsResult {
       console.log('[SETTINGS] pulled:', JSON.stringify(remote?.jiraFavourites))
       if (!remote) return
       const merged = { ...remote, ...(local ?? {}) } as import('../../../types/index').UserSettings
+      // For Jira tokens, prefer whichever source has the later expiry — avoids a stale
+      // local token overriding a fresh one from Supabase (e.g. after refresh on another launch)
+      const parseExp = (v: string | undefined) => v ? (isNaN(Number(v)) ? new Date(v).getTime() : Number(v)) : 0
+      const localExp = parseExp(local?.jiraTokenExpiry)
+      const remoteExp = parseExp(remote?.jiraTokenExpiry)
+      if (remoteExp > localExp && remote?.jiraAccessToken) {
+        merged.jiraAccessToken = remote.jiraAccessToken
+        merged.jiraRefreshToken = remote.jiraRefreshToken
+        merged.jiraTokenExpiry = remote.jiraTokenExpiry
+      }
       settingsRef.current = merged
       setSettings(merged)
       await ltt.setSettings(merged)
