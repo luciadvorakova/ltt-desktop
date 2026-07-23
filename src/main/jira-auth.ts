@@ -85,7 +85,12 @@ async function exchangeCodeForTokens(code: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.id) {
       const settings = getJiraSettings()
-      await supabase.from('user_settings').upsert({ user_id: user.id, ...settings }, { onConflict: 'user_id' })
+      await supabase.from('user_settings').upsert({
+        user_id: user.id,
+        settings: settings,
+        client_colors: settings.clientColors ? JSON.stringify(settings.clientColors) : null,
+        theme: settings.theme ?? 'dark',
+      }, { onConflict: 'user_id' })
       console.log('[jira] settings pushed to Supabase')
     }
 
