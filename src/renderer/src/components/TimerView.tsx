@@ -85,11 +85,11 @@ function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTim
     <>
       <div
         onMouseDown={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100, borderRadius: 20, cursor: 'pointer' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 100, cursor: 'pointer' }}
       />
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '68%', overflowY: 'auto', background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: '16px 16px 0 0', zIndex: 101, scrollbarWidth: 'none' }}
+        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxHeight: '68%', overflowY: 'auto', background: 'var(--bg-overlay)', border: '1px solid var(--border-card)', borderRadius: '16px 16px 0 0', zIndex: 101, scrollbarWidth: 'none' }}
       >
         {onMoveTo && (
           <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -421,6 +421,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     : 0
 
   const totalMs = todayEntries.reduce((sum, e) => sum + e.ms, 0) + (isRunning ? elapsed : 0)
+  const menuEntry = openMenuId !== null ? (dragOrderedEntries ?? orderedEntries).find(e => e.id === openMenuId) ?? null : null
 
   if (bulkSendOpen) {
     return (
@@ -1032,57 +1033,52 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         </div>
       </div>}
 
-      {(() => {
-        const menuEntry = openMenuId !== null ? (dragOrderedEntries ?? orderedEntries).find(e => e.id === openMenuId) ?? null : null
-        return (
-          <BottomSheet
-            open={openMenuId !== null}
-            onClose={() => setOpenMenuId(null)}
-            ms={menuEntry?.ms ?? 0}
-            currentTab={activeSubTab}
-            onDelete={async () => { if (menuEntry) await deleteEntry(menuEntry.id) }}
-            onEditDesc={() => { if (menuEntry) setEditingDescId(menuEntry.id) }}
-            onAddTime={async (added) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: menuEntry.ms + added, updatedAt: new Date().toISOString() }) }}
-            onEditTime={async (newMs) => {
-              if (menuEntry) {
-                await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
-                if (timerState?.paused && timerState.activeEntryId === menuEntry.id) {
-                  await ltt.setTimerBase(menuEntry.id, newMs)
-                }
-              }
-            }}
-            onAddToFavourites={menuEntry?.jiraKey ? () => modifyFavourites(cur => {
-              if ((cur ?? []).some(f => f.jiraKey === menuEntry.jiraKey)) return cur ?? []
-              return [{ jiraKey: menuEntry.jiraKey!, jiraSummary: menuEntry.jiraSummary, clientName: menuEntry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
-            }, `add-entry:${menuEntry.jiraKey}`) : undefined}
-            onSendToJira={menuEntry?.jiraKey && menuEntry.ms > 0 ? async () => {
-              const result = await ltt.jiraLogTime(menuEntry.jiraKey!, menuEntry.ms, menuEntry.jiraDesc)
-              if (result.success) await updateEntry({ ...menuEntry, jiraSent: true, updatedAt: new Date().toISOString() })
-              else console.error('[jira] logTime failed:', result.error)
-            } : undefined}
-            onLinkToJira={menuEntry && !menuEntry.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-            onChangeJiraLink={menuEntry?.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
-            onRemoveFromTimer={menuEntry ? () => updateEntry({ ...menuEntry, removedFromTimer: true, updatedAt: new Date().toISOString() }) : undefined}
-            onDuplicate={menuEntry ? () => addEntry({
-              id: Date.now(),
-              name: menuEntry.name,
-              ms: 0,
-              ts: Date.now(),
-              jiraKey: menuEntry.jiraKey,
-              jiraSummary: menuEntry.jiraSummary,
-              jiraDesc: menuEntry.jiraDesc,
-              clientName: menuEntry.clientName,
-              jiraSent: false,
-              untracked: false,
-              carriedOver: false,
-              removedFromTimer: false,
-              deletedFromBulk: false,
-              updatedAt: new Date().toISOString(),
-            }) : undefined}
-            onMoveTo={menuEntry ? async (tab) => { await updateEntry({ ...menuEntry, tab, updatedAt: new Date().toISOString() }) } : undefined}
-          />
-        )
-      })()}
+      <BottomSheet
+        open={openMenuId !== null}
+        onClose={() => setOpenMenuId(null)}
+        ms={menuEntry?.ms ?? 0}
+        currentTab={activeSubTab}
+        onDelete={async () => { if (menuEntry) await deleteEntry(menuEntry.id) }}
+        onEditDesc={() => { if (menuEntry) setEditingDescId(menuEntry.id) }}
+        onAddTime={async (added) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: menuEntry.ms + added, updatedAt: new Date().toISOString() }) }}
+        onEditTime={async (newMs) => {
+          if (menuEntry) {
+            await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
+            if (timerState?.paused && timerState.activeEntryId === menuEntry.id) {
+              await ltt.setTimerBase(menuEntry.id, newMs)
+            }
+          }
+        }}
+        onAddToFavourites={menuEntry?.jiraKey ? () => modifyFavourites(cur => {
+          if ((cur ?? []).some(f => f.jiraKey === menuEntry.jiraKey)) return cur ?? []
+          return [{ jiraKey: menuEntry.jiraKey!, jiraSummary: menuEntry.jiraSummary, clientName: menuEntry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
+        }, `add-entry:${menuEntry.jiraKey}`) : undefined}
+        onSendToJira={menuEntry?.jiraKey && menuEntry.ms > 0 ? async () => {
+          const result = await ltt.jiraLogTime(menuEntry.jiraKey!, menuEntry.ms, menuEntry.jiraDesc)
+          if (result.success) await updateEntry({ ...menuEntry, jiraSent: true, updatedAt: new Date().toISOString() })
+          else console.error('[jira] logTime failed:', result.error)
+        } : undefined}
+        onLinkToJira={menuEntry && !menuEntry.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+        onChangeJiraLink={menuEntry?.jiraKey ? () => { setLinkJiraEntryId(menuEntry.id); setJiraQuery(''); setJiraResults([]) } : undefined}
+        onRemoveFromTimer={menuEntry ? () => updateEntry({ ...menuEntry, removedFromTimer: true, updatedAt: new Date().toISOString() }) : undefined}
+        onDuplicate={menuEntry ? () => addEntry({
+          id: Date.now(),
+          name: menuEntry.name,
+          ms: 0,
+          ts: Date.now(),
+          jiraKey: menuEntry.jiraKey,
+          jiraSummary: menuEntry.jiraSummary,
+          jiraDesc: menuEntry.jiraDesc,
+          clientName: menuEntry.clientName,
+          jiraSent: false,
+          untracked: false,
+          carriedOver: false,
+          removedFromTimer: false,
+          deletedFromBulk: false,
+          updatedAt: new Date().toISOString(),
+        }) : undefined}
+        onMoveTo={menuEntry ? async (tab) => { await updateEntry({ ...menuEntry, tab, updatedAt: new Date().toISOString() }) } : undefined}
+      />
 
       {/* Link to Jira modal */}
       {linkJiraEntryId !== null && (() => {
