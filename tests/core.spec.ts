@@ -212,7 +212,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByText('Edit tracked time').click()
     await expect(page.locator('button', { hasText: 'Save' }).first()).toBeVisible({ timeout: 3_000 })
 
-    const timeInput = firstEntryRow.locator('input[style*="text-align: center"]')
+    const timeInput = page.locator('input[style*="text-align: center"]').first()
     await timeInput.click()
     await timeInput.fill('50')
     await timeInput.press('Enter')
@@ -246,7 +246,7 @@ test.describe.serial('LTT Desktop core flows', () => {
     await page.getByText('Add time manually').click()
     await expect(page.locator('button', { hasText: 'Add' }).first()).toBeVisible({ timeout: 3_000 })
 
-    const timeInput = firstEntryRow.locator('input[style*="text-align: center"]')
+    const timeInput = page.locator('input[style*="text-align: center"]').first()
     await timeInput.click()
     await timeInput.fill('10')
     await timeInput.press('Enter')
