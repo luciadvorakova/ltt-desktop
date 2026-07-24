@@ -9,7 +9,7 @@ import { jiraAuthEmitter, startJiraRefreshInterval, ensureJiraToken } from './ji
 import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { registerIpcHandlers } from './ipc'
-import { setupNotificationIpc, clearDismissed } from './notification-window'
+import { setupNotificationIpc, clearDismissed, showStandupNotification } from './notification-window'
 import { store } from './store'
 import { supabase } from './supabase'
 
@@ -139,6 +139,19 @@ mb.on('ready', () => {
     runMidnightTasks()
     setInterval(runMidnightTasks, 24 * 60 * 60 * 1000)
   }, msUntilMidnight)
+
+  const checkStandupReminder = () => {
+    const now = new Date()
+    const day = now.getDay()
+    if (day === 0 || day === 6) return
+    const settings = store.get('settings')
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    if (settings?.lastStandupDate === today) return
+    const h = now.getHours(); const m = now.getMinutes()
+    const atReminderTime = h === 10 && m === 30
+    if (atReminderTime) showStandupNotification()
+  }
+  setInterval(checkStandupReminder, 60_000)
 })
 
 mb.on('after-create-window', () => {

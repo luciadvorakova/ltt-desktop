@@ -7,6 +7,7 @@ import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraPr
 import { signInWithGCal } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
 import { scheduleMeetingNotifications } from './meeting-notifications'
+import { closeStandupNotification } from './notification-window'
 import {
   loadEntries,
   saveEntry,
@@ -224,6 +225,12 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   ipcMain.handle('app:clearDeletedEntryNames', () => {
     store.set('deletedEntryNames', [])
+  })
+
+  // ---- STANDUP ----
+
+  ipcMain.on('standup:sent', () => {
+    closeStandupNotification()
   })
 
 }

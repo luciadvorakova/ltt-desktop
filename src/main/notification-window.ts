@@ -59,6 +59,53 @@ export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'
   }
 }
 
+export function showStandupNotification(): void {
+  if (dismissed.has('standup-reminder')) return
+
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.close()
+  }
+
+  const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize
+  const winWidth = 300
+  const winHeight = 170
+
+  notificationWindow = new BrowserWindow({
+    width: winWidth,
+    height: winHeight,
+    x: screenWidth - winWidth - 20,
+    y: 48,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+    },
+  })
+
+  const params = new URLSearchParams({ type: 'standup' })
+
+  const devUrl = process.env['VITE_DEV_SERVER_URL']
+  if (devUrl) {
+    notificationWindow.loadURL(`${devUrl}notification.html?${params}`)
+  } else {
+    notificationWindow.loadFile(path.join(__dirname, '..', 'dist', 'notification.html'), {
+      search: `?${params}`,
+    })
+  }
+}
+
+export function closeStandupNotification(): void {
+  dismissed.add('standup-reminder')
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.close()
+    notificationWindow = null
+  }
+}
+
 let notificationIpcRegistered = false
 
 export function setupNotificationIpc(mainWindow: BrowserWindow): void {
@@ -83,6 +130,24 @@ export function setupNotificationIpc(mainWindow: BrowserWindow): void {
       notificationWindow = null
     }
     mainWindow.webContents.send('start-tracking-from-notification', entryId)
+    if (!mainWindow.isVisible()) mainWindow.show()
+  })
+
+  ipcMain.on('notification:standup-dismiss', () => {
+    dismissed.add('standup-reminder')
+    if (notificationWindow && !notificationWindow.isDestroyed()) {
+      notificationWindow.close()
+      notificationWindow = null
+    }
+  })
+
+  ipcMain.on('notification:open-standup', () => {
+    dismissed.add('standup-reminder')
+    if (notificationWindow && !notificationWindow.isDestroyed()) {
+      notificationWindow.close()
+      notificationWindow = null
+    }
+    mainWindow.webContents.send('open-standup-from-notification')
     if (!mainWindow.isVisible()) mainWindow.show()
   })
 }
