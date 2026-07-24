@@ -294,6 +294,25 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     }
   }, [addPanelOpen, addMode, linkJiraEntryId, ltt])
 
+  const healedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const withJira = entries.filter(e => e.jiraKey && !healedRef.current.has(e.jiraKey))
+    if (withJira.length === 0) return
+    const seen = new Set<string>()
+    const toCheck = withJira.filter(e => { if (seen.has(e.jiraKey!)) return false; seen.add(e.jiraKey!); return true })
+    toCheck.forEach(e => {
+      healedRef.current.add(e.jiraKey!)
+      ltt.jiraGetClientName(e.jiraKey!).then(name => {
+        if (name && name !== e.clientName) {
+          entries.filter(x => x.jiraKey === e.jiraKey && x.clientName !== name).forEach(x => {
+            patchEntry(x.id, undefined, name)
+            updateEntry({ ...x, clientName: name, updatedAt: new Date().toISOString() })
+          })
+        }
+      }).catch(() => {})
+    })
+  }, [entries, ltt, patchEntry, updateEntry])
+
   const handleAddEntry = async () => {
     const name = manualInput.trim()
     if (!name) return
@@ -579,8 +598,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                       jiraKey={issue.key}
                       name={issue.summary}
                       onClick={async () => {
-                        const projectKey = issue.key.split('-')[0]
-                        const clientName = jiraProjectsRef.current.get(projectKey)
+                        const clientName = undefined
                         const entry: TimeEntry = {
                           id: Math.floor(Date.now()),
                           name: issue.summary,
@@ -606,7 +624,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                         })
                       }}
                       onUnfav={isFav ? () => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== issue.key), `remove:${issue.key}`) : undefined}
-                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `add:${issue.key}`) : undefined}
+                      onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: undefined }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `add:${issue.key}`) : undefined}
                     />
                     )
                   })}
@@ -1088,8 +1106,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         const closeLinkModal = () => { setLinkJiraEntryId(null); setJiraQuery(''); setJiraResults([]) }
 
         const handleLinkPick = async (issue: { key: string; summary: string }) => {
-          const projectKey = issue.key.split('-')[0]
-          const clientName = jiraProjectsRef.current.get(projectKey)
+          const clientName = undefined
           const updated = {
             ...linkEntry,
             name: issue.summary,
@@ -1161,7 +1178,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                         <JiraRow key={issue.key} icon="◈" jiraKey={issue.key} name={issue.summary}
                           onClick={() => handleLinkPick(issue)}
                           onUnfav={isFav ? () => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== issue.key), `modal-remove:${issue.key}`) : undefined}
-                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: jiraProjectsRef.current.get(issue.key.split('-')[0]) }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `modal-add:${issue.key}`) : undefined}
+                          onFav={!isFav ? () => modifyFavourites(cur => [{ jiraKey: issue.key, jiraSummary: issue.summary, clientName: undefined }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites'], `modal-add:${issue.key}`) : undefined}
                         />
                       )
                     })}
