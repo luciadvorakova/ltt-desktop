@@ -219,6 +219,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     const result = await ltt.slackSendStandup({ channel, userId, accomplished, workingOn, problems, share })
     if (result.success) {
       await updateSetting('lastStandupDate', getLocalDateStr())
+      window.dispatchEvent(new CustomEvent('standup-sent'))
     } else {
       console.error('[standup] send failed:', result.error)
     }

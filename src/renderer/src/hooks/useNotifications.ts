@@ -73,14 +73,16 @@ export function useNotifications({
     const check = () => {
       const now = new Date()
       const day = now.getDay()
-      if (day === 0 || day === 6) return
+      if (day === 0 || day === 6) { setStandupDue(false); return }
       const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
       const today = getLocalDateStr()
       setStandupDue(afterCutoff && lastStandupDate !== today)
     }
     check()
     const interval = setInterval(check, 60_000)
-    return () => clearInterval(interval)
+    const onSent = () => setStandupDue(false)
+    window.addEventListener('standup-sent', onSent)
+    return () => { clearInterval(interval); window.removeEventListener('standup-sent', onSent) }
   }, [lastStandupDate])
 
   const gcalConnected = !!settings?.gcalEmail
