@@ -6,7 +6,7 @@ import { signInWithGoogle, getSession } from './auth'
 import { signInWithJira, signOutJira, getJiraStatus, searchJiraIssues, getJiraProjects, logTimeToJira, getJiraIssueClientName } from './jira-auth'
 import { signInWithGCal } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
-import { scheduleMeetingNotifications } from './meeting-notifications'
+import { scheduleMeetingNotifications, cancelMeetingNotifications } from './meeting-notifications'
 import { closeStandupNotification } from './notification-window'
 import {
   loadEntries,
@@ -48,6 +48,9 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
     console.log('[IPC] entries:save called, id:', entry.id, 'ms:', entry.ms)
     await saveEntry(entry)
     console.log('[IPC] entries:save done')
+    if (entry.removedFromTimer && entry.gcalEventId) {
+      cancelMeetingNotifications(entry.gcalEventId)
+    }
   })
 
   ipcMain.handle('entries:delete', async (_event, id: number) => {
