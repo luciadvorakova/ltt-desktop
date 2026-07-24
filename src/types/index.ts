@@ -16,6 +16,8 @@ export interface TimeEntry {
   deletedFromBulk: boolean
   gcalEventId?: string
   gcalEndTime?: number
+  gcalMeetLink?: string
+  isMeeting?: boolean
   gcal_end_time?: string
   description?: string
   tab?: 'today' | 'tomorrow' | 'later'

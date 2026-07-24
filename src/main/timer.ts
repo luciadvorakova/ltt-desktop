@@ -27,6 +27,8 @@ function rowToEntry(row: Record<string, unknown>): TimeEntry {
     deletedFromBulk:  Boolean(row.deleted_from_bulk),
     gcalEventId:      (row.gcal_event_id as string) ?? undefined,
     gcalEndTime:      row.gcal_end_time != null ? Number(row.gcal_end_time) : undefined,
+    gcalMeetLink:     (row.gcal_meet_link as string) ?? undefined,
+    isMeeting:        (row.is_meeting as boolean) ?? (row.gcal_event_id != null),
     tab:              (row.tab as 'today' | 'tomorrow' | 'later') ?? 'today',
     lastTrackedDate:  (row.last_tracked_date as string) ?? undefined,
   }
@@ -50,6 +52,8 @@ function entryToRow(entry: TimeEntry, userId: string): Record<string, unknown> {
     carried_over:      entry.carriedOver,
     removed_from_timer: entry.removedFromTimer,
     deleted_from_bulk: entry.deletedFromBulk,
+    gcal_meet_link:    entry.gcalMeetLink ?? null,
+    is_meeting:        entry.isMeeting ?? false,
     tab:               entry.tab ?? 'today',
     last_tracked_date: entry.lastTrackedDate ?? null,
   }

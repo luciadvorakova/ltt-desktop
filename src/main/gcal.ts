@@ -12,6 +12,8 @@ interface GCalEvent {
   start: { dateTime?: string; date?: string }
   end: { dateTime?: string; date?: string }
   attendees?: { self?: boolean; responseStatus?: string }[]
+  hangoutLink?: string
+  conferenceData?: { entryPoints?: { entryPointType?: string; uri?: string }[] }
 }
 
 function shouldSkip(event: GCalEvent): boolean {
@@ -88,6 +90,9 @@ export async function syncGoogleCalendar(): Promise<boolean> {
       const ts = new Date(event.start.dateTime!).getTime()
       const gcalEndTime = new Date(event.end.dateTime!).getTime()
       const gcalEventId = event.id ?? null
+      const meetLink = event.hangoutLink
+        ?? event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri
+        ?? undefined
       const now = new Date().toISOString()
 
       const entryId = Date.now() + created
@@ -107,6 +112,8 @@ export async function syncGoogleCalendar(): Promise<boolean> {
           deleted_from_bulk: false,
           gcal_event_id: gcalEventId,
           gcal_end_time: gcalEndTime,
+          gcal_meet_link: meetLink ?? null,
+          is_meeting: true,
         })
         .select()
         .single()
@@ -126,6 +133,8 @@ export async function syncGoogleCalendar(): Promise<boolean> {
           deletedFromBulk: false,
           gcalEventId: gcalEventId ?? undefined,
           gcalEndTime,
+          gcalMeetLink: meetLink,
+          isMeeting: true,
         }
         currentEntries.push(entry)
         newEntries.push(entry)
@@ -141,7 +150,12 @@ export async function syncGoogleCalendar(): Promise<boolean> {
 
     await supabase
       .from('user_settings')
-      .upsert({ user_id: userId, ...updatedSettings }, { onConflict: 'user_id' })
+      .upsert({
+        user_id: userId,
+        settings: updatedSettings,
+        client_colors: updatedSettings.clientColors ? JSON.stringify(updatedSettings.clientColors) : null,
+        theme: updatedSettings.theme ?? 'dark',
+      }, { onConflict: 'user_id' })
 
     return created > 0
   } catch (err) {
