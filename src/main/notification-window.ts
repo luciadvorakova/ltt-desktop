@@ -22,7 +22,7 @@ export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'
 
   const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize
   const winWidth = 300
-  const winHeight = type === '1min' ? 160 : 130
+  const winHeight = type === '1min' ? 200 : 170
 
   notificationWindow = new BrowserWindow({
     width: winWidth,
@@ -58,6 +58,18 @@ export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'
       search: `?${params}`,
     })
   }
+
+  notificationWindow.webContents.on('did-finish-load', async () => {
+    try {
+      const height = await notificationWindow!.webContents.executeJavaScript(
+        'document.body.scrollHeight'
+      )
+      if (height && typeof height === 'number') {
+        const bounds = notificationWindow!.getBounds()
+        notificationWindow!.setBounds({ ...bounds, height: Math.ceil(height) })
+      }
+    } catch { /* ignore */ }
+  })
 }
 
 export function showStandupNotification(): void {
