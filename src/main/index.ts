@@ -12,6 +12,8 @@ import { registerIpcHandlers } from './ipc'
 import { setupNotificationIpc, clearDismissed, showStandupNotification } from './notification-window'
 import { store } from './store'
 import { supabase } from './supabase'
+import { currentEntries } from './timer'
+import { scheduleMeetingNotifications } from './meeting-notifications'
 
 if (!app.isPackaged && !process.env.E2E_TEST_SESSION) {
   app.setPath('userData', path.join(app.getPath('userData'), 'dev'))
@@ -122,11 +124,35 @@ mb.on('ready', () => {
     clearDismissed()
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
-      await supabase
-        .from('time_entries')
-        .update({ tab: 'today' })
-        .eq('user_id', session.user.id)
-        .eq('tab', 'tomorrow')
+      // Capture tomorrow's calendar meetings before the bulk re-tag
+      const tomorrowMeetings = currentEntries.filter(e => e.tab === 'tomorrow' && !!e.gcalEventId)
+
+      try {
+        await supabase
+          .from('time_entries')
+          .update({ tab: 'today' })
+          .eq('user_id', session.user.id)
+          .eq('tab', 'tomorrow')
+      } catch (err) {
+        console.error('[midnight] re-tag error:', err)
+      }
+
+      // Sync in-memory and schedule notifications for calendar meetings now becoming today
+      if (tomorrowMeetings.length > 0) {
+        for (const entry of tomorrowMeetings) {
+          const idx = currentEntries.findIndex(e => e.id === entry.id)
+          if (idx > -1) currentEntries[idx] = { ...currentEntries[idx], tab: 'today' }
+        }
+        scheduleMeetingNotifications(tomorrowMeetings.map(e => ({ ...e, tab: 'today' as const })))
+      }
+
+      // Clear gcal sync dates so the new day's sync runs cleanly
+      const settings = store.get('settings')
+      if (settings) {
+        store.set('settings', { ...settings, gcalLastSyncDate: undefined, gcalTomorrowSyncDate: undefined })
+      }
+
+      await syncGoogleCalendar()
     }
   }
 

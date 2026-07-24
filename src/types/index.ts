@@ -39,6 +39,7 @@ export interface UserSettings {
   gcalRefreshToken?: string
   gcalTokenExpiry?: string
   gcalLastSyncDate?: string
+  gcalTomorrowSyncDate?: string
   slackChannel?: string
   slackUserId?: string
   manualTimerCleanup?: boolean
