@@ -61,6 +61,16 @@ function AppShell({ session, signOut }: { session: Session; signOut: () => Promi
   })
 
   useEffect(() => {
+    if (!window.ltt?.onOpenStandupFromNotification) return
+    const cleanup = window.ltt.onOpenStandupFromNotification(() => {
+      setTab('timer')
+      setSettingsOpen(false)
+      setStandupOpen(true)
+    })
+    return cleanup
+  }, [])
+
+  useEffect(() => {
     if (!navOpen) return
     const handler = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) setNavOpen(false)

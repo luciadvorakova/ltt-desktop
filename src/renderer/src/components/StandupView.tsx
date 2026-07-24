@@ -220,6 +220,7 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
     if (result.success) {
       await updateSetting('lastStandupDate', getLocalDateStr())
       window.dispatchEvent(new CustomEvent('standup-sent'))
+      window.ltt?.standupSent()
     } else {
       console.error('[standup] send failed:', result.error)
     }

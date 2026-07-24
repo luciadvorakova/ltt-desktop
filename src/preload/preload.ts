@@ -53,6 +53,14 @@ contextBridge.exposeInMainWorld('ltt', {
   // ---- NOTIFICATION ----
   notificationClose:         (gcalEventId?: string, type?: string)     => ipcRenderer.send('notification:close', gcalEventId, type),
   notificationStartTracking: (entryId: string, gcalEventId?: string)  => ipcRenderer.send('notification:start-tracking', entryId, gcalEventId),
+  notificationStandupDismiss: () => ipcRenderer.send('notification:standup-dismiss'),
+  notificationOpenStandup:    () => ipcRenderer.send('notification:open-standup'),
+  standupSent:                () => ipcRenderer.send('standup:sent'),
+  onOpenStandupFromNotification: (cb: () => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('open-standup-from-notification', handler)
+    return () => ipcRenderer.removeListener('open-standup-from-notification', handler)
+  },
 
   // ---- EVENTS (main → renderer) ----
   on:  (channel: string, fn: (...args: unknown[]) => void) =>
