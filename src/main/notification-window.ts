@@ -48,6 +48,7 @@ export function showMeetingNotification(entry: TimeEntry, type: '10min' | '1min'
     ts: String(entry.ts),
     gcalEventId: entry.gcalEventId || '',
   })
+  if (entry.gcalMeetLink) params.set('meetLink', entry.gcalMeetLink)
 
   const devUrl = process.env['VITE_DEV_SERVER_URL']
   if (devUrl) {

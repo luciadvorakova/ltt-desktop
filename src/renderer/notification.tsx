@@ -9,6 +9,7 @@ const name = params.get('name') ?? ''
 const description = params.get('description') ?? ''
 const ts = parseInt(params.get('ts') ?? '0', 10)
 const gcalEventId = params.get('gcalEventId') ?? ''
+const meetLink = params.get('meetLink') ?? ''
 
 function formatTime(ms: number): string {
   const d = new Date(ms)
@@ -129,6 +130,19 @@ function NotificationPopup() {
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>
             {description}
           </div>
+        )}
+        {meetLink && (
+          <button
+            onClick={() => window.open(meetLink, '_blank')}
+            style={{
+              fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99, marginBottom: 10,
+              background: 'transparent', border: '1px solid rgba(130,160,255,0.55)',
+              color: 'rgba(150,175,255,0.95)', cursor: 'pointer', fontFamily: 'inherit',
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            ▶ Join meeting
+          </button>
         )}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginBottom: 8 }} />
         <div style={{

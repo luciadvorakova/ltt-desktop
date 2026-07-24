@@ -200,7 +200,7 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
         {selected ? '✓' : ''}
       </div>
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        {(entry.clientName || entry.jiraKey) && (
+        {(entry.clientName || entry.jiraKey || entry.isMeeting || entry.gcalEventId) && (
           <div style={{ display: 'flex', gap: 4, marginBottom: 3, alignItems: 'center', flexWrap: 'wrap' }}>
             {entry.clientName && (() => {
               const color = getClientColor(entry.clientName, clientColors, theme)
@@ -220,6 +220,35 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
               <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
                 {entry.jiraKey}
               </span>
+            )}
+            {(entry.isMeeting || entry.gcalEventId) && (
+              entry.gcalMeetLink ? (
+                <button
+                  draggable={false}
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); window.open(entry.gcalMeetLink, '_blank') }}
+                  style={{
+                    fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
+                    background: 'transparent',
+                    border: '1px solid var(--accent-meeting-border)',
+                    color: 'var(--accent-meeting-text)',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                  }}
+                >
+                  ▶ Join meeting
+                </button>
+              ) : (
+                <span draggable={false} style={{
+                  fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+                  background: 'transparent',
+                  border: '1px solid var(--accent-meeting-border)',
+                  color: 'var(--accent-meeting-text)',
+                  letterSpacing: '0.02em', whiteSpace: 'nowrap',
+                }}>
+                  Meeting
+                </span>
+              )
             )}
           </div>
         )}
@@ -867,7 +896,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   <div style={{ flex: 1, minWidth: 0 }}>
 
                     {/* Badges row */}
-                    {(entry.clientName || entry.jiraKey) && (
+                    {(entry.clientName || entry.jiraKey || entry.isMeeting || entry.gcalEventId) && (
                       <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                         {entry.clientName && (() => {
                           const color = getClientColor(entry.clientName, settings?.clientColors, theme)
@@ -896,6 +925,35 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                           }}>
                             {entry.jiraKey}
                           </span>
+                        )}
+                        {(entry.isMeeting || entry.gcalEventId) && (
+                          entry.gcalMeetLink ? (
+                            <button
+                              draggable={false}
+                              onMouseDown={e => e.stopPropagation()}
+                              onClick={(e) => { e.stopPropagation(); window.open(entry.gcalMeetLink, '_blank') }}
+                              style={{
+                                fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
+                                background: 'transparent',
+                                border: '1px solid var(--accent-meeting-border)',
+                                color: 'var(--accent-meeting-text)',
+                                cursor: 'pointer', fontFamily: 'inherit',
+                                display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                              }}
+                            >
+                              ▶ Join meeting
+                            </button>
+                          ) : (
+                            <span draggable={false} style={{
+                              fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+                              background: 'transparent',
+                              border: '1px solid var(--accent-meeting-border)',
+                              color: 'var(--accent-meeting-text)',
+                              letterSpacing: '0.02em', whiteSpace: 'nowrap',
+                            }}>
+                              Meeting
+                            </span>
+                          )
                         )}
                       </div>
                     )}
