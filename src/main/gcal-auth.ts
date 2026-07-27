@@ -93,7 +93,12 @@ async function exchangeCodeForTokens(code: string): Promise<void> {
     await ensureSession()
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.id) {
-      await supabase.from('user_settings').upsert({ user_id: user.id, ...updated }, { onConflict: 'user_id' })
+      await supabase.from('user_settings').upsert({
+        user_id: user.id,
+        settings: updated,
+        client_colors: updated.clientColors ? JSON.stringify(updated.clientColors) : null,
+        theme: updated.theme ?? 'dark',
+      }, { onConflict: 'user_id' })
     }
 
     gcalAuthEmitter.emit('gcal-auth-success')
@@ -125,6 +130,11 @@ export async function refreshGCalToken(): Promise<string | null> {
     const tokens = await res.json() as { access_token: string; expires_in: number; error?: string; error_description?: string }
     if (!tokens.access_token) {
       console.error('[gcal] token refresh failed:', tokens.error, tokens.error_description)
+      if (tokens.error === 'invalid_grant') {
+        const s = store.get('settings') ?? {}
+        store.set('settings', { ...s, gcalAccessToken: undefined, gcalRefreshToken: undefined, gcalTokenExpiry: undefined, gcalEmail: undefined })
+        gcalAuthEmitter.emit('gcal-auth-expired')
+      }
       return null
     }
 
@@ -133,10 +143,47 @@ export async function refreshGCalToken(): Promise<string | null> {
       gcalAccessToken: tokens.access_token,
       gcalTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
     })
+
+    // Push refreshed gcal token to Supabase
+    try {
+      await ensureSession()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        const s = store.get('settings')
+        await supabase.from('user_settings').upsert({
+          user_id: user.id,
+          settings: s,
+          client_colors: s?.clientColors ? JSON.stringify(s.clientColors) : null,
+          theme: s?.theme ?? 'dark',
+        }, { onConflict: 'user_id' })
+      }
+    } catch { /* ignore */ }
+
     console.log('[gcal] token refreshed successfully, expires in:', tokens.expires_in, 's')
     return tokens.access_token
   } catch (err) {
     console.error('[gcal] refreshGCalToken error:', err)
     return null
   }
+}
+
+export async function ensureGCalToken(): Promise<string | null> {
+  const settings = store.get('settings')
+  if (!settings?.gcalRefreshToken) return null
+  const expiry = settings.gcalTokenExpiry ? new Date(settings.gcalTokenExpiry).getTime() : 0
+  if (Date.now() > expiry - 10 * 60 * 1000) {
+    return await refreshGCalToken()
+  }
+  return settings.gcalAccessToken ?? null
+}
+
+export function startGCalRefreshInterval(): void {
+  setInterval(async () => {
+    const s = store.get('settings')
+    if (!s?.gcalRefreshToken || !s.gcalTokenExpiry) return
+    const expiry = new Date(s.gcalTokenExpiry).getTime()
+    if (Date.now() > expiry - 10 * 60 * 1000) {
+      await refreshGCalToken()
+    }
+  }, 5 * 60 * 1000)
 }
