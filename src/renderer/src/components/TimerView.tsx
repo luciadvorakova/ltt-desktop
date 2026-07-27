@@ -226,7 +226,7 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
                 <button
                   draggable={false}
                   onMouseDown={e => e.stopPropagation()}
-                  onClick={(e) => { e.stopPropagation(); window.open(entry.gcalMeetLink, '_blank') }}
+                  onClick={(e) => { e.stopPropagation(); window.ltt?.openExternal(entry.gcalMeetLink!) }}
                   style={{
                     fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
                     background: 'transparent',
@@ -931,7 +931,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                             <button
                               draggable={false}
                               onMouseDown={e => e.stopPropagation()}
-                              onClick={(e) => { e.stopPropagation(); window.open(entry.gcalMeetLink, '_blank') }}
+                              onClick={(e) => { e.stopPropagation(); window.ltt?.openExternal(entry.gcalMeetLink!) }}
                               style={{
                                 fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
                                 background: 'transparent',

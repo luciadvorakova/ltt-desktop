@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld('ltt', {
   addDeletedId:           (id: number)   => ipcRenderer.invoke('app:addDeletedId', id),
   clearDeletedEntryNames: ()             => ipcRenderer.invoke('app:clearDeletedEntryNames'),
 
+  // ---- SHELL ----
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+
   // ---- NOTIFICATION ----
   notificationClose:         (gcalEventId?: string, type?: string)     => ipcRenderer.send('notification:close', gcalEventId, type),
   notificationStartTracking: (entryId: string, gcalEventId?: string)  => ipcRenderer.send('notification:start-tracking', entryId, gcalEventId),

@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom/client'
 
-declare const window: Window & { ltt?: { notificationClose: (gcalEventId?: string, type?: string) => void; notificationStartTracking: (entryId: string, gcalEventId?: string) => void; notificationStandupDismiss: () => void; notificationOpenStandup: () => void } }
+declare const window: Window & { ltt?: { notificationClose: (gcalEventId?: string, type?: string) => void; notificationStartTracking: (entryId: string, gcalEventId?: string) => void; notificationStandupDismiss: () => void; notificationOpenStandup: () => void; openExternal: (url: string) => void } }
 
 const params = new URLSearchParams(window.location.search)
 const type = (params.get('type') ?? '10min') as '10min' | '1min' | 'standup'
@@ -133,7 +133,7 @@ function NotificationPopup() {
         )}
         {meetLink && (
           <button
-            onClick={() => window.open(meetLink, '_blank')}
+            onClick={() => window.ltt?.openExternal(meetLink)}
             style={{
               fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99, marginBottom: 10,
               background: 'transparent', border: '1px solid rgba(130,160,255,0.55)',

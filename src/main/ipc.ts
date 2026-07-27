@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, shell } from 'electron'
 import { store } from './store'
 import { supabase } from './supabase'
 import { ensureSession } from './auth'
@@ -234,6 +234,14 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   ipcMain.on('standup:sent', () => {
     closeStandupNotification()
+  })
+
+  // ---- SHELL ----
+
+  ipcMain.handle('open-external', (_event, url: string) => {
+    if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+      shell.openExternal(url)
+    }
   })
 
 }

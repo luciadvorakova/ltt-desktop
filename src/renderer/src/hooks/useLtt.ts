@@ -46,6 +46,9 @@ interface LttAPI {
   addDeletedId:           (id: number) => Promise<void>
   clearDeletedEntryNames: () => Promise<void>
 
+  // SHELL
+  openExternal: (url: string) => void
+
   // NOTIFICATION
   notificationClose:              (gcalEventId?: string, type?: string) => void
   notificationStartTracking:      (entryId: string, gcalEventId?: string) => void
