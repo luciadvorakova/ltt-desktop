@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useLtt } from '../hooks/useLtt'
 import type { TimeEntry } from '../../../types/index'
 
+function worklogStarted(entry: { lastTrackedDate?: string; ts: number }): string {
+  if (entry.lastTrackedDate) {
+    const [y, m, d] = entry.lastTrackedDate.split('-').map(Number)
+    return new Date(y, m - 1, d, 12, 0, 0).toISOString()
+  }
+  return new Date(entry.ts).toISOString()
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -64,7 +72,7 @@ export function BulkSendView({
     setSending(true)
     for (const entry of selectedEntries) {
       const desc = descs.get(entry.id) ?? entry.jiraDesc ?? ''
-      const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, desc, new Date(entry.ts).toISOString())
+      const result = await ltt.jiraLogTime(entry.jiraKey!, entry.ms, desc, worklogStarted(entry))
       if (result.success) {
         await updateEntry({ ...entry, jiraSent: true, jiraDesc: desc, updatedAt: new Date().toISOString() })
       } else {
