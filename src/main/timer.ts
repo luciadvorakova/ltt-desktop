@@ -6,6 +6,11 @@ import type { TimeEntry, TimerState } from '../types/index'
 let flushInterval: ReturnType<typeof setInterval> | null = null
 export let currentEntries: TimeEntry[] = []
 
+function localDateStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // ---- DB mapping ----
 
 function rowToEntry(row: Record<string, unknown>): TimeEntry {
@@ -159,7 +164,7 @@ export async function pauseTimer(): Promise<void> {
   console.log('[PAUSE] baseMs set to:', newMs)
   if (flushInterval) { clearInterval(flushInterval); flushInterval = null }
   const entry = currentEntries.find(e => e.id === state.activeEntryId)
-  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString(), lastTrackedDate: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })() })
+  if (entry) await saveEntry({ ...entry, ms: newMs, updatedAt: new Date().toISOString(), lastTrackedDate: localDateStr() })
 }
 
 export async function stopTimer(): Promise<{ id: number; ms: number } | null> {
@@ -170,7 +175,7 @@ export async function stopTimer(): Promise<{ id: number; ms: number } | null> {
   } else if (state?.paused && state.activeEntryId !== null) {
     const idx = currentEntries.findIndex((e) => e.id === state.activeEntryId)
     if (idx !== -1) {
-      const updated: TimeEntry = { ...currentEntries[idx], ms: state.baseMs, updatedAt: new Date().toISOString() }
+      const updated: TimeEntry = { ...currentEntries[idx], ms: state.baseMs, updatedAt: new Date().toISOString(), lastTrackedDate: localDateStr() }
       console.log('[STOP] saving paused entry id:', state.activeEntryId, 'ms:', state.baseMs)
       await saveEntry(updated)
       currentEntries[idx] = updated
@@ -201,7 +206,7 @@ export async function flushActiveTime(): Promise<void> {
     ...currentEntries[idx],
     ms: state.baseMs + elapsed,
     updatedAt: new Date(now).toISOString(),
-    lastTrackedDate: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })(),
+    lastTrackedDate: localDateStr(),
   }
   await saveEntry(updated)
   currentEntries[idx] = updated
