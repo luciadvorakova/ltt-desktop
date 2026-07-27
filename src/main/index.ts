@@ -129,8 +129,11 @@ mb.on('ready', () => {
     }
   })
 
+  let standupReminderShownDate: string | null = null
+
   const runMidnightTasks = async () => {
     clearDismissed()
+    standupReminderShownDate = null
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       // Capture tomorrow's calendar meetings before the bulk re-tag
@@ -179,12 +182,15 @@ mb.on('ready', () => {
     const now = new Date()
     const day = now.getDay()
     if (day === 0 || day === 6) return
-    const settings = store.get('settings')
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const settings = store.get('settings')
     if (settings?.lastStandupDate === today) return
+    if (standupReminderShownDate === today) return
     const h = now.getHours(); const m = now.getMinutes()
-    const atReminderTime = h === 10 && m === 30
-    if (atReminderTime) showStandupNotification()
+    if (h > 10 || (h === 10 && m >= 30)) {
+      standupReminderShownDate = today
+      showStandupNotification()
+    }
   }
   setInterval(checkStandupReminder, 60_000)
 })
