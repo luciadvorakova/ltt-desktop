@@ -65,7 +65,14 @@ async function fetchAndInsertEvents(
       ? new Date(event.end.dateTime).getTime() - new Date(event.start.dateTime).getTime()
       : 0
     const eventName = event.summary ?? 'Calendar event'
-    const isDuplicate = currentEntries.some(e => e.ts >= startMs && (e.name === eventName || e.jiraDesc === eventName))
+    const gcalEventId = event.id ?? null
+    const meetLink = event.hangoutLink
+      ?? event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri
+      ?? undefined
+    const isDuplicate = currentEntries.some(e =>
+      (gcalEventId && e.gcalEventId === gcalEventId) ||
+      (e.ts >= startMs && (e.name === eventName || e.jiraDesc === eventName))
+    )
     const isDeleted = deletedNames.has(eventName)
     console.log('[gcal] event:', event.summary, 'tab:', tab, 'allDay:', !event.start?.dateTime, 'declined:', isDeclined, 'tooShort:', durationMs < 5 * 60 * 1000, 'duplicate:', isDuplicate, 'deleted:', isDeleted)
 
@@ -75,10 +82,6 @@ async function fetchAndInsertEvents(
     const ms = 0
     const ts = new Date(event.start.dateTime!).getTime()
     const gcalEndTime = new Date(event.end.dateTime!).getTime()
-    const gcalEventId = event.id ?? null
-    const meetLink = event.hangoutLink
-      ?? event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri
-      ?? undefined
     const now = new Date().toISOString()
 
     const entryId = Date.now() + created
