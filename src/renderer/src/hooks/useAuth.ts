@@ -31,6 +31,22 @@ export function useAuth(): UseAuthResult {
     return () => ltt.off('auth-success', onAuthSuccess)
   }, [ltt])
 
+  useEffect(() => {
+    if (!window.ltt) return
+    const onExpired = () => setSession(null)
+    ltt.on('auth-expired', onExpired)
+    return () => ltt.off('auth-expired', onExpired)
+  }, [ltt])
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (!window.ltt) return
+      ltt.getSession().then((s) => setSession(s))
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [ltt])
+
   const signIn = useCallback(async () => {
     await ltt.signIn()
   }, [ltt])

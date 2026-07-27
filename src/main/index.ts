@@ -92,6 +92,9 @@ mb.on('ready', () => {
     mb.window?.webContents.send('auth-success', session)
     console.log('[AUTH] sent to renderer')
   })
+  authEmitter.on('auth-expired', () => {
+    mb.window?.webContents.send('auth-expired')
+  })
   gcalAuthEmitter.on('gcal-auth-success', () => {
     mb.window?.webContents.send('gcal-auth-success')
   })

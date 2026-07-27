@@ -132,6 +132,7 @@ export async function refreshSession(): Promise<{ access_token: string; refresh_
 
   console.error('[auth] refreshSession failed after retry — session cleared')
   store.set('session', null)
+  authEmitter.emit('auth-expired')
   return null
 }
 
