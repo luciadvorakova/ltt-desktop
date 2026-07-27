@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { menubar } from 'menubar'
 import { autoUpdater } from 'electron-updater'
-import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter } from './auth'
+import { handleAuthCallback, refreshSession, startSessionRefreshInterval, authEmitter, ensureSession } from './auth'
 import { jiraAuthEmitter, startJiraRefreshInterval, ensureJiraToken } from './jira-auth'
 import { gcalAuthEmitter } from './gcal-auth'
 import { syncGoogleCalendar } from './gcal'
@@ -85,7 +85,7 @@ mb.on('ready', () => {
   }
   startSessionRefreshInterval()
   startJiraRefreshInterval()
-  powerMonitor.on('resume', () => { ensureJiraToken().catch(() => {}) })
+  powerMonitor.on('resume', () => { ensureSession().catch(() => {}); ensureJiraToken().catch(() => {}) })
   authEmitter.on('auth-success', (session) => {
     console.log('[AUTH] auth-success received in index.ts, win exists:', !!mb.window)
     mb.window?.webContents.send('auth-success', session)
@@ -101,6 +101,7 @@ mb.on('ready', () => {
     mb.window?.webContents.send('jira-auth-expired')
   })
   mb.on('show', async () => {
+    await ensureSession().catch(() => {})
     ensureJiraToken().catch(() => {})
     const settings = store.get('settings')
     console.log('[GCAL] show fired, lastSync:', settings?.gcalLastSyncDate, 'today:', new Date().toISOString().slice(0, 10))

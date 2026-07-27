@@ -139,7 +139,13 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 export function startSessionRefreshInterval(): ReturnType<typeof setInterval> {
   if (refreshInterval) clearInterval(refreshInterval)
-  refreshInterval = setInterval(() => { refreshSession() }, 55 * 60 * 1000)
+  refreshInterval = setInterval(async () => {
+    const session = store.get('session')
+    if (!session) return
+    if (isTokenExpiringSoon(session.access_token)) {
+      await refreshSession()
+    }
+  }, 5 * 60 * 1000)
   return refreshInterval
 }
 
@@ -150,7 +156,7 @@ export function getSession(): { access_token: string; refresh_token: string } | 
 function isTokenExpiringSoon(accessToken: string): boolean {
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1])) as { exp?: number }
-    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now() + 60_000
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now() + 10 * 60_000
   } catch {
     return true
   }
