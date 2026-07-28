@@ -80,6 +80,7 @@ export async function loadEntries(userId: string): Promise<TimeEntry[]> {
     return []
   }
   currentEntries = (data ?? []).map(rowToEntry)
+  reconcileTimerState()
   return currentEntries
 }
 
@@ -224,5 +225,15 @@ export function setTimerBase(entryId: number, ms: number): void {
   if (state?.paused && state.activeEntryId === entryId) {
     store.set('timerState', { ...state, baseMs: ms })
     console.log('[SET_BASE] entryId:', entryId, 'ms:', ms)
+  }
+}
+
+export function reconcileTimerState(): void {
+  const state = store.get('timerState') as TimerState | null
+  if (!state) return
+  if (state.paused && state.activeEntryId != null) {
+    const entry = currentEntries.find(e => e.id === state.activeEntryId)
+    if (!entry) { store.set('timerState', null); return }
+    if ((entry.ms ?? 0) >= state.baseMs) { store.set('timerState', null) }
   }
 }

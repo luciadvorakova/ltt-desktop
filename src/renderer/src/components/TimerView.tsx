@@ -1116,13 +1116,19 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         currentTab={activeSubTab}
         onDelete={async () => { if (menuEntry) await deleteEntry(menuEntry.id) }}
         onEditDesc={() => { if (menuEntry) setEditingDescId(menuEntry.id) }}
-        onAddTime={async (added) => { if (menuEntry) await updateEntry({ ...menuEntry, ms: menuEntry.ms + added, updatedAt: new Date().toISOString() }) }}
+        onAddTime={async (added) => {
+          if (!menuEntry) return
+          const newMs = menuEntry.ms + added
+          await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
+          if (timerState?.activeEntryId === menuEntry.id) {
+            await ltt.setTimerBase(menuEntry.id, newMs)
+          }
+        }}
         onEditTime={async (newMs) => {
-          if (menuEntry) {
-            await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
-            if (timerState?.paused && timerState.activeEntryId === menuEntry.id) {
-              await ltt.setTimerBase(menuEntry.id, newMs)
-            }
+          if (!menuEntry) return
+          await updateEntry({ ...menuEntry, ms: newMs, updatedAt: new Date().toISOString() })
+          if (timerState?.activeEntryId === menuEntry.id) {
+            await ltt.setTimerBase(menuEntry.id, newMs)
           }
         }}
         onAddToFavourites={menuEntry?.jiraKey ? () => modifyFavourites(cur => {
