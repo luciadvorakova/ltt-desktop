@@ -136,29 +136,54 @@ mb.on('ready', () => {
     standupReminderShownDate = null
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
-      // Capture tomorrow's calendar meetings before the bulk re-tag
+      // Tomorrow's calendar meetings: split into "untouched" (safe to drop and re-fetch)
+      // and "worked" (tracked/linked — must be preserved and re-tagged to today).
       const tomorrowMeetings = currentEntries.filter(e => e.tab === 'tomorrow' && !!e.gcalEventId)
+      const untouched = tomorrowMeetings.filter(e => (e.ms ?? 0) === 0 && !e.jiraSent && !e.jiraKey)
+      const worked = tomorrowMeetings.filter(e => !((e.ms ?? 0) === 0 && !e.jiraSent && !e.jiraKey))
 
+      try {
+        // Delete untouched tomorrow meetings from Supabase — the fresh sync will
+        // re-import them ONLY if they still exist in the calendar (handles cancellations/reschedules)
+        if (untouched.length > 0) {
+          const untouchedIds = untouched.map(e => e.id)
+          await supabase.from('time_entries').delete().in('id', untouchedIds)
+          for (const e of untouched) {
+            const idx = currentEntries.findIndex(x => x.id === e.id)
+            if (idx > -1) currentEntries.splice(idx, 1)
+          }
+        }
+        // Re-tag worked meetings (tracked/linked) to today so their work isn't lost
+        if (worked.length > 0) {
+          const workedIds = worked.map(e => e.id)
+          await supabase.from('time_entries').update({ tab: 'today' }).in('id', workedIds)
+          for (const e of worked) {
+            const idx = currentEntries.findIndex(x => x.id === e.id)
+            if (idx > -1) currentEntries[idx] = { ...currentEntries[idx], tab: 'today' }
+          }
+        }
+      } catch (err) {
+        console.error('[midnight] meeting reconcile error:', err)
+      }
+
+      // Also re-tag any NON-meeting tomorrow entries (manual tasks the user pre-planned) to today
       try {
         await supabase
           .from('time_entries')
           .update({ tab: 'today' })
           .eq('user_id', session.user.id)
           .eq('tab', 'tomorrow')
+          .is('gcal_event_id', null)
       } catch (err) {
-        console.error('[midnight] re-tag error:', err)
+        console.error('[midnight] non-meeting re-tag error:', err)
       }
 
-      // Sync in-memory and schedule notifications for calendar meetings now becoming today
-      if (tomorrowMeetings.length > 0) {
-        for (const entry of tomorrowMeetings) {
-          const idx = currentEntries.findIndex(e => e.id === entry.id)
-          if (idx > -1) currentEntries[idx] = { ...currentEntries[idx], tab: 'today' }
-        }
-        scheduleMeetingNotifications(tomorrowMeetings.map(e => ({ ...e, tab: 'today' as const })))
+      // Schedule notifications for worked meetings now in today
+      if (worked.length > 0) {
+        scheduleMeetingNotifications(worked.map(e => ({ ...e, tab: 'today' as const })))
       }
 
-      // Clear gcal sync dates so the new day's sync runs cleanly
+      // Clear gcal sync dates so the new day's sync runs fresh and re-imports valid meetings
       const settings = store.get('settings')
       if (settings) {
         store.set('settings', { ...settings, gcalLastSyncDate: undefined, gcalTomorrowSyncDate: undefined })
