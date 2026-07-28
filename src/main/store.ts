@@ -1,5 +1,14 @@
 import Store from 'electron-store'
+import { app } from 'electron'
+import path from 'node:path'
 import type { UserSettings, TimerState } from '../types/index'
+
+// CRITICAL: must run before `new Store()` so the dev build never shares a
+// store file (session + tokens) with the production build. Import hoisting
+// means this file executes before index.ts's top-level code.
+if (!app.isPackaged && !process.env.E2E_TEST_SESSION) {
+  app.setPath('userData', path.join(app.getPath('userData'), 'dev'))
+}
 
 interface StoreSchema {
   session: { access_token: string; refresh_token: string } | null

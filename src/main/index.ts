@@ -15,10 +15,6 @@ import { supabase } from './supabase'
 import { currentEntries } from './timer'
 import { scheduleMeetingNotifications } from './meeting-notifications'
 
-if (!app.isPackaged && !process.env.E2E_TEST_SESSION) {
-  app.setPath('userData', path.join(app.getPath('userData'), 'dev'))
-}
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 process.env.APP_ROOT = path.join(__dirname, '..')
