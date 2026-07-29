@@ -674,7 +674,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   ts: Date.now(),
                   jiraKey,
                   jiraSummary,
-                  clientName,
+                  clientName: undefined,
                   jiraSent: false,
                   untracked: false,
                   carriedOver: false,
@@ -697,8 +697,12 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                             jiraKey={fav.jiraKey}
                             name={fav.jiraSummary ?? fav.jiraKey}
                             onClick={async () => {
-                              await addEntry(makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, fav.clientName))
+                              const newEntry = makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, undefined)
+                              await addEntry(newEntry)
                               setAddPanelOpen(false)
+                              ltt.jiraGetClientName(fav.jiraKey).then(name => {
+                                if (name) { patchEntry(newEntry.id, undefined, name); updateEntry({ ...newEntry, clientName: name, updatedAt: new Date().toISOString() }) }
+                              })
                             }}
                             onUnfav={() => modifyFavourites(cur => (cur ?? []).filter(f => f.jiraKey !== fav.jiraKey), `remove-fav:${fav.jiraKey}`)}
                           />
@@ -717,8 +721,12 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                             jiraKey={e.jiraKey!}
                             name={e.jiraSummary ?? e.name}
                             onClick={async () => {
-                              await addEntry(makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, e.clientName))
+                              const newEntry = makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, undefined)
+                              await addEntry(newEntry)
                               setAddPanelOpen(false)
+                              ltt.jiraGetClientName(e.jiraKey!).then(name => {
+                                if (name) { patchEntry(newEntry.id, undefined, name); updateEntry({ ...newEntry, clientName: name, updatedAt: new Date().toISOString() }) }
+                              })
                             }}
                           />
                         ))}
