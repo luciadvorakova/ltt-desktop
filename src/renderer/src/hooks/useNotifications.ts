@@ -69,18 +69,24 @@ export function useNotifications({
 
   // Standup time check — every minute
   const lastStandupDate = settings?.lastStandupDate
+  const sentTodayRef = useRef<string | null>(null)
   useEffect(() => {
     const check = () => {
       const now = new Date()
       const day = now.getDay()
-      if (day === 0 || day === 6) { setStandupDue(false); return }
-      const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
       const today = getLocalDateStr()
-      setStandupDue(afterCutoff && lastStandupDate !== today)
+      if (day === 0 || day === 6) { setStandupDue(false); return }
+      // If sent today (via event latch OR settings), never show
+      if (sentTodayRef.current === today || lastStandupDate === today) { setStandupDue(false); return }
+      const afterCutoff = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 30)
+      setStandupDue(afterCutoff)
     }
     check()
     const interval = setInterval(check, 60_000)
-    const onSent = () => setStandupDue(false)
+    const onSent = () => {
+      sentTodayRef.current = getLocalDateStr()
+      setStandupDue(false)
+    }
     window.addEventListener('standup-sent', onSent)
     return () => { clearInterval(interval); window.removeEventListener('standup-sent', onSent) }
   }, [lastStandupDate])
