@@ -667,7 +667,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                   .sort((a, b) => b.ts - a.ts)
                   .filter(e => { if (seenRecent.has(e.jiraKey!)) return false; seenRecent.add(e.jiraKey!); return true })
                   .slice(0, 30)
-                const makeEntry = (jiraKey: string, name: string, jiraSummary: string | undefined, clientName: string | undefined): TimeEntry => ({
+                const makeEntry = (jiraKey: string, name: string, jiraSummary: string | undefined): TimeEntry => ({
                   id: Math.floor(Date.now()),
                   name,
                   ms: 0,
@@ -697,7 +697,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                             jiraKey={fav.jiraKey}
                             name={fav.jiraSummary ?? fav.jiraKey}
                             onClick={async () => {
-                              const newEntry = makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary, undefined)
+                              const newEntry = makeEntry(fav.jiraKey, fav.jiraSummary ?? fav.jiraKey, fav.jiraSummary)
                               await addEntry(newEntry)
                               setAddPanelOpen(false)
                               ltt.jiraGetClientName(fav.jiraKey).then(name => {
@@ -721,7 +721,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                             jiraKey={e.jiraKey!}
                             name={e.jiraSummary ?? e.name}
                             onClick={async () => {
-                              const newEntry = makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary, undefined)
+                              const newEntry = makeEntry(e.jiraKey!, e.jiraSummary ?? e.name, e.jiraSummary)
                               await addEntry(newEntry)
                               setAddPanelOpen(false)
                               ltt.jiraGetClientName(e.jiraKey!).then(name => {
