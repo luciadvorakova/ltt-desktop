@@ -91,6 +91,16 @@ export async function saveEntry(entry: TimeEntry): Promise<void> {
   const userId = user?.id
   if (!userId) return
 
+  // Preserve lastTrackedDate if the incoming entry doesn't carry it
+  // (renderer-initiated saves may have a stale/undefined value that would
+  //  otherwise null out a date the timer already stamped)
+  if (!entry.lastTrackedDate) {
+    const existing = currentEntries.find(e => e.id === entry.id)
+    if (existing?.lastTrackedDate) {
+      entry = { ...entry, lastTrackedDate: existing.lastTrackedDate }
+    }
+  }
+
   const row = entryToRow(entry, userId)
   const { data, error } = await supabase
     .from('time_entries')
