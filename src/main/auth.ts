@@ -95,44 +95,66 @@ export async function handleAuthCallback(url: string): Promise<{ access_token: s
   }
 }
 
-async function attemptRefresh(): Promise<{ access_token: string; refresh_token: string } | null> {
+type RefreshResult =
+  | { status: 'ok'; session: { access_token: string; refresh_token: string } }
+  | { status: 'invalid' }   // token genuinely rejected → must log out
+  | { status: 'transient' } // network/server error → keep session, retry later
+
+async function attemptRefresh(): Promise<RefreshResult> {
   const stored = store.get('session')
-  if (!stored) return null
-  const { data, error } = await supabase.auth.refreshSession({ refresh_token: stored.refresh_token })
-  if (error || !data.session) {
-    console.error('[auth] refreshSession attempt failed:', error?.message)
-    if (error?.message?.includes('refresh_token_already_used')) {
-      console.log('[auth] refresh_token_already_used — fetching current session from Supabase')
-      const { data: current } = await supabase.auth.getSession()
-      if (current.session) {
-        const session = { access_token: current.session.access_token, refresh_token: current.session.refresh_token }
-        store.set('session', session)
-        return session
+  if (!stored) return { status: 'invalid' }
+  try {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: stored.refresh_token })
+    if (error || !data.session) {
+      const msg = error?.message ?? ''
+      if (msg.includes('refresh_token_already_used')) {
+        const { data: current } = await supabase.auth.getSession()
+        if (current.session) {
+          const session = { access_token: current.session.access_token, refresh_token: current.session.refresh_token }
+          store.set('session', session)
+          return { status: 'ok', session }
+        }
       }
+      // Genuine auth rejections from Supabase
+      if (msg.includes('refresh_token_not_found') || msg.includes('Invalid Refresh Token') || msg.includes('invalid_grant') || msg.includes('already_used')) {
+        return { status: 'invalid' }
+      }
+      // Anything else (network, timeout, 5xx) is transient
+      console.error('[auth] refresh transient error:', msg)
+      return { status: 'transient' }
     }
-    return null
+    const session = { access_token: data.session.access_token, refresh_token: data.session.refresh_token }
+    store.set('session', session)
+    await supabase.auth.setSession(session)
+    return { status: 'ok', session }
+  } catch (err) {
+    // fetch threw → almost always no network
+    console.error('[auth] refresh threw (likely offline):', err)
+    return { status: 'transient' }
   }
-  const session = {
-    access_token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-  }
-  store.set('session', session)
-  await supabase.auth.setSession(session)
-  return session
 }
 
 export async function refreshSession(): Promise<{ access_token: string; refresh_token: string } | null> {
-  const result = await attemptRefresh()
-  if (result) return result
-
-  console.error('[auth] refreshSession failed, retrying in 5s')
+  const first = await attemptRefresh()
+  if (first.status === 'ok') return first.session
+  if (first.status === 'invalid') {
+    console.error('[auth] refresh token invalid — clearing session')
+    store.set('session', null)
+    authEmitter.emit('auth-expired')
+    return null
+  }
+  // transient → wait and retry once
   await new Promise(resolve => setTimeout(resolve, 5000))
-  const retry = await attemptRefresh()
-  if (retry) return retry
-
-  console.error('[auth] refreshSession failed after retry — session cleared')
-  store.set('session', null)
-  authEmitter.emit('auth-expired')
+  const second = await attemptRefresh()
+  if (second.status === 'ok') return second.session
+  if (second.status === 'invalid') {
+    console.error('[auth] refresh token invalid on retry — clearing session')
+    store.set('session', null)
+    authEmitter.emit('auth-expired')
+    return null
+  }
+  // still transient → keep session, do NOT log out; a later tick / online event will retry
+  console.warn('[auth] refresh still failing (transient/offline) — keeping session for later retry')
   return null
 }
 
