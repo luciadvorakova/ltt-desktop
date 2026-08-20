@@ -192,10 +192,12 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   })()
 
   const previousEntries = entries.filter(e => {
-    if (e.ms < 1000) return false
+    if (e.ms < 1000) return false          // must have real tracked time
     if (e.removedFromTimer) return false
-    if (e.lastTrackedDate) return e.lastTrackedDate === prevDateStr
-    return e.ts >= prevStart && e.ts < prevEnd
+    // Only tasks actually tracked on the previous working day.
+    // Require lastTrackedDate — do NOT fall back to ts (creation date),
+    // which would wrongly include planned-but-untracked tasks.
+    return e.lastTrackedDate === prevDateStr
   })
   const todayEntries = entries.filter(e => {
     if (e.removedFromTimer) return false
