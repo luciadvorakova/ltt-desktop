@@ -57,7 +57,7 @@ function EntryMenu({ open, onOpen, onClose }: {
   )
 }
 
-function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate, onMoveTo, currentTab, ms }: {
+function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTime, onAddToFavourites, onSendToJira, onLinkToJira, onChangeJiraLink, onRemoveFromTimer, onDuplicate, onMoveTo, onAddTask, currentTab, ms }: {
   open: boolean; onClose: () => void;
   onDelete: () => void; onEditDesc: () => void;
   onAddTime: (ms: number) => void; onEditTime: (ms: number) => void;
@@ -65,6 +65,7 @@ function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTim
   onLinkToJira?: () => void; onChangeJiraLink?: () => void;
   onRemoveFromTimer?: () => void; onDuplicate?: () => void;
   onMoveTo?: (tab: 'today' | 'tomorrow' | 'later') => void;
+  onAddTask?: () => void;
   currentTab?: 'today' | 'tomorrow' | 'later'; ms: number;
 }) {
   const [expandedTime, setExpandedTime] = useState<'add' | 'edit' | null>(null)
@@ -126,6 +127,7 @@ function BottomSheet({ open, onClose, onDelete, onEditDesc, onAddTime, onEditTim
         <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-subtle)' }}>
           {onLinkToJira && <MenuItem icon="⌗" label="Link to Jira" onAction={() => { onLinkToJira(); onClose() }} />}
           {onChangeJiraLink && <MenuItem icon="⌗" label="Change Jira link" onAction={() => { onChangeJiraLink(); onClose() }} />}
+          {onAddTask && <MenuItem icon="+" label="Add task" onAction={() => { onAddTask(); onClose() }} />}
           <MenuItem icon="✎" label="Edit description" onAction={() => { onEditDesc(); onClose() }} />
           {onAddToFavourites && <MenuItem icon="★" label="Add to favourites" onAction={() => { onAddToFavourites(); onClose() }} />}
           {onDuplicate && <MenuItem icon="⧉" label="Duplicate as new task" onAction={() => { onDuplicate(); onClose() }} />}
@@ -388,6 +390,28 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   }
   const handlePause = async () => {
     await pause()
+  }
+
+  const addTaskToJira = async (base: TimeEntry) => {
+    const newEntry: TimeEntry = {
+      id: Date.now(),
+      name: base.name,
+      ms: 0,
+      ts: Date.now(),
+      jiraKey: base.jiraKey,
+      jiraSummary: base.jiraSummary,
+      clientName: base.clientName,
+      jiraSent: false,
+      untracked: false,
+      carriedOver: false,
+      removedFromTimer: false,
+      deletedFromBulk: false,
+      updatedAt: new Date().toISOString(),
+      tab: base.tab ?? activeSubTab,
+    }
+    await addEntry(newEntry)
+    setEditingDescId(newEntry.id)
+    setLocalDesc('')
   }
 
   const handleStartRef = useRef(handleStart)
@@ -1203,10 +1227,6 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           const { jiraKey, entries: groupEntries } = item
           const isCollapsed = collapsedGroups.has(jiraKey)
           const first = groupEntries[0]
-          const groupTotalMs = groupEntries.reduce((sum, e) => {
-            const isThisActive = activeId === e.id && isRunning
-            return sum + (isThisActive ? liveMs : e.ms)
-          }, 0)
           const clientColor = first.clientName ? getClientColor(first.clientName, settings?.clientColors, theme) : null
           return (
             <div
@@ -1254,11 +1274,21 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     {first.jiraSummary ?? first.name}
                   </div>
                 </div>
-                {activeSubTab === 'today' && (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                    {formatMs(groupTotalMs)}
-                  </span>
-                )}
+                <button
+                  draggable={false}
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); addTaskToJira(first) }}
+                  style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)',
+                    color: 'var(--text-secondary)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, padding: 0, paddingBottom: 1, lineHeight: '1',
+                    fontFamily: 'inherit', flexShrink: 0,
+                  }}
+                >
+                  +
+                </button>
               </div>
               {/* Entry rows (only when expanded) */}
               {!isCollapsed && groupEntries.map(entry => renderGroupedEntryRow(entry))}
@@ -1348,6 +1378,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             await ltt.setTimerBase(menuEntry.id, newMs)
           }
         }}
+        onAddTask={menuEntry?.jiraKey ? () => addTaskToJira(menuEntry) : undefined}
         onAddToFavourites={menuEntry?.jiraKey ? () => modifyFavourites(cur => {
           if ((cur ?? []).some(f => f.jiraKey === menuEntry.jiraKey)) return cur ?? []
           return [{ jiraKey: menuEntry.jiraKey!, jiraSummary: menuEntry.jiraSummary, clientName: menuEntry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
