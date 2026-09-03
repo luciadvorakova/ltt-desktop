@@ -280,6 +280,10 @@ const formatMsHHMM = (ms: number): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
+type GroupedItem =
+  | { type: 'single'; entry: TimeEntry }
+  | { type: 'group'; jiraKey: string; entries: TimeEntry[] }
+
 export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { standupOpen?: boolean; onStandupClose?: () => void } = {}) {
   const ltt = useLtt()
   const { entries, patchEntry, deleteEntry, addEntry, updateEntry } = useEntries()
@@ -311,6 +315,12 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
   const [activeSubTab, setActiveSubTab] = useState<'today' | 'tomorrow' | 'later'>('today')
   const [dragOverTab, setDragOverTab] = useState<'today' | 'tomorrow' | 'later' | null>(null)
   const dragTabTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const toggleGroup = (jiraKey: string) => setCollapsedGroups(prev => {
+    const next = new Set(prev)
+    next.has(jiraKey) ? next.delete(jiraKey) : next.add(jiraKey)
+    return next
+  })
 
   useEffect(() => {
     const needsProjects = (addPanelOpen && addMode === 'jira') || linkJiraEntryId !== null
@@ -462,6 +472,21 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
     setDragOrderedEntries(null)
   }
 
+  const groupedItems = useMemo((): GroupedItem[] => {
+    const source = dragOrderedEntries ?? orderedEntries
+    const seen = new Set<string>()
+    const items: GroupedItem[] = []
+    for (const entry of source) {
+      if (!entry.jiraKey) { items.push({ type: 'single', entry }); continue }
+      if (seen.has(entry.jiraKey)) continue
+      const groupEntries = source.filter(e => e.jiraKey === entry.jiraKey)
+      seen.add(entry.jiraKey)
+      if (groupEntries.length === 1) items.push({ type: 'single', entry: groupEntries[0] })
+      else items.push({ type: 'group', jiraKey: entry.jiraKey, entries: groupEntries })
+    }
+    return items
+  }, [dragOrderedEntries, orderedEntries])
+
   const activeId = timerState?.activeEntryId ?? null
   const isRunning = timerState?.running ?? false
   const liveMs = timerState
@@ -470,6 +495,302 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
 
   const totalMs = todayEntries.reduce((sum, e) => sum + e.ms, 0) + (isRunning ? elapsed : 0)
   const menuEntry = openMenuId !== null ? (dragOrderedEntries ?? orderedEntries).find(e => e.id === openMenuId) ?? null : null
+
+  const renderSingleEntry = (entry: TimeEntry, isFirst: boolean) => {
+    const isActive = activeId === entry.id
+    const isActiveRunning = isActive && isRunning
+    const displayMs = isActiveRunning ? liveMs : entry.ms
+
+    if (isActive) console.log('[DISPLAY] entry id:', entry.id, 'isActive:', isActive, 'isRunning:', isRunning, 'displayMs:', displayMs, 'entry.ms:', entry.ms, 'liveMs:', liveMs, 'baseMs:', timerState?.baseMs, 'elapsed:', elapsed)
+
+    return (
+      <div
+        key={entry.id}
+        draggable={true}
+        onDragStart={() => { dragIdRef.current = entry.id }}
+        onDragOver={e => { e.preventDefault(); dragOverIdRef.current = entry.id; setDragOverId(entry.id) }}
+        onDragEnd={() => { setDragOverId(null); dragIdRef.current = null; dragOverIdRef.current = null }}
+        onDrop={() => { reorderEntries(dragIdRef.current, entry.id); setDragOverTab(null) }}
+        style={{
+          padding: '8px 14px',
+          borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : isFirst ? 'none' : '1px solid var(--border-entry)',
+          background: activeSubTab === 'today' && isActiveRunning ? 'var(--bg-entry-running)' : 'transparent',
+          opacity: entry.jiraSent ? 0.5 : 1,
+          cursor: 'grab',
+        }}
+      >
+        {/* 2-column layout */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+
+          {/* Left column: play button + entry body */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, flex: 1, minWidth: 0 }}>
+
+            {/* Play button (today only) */}
+            {activeSubTab === 'today' && (
+              <button
+                draggable={false}
+                onMouseDown={e => e.stopPropagation()}
+                onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: entry.jiraSent ? 'var(--bg-entry-running)' : isActiveRunning ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
+                  border: `1px solid ${entry.jiraSent ? 'var(--accent-running-border)' : isActiveRunning ? 'var(--accent-running-border)' : 'var(--border-btn)'}`,
+                  color: entry.jiraSent || isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
+                  cursor: entry.jiraSent ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontSize: 8,
+                  padding: 0,
+                  marginTop: 2,
+                }}
+              >
+                {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
+              </button>
+            )}
+
+            {/* Entry body */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+
+              {/* Badges row */}
+              {(entry.clientName || entry.jiraKey || entry.isMeeting || entry.gcalEventId) && (
+                <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {entry.clientName && (() => {
+                    const color = getClientColor(entry.clientName, settings?.clientColors, theme)
+                    return (
+                      <span draggable={false} style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: 99,
+                        background: color ? color.bg : 'var(--bg-btn-subtle)',
+                        border: `1px solid ${color ? color.border : 'var(--border-entry)'}`,
+                        color: color ? color.text : 'var(--text-secondary)',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {entry.clientName}
+                      </span>
+                    )
+                  })()}
+                  {entry.jiraKey && (
+                    <span draggable={false} style={{
+                      fontSize: 9,
+                      fontWeight: 500,
+                      color: 'var(--text-muted)',
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {entry.jiraKey}
+                    </span>
+                  )}
+                  {(entry.isMeeting || entry.gcalEventId) && (
+                    entry.gcalMeetLink ? (
+                      <button
+                        draggable={false}
+                        onMouseDown={e => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); window.ltt?.openExternal(entry.gcalMeetLink!) }}
+                        style={{
+                          fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
+                          background: 'transparent',
+                          border: '1px solid var(--accent-meeting-border)',
+                          color: 'var(--accent-meeting-text)',
+                          cursor: 'pointer', fontFamily: 'inherit',
+                          display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                        }}
+                      >
+                        ▶ Join meeting
+                      </button>
+                    ) : (
+                      <span draggable={false} style={{
+                        fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+                        background: 'transparent',
+                        border: '1px solid var(--accent-meeting-border)',
+                        color: 'var(--accent-meeting-text)',
+                        letterSpacing: '0.02em', whiteSpace: 'nowrap',
+                      }}>
+                        Meeting
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* Task name with pulse dot */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, overflow: 'hidden' }}>
+                {activeSubTab === 'today' && isActiveRunning && (
+                  <div style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--accent-pulse)',
+                    flexShrink: 0,
+                    animation: 'ltt-pulse 1.5s ease-in-out infinite',
+                  }} />
+                )}
+                <span style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  flex: 1,
+                  color: activeSubTab === 'today' && isActiveRunning ? 'var(--accent)' : 'var(--text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {entry.name}
+                </span>
+              </div>
+
+              {/* Description */}
+              <input
+                type="text"
+                className="desc-field"
+                placeholder="Add description..."
+                draggable={false}
+                onMouseDown={e => e.stopPropagation()}
+                value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
+                onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
+                onChange={e => setLocalDesc(e.target.value)}
+                onBlur={() => {
+                  if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
+                    updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
+                  }
+                  escapeRef.current = false
+                  setEditingDescId(null)
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
+                  if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
+                }}
+                style={{
+                  fontSize: 10,
+                  color: editingDescId === entry.id ? 'var(--text-secondary)' : entry.jiraDesc ? 'var(--text-muted)' : 'var(--text-muted)',
+                  outline: 'none',
+                  cursor: 'text',
+                  background: 'transparent',
+                  border: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minHeight: '1.2em',
+                  padding: 0,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Right column: time (today only) + menu */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+            {activeSubTab === 'today' && (
+              <span style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '0.02em',
+              }}>
+                {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
+              </span>
+            )}
+            <EntryMenu
+              open={openMenuId === entry.id}
+              onOpen={() => setOpenMenuId(entry.id)}
+              onClose={() => setOpenMenuId(null)}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderGroupedEntryRow = (entry: TimeEntry) => {
+    const isActive = activeId === entry.id
+    const isActiveRunning = isActive && isRunning
+    const displayMs = isActiveRunning ? liveMs : entry.ms
+    return (
+      <div
+        key={entry.id}
+        style={{
+          padding: '8px 14px 8px 38px',
+          display: 'flex', alignItems: 'flex-start', gap: 9,
+          borderTop: '1px solid var(--border-entry)',
+          background: activeSubTab === 'today' && isActiveRunning ? 'var(--bg-entry-running)' : 'transparent',
+          opacity: entry.jiraSent ? 0.5 : 1,
+        }}
+      >
+        {activeSubTab === 'today' && (
+          <button
+            onMouseDown={e => e.stopPropagation()}
+            onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
+            style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: entry.jiraSent ? 'var(--bg-entry-running)' : isActiveRunning ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
+              border: `1px solid ${entry.jiraSent ? 'var(--accent-running-border)' : isActiveRunning ? 'var(--accent-running-border)' : 'var(--border-btn)'}`,
+              color: entry.jiraSent || isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
+              cursor: entry.jiraSent ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, fontSize: 8, padding: 0,
+            }}
+          >
+            {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
+          </button>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {(entry.isMeeting || entry.gcalEventId) && (
+            <div style={{ marginBottom: 3 }}>
+              {entry.gcalMeetLink ? (
+                <button
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); window.ltt?.openExternal(entry.gcalMeetLink!) }}
+                  style={{
+                    fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
+                    background: 'transparent', border: '1px solid var(--accent-meeting-border)',
+                    color: 'var(--accent-meeting-text)', cursor: 'pointer', fontFamily: 'inherit',
+                    display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                  }}
+                >
+                  ▶ Join meeting
+                </button>
+              ) : (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+                  background: 'transparent', border: '1px solid var(--accent-meeting-border)',
+                  color: 'var(--accent-meeting-text)', letterSpacing: '0.02em', whiteSpace: 'nowrap',
+                }}>
+                  Meeting
+                </span>
+              )}
+            </div>
+          )}
+          <span style={{
+            fontSize: 11, color: isActiveRunning ? 'var(--accent)' : 'var(--text-primary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block',
+          }}>
+            {entry.jiraDesc || entry.name}
+          </span>
+        </div>
+        {activeSubTab === 'today' && (
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
+            fontVariantNumeric: 'tabular-nums', flexShrink: 0,
+          }}>
+            {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
+          </span>
+        )}
+        <EntryMenu
+          open={openMenuId === entry.id}
+          onOpen={() => setOpenMenuId(entry.id)}
+          onClose={() => setOpenMenuId(null)}
+        />
+      </div>
+    )
+  }
 
   if (bulkSendOpen) {
     return (
@@ -844,215 +1165,72 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             {activeSubTab === 'today' ? 'No entries today' : activeSubTab === 'tomorrow' ? 'No tasks for tomorrow yet.' : 'No backlog tasks yet. Add tasks you want to work on later.'}
           </div>
         )}
-        {(dragOrderedEntries ?? orderedEntries).map((entry, index) => {
-          const isActive = activeId === entry.id
-          const isActiveRunning = isActive && isRunning
-          const displayMs = isActiveRunning ? liveMs : entry.ms
-
-          if (isActive) console.log('[DISPLAY] entry id:', entry.id, 'isActive:', isActive, 'isRunning:', isRunning, 'displayMs:', displayMs, 'entry.ms:', entry.ms, 'liveMs:', liveMs, 'baseMs:', timerState?.baseMs, 'elapsed:', elapsed)
-
+        {groupedItems.map((item, itemIndex) => {
+          if (item.type === 'single') {
+            return renderSingleEntry(item.entry, itemIndex === 0)
+          }
+          const { jiraKey, entries: groupEntries } = item
+          const isCollapsed = collapsedGroups.has(jiraKey)
+          const first = groupEntries[0]
+          const groupTotalMs = groupEntries.reduce((sum, e) => {
+            const isThisActive = activeId === e.id && isRunning
+            return sum + (isThisActive ? liveMs : e.ms)
+          }, 0)
+          const clientColor = first.clientName ? getClientColor(first.clientName, settings?.clientColors, theme) : null
           return (
             <div
-              key={entry.id}
+              key={`group-${jiraKey}`}
               draggable={true}
-              onDragStart={() => { dragIdRef.current = entry.id }}
-              onDragOver={e => { e.preventDefault(); dragOverIdRef.current = entry.id; setDragOverId(entry.id) }}
+              onDragStart={() => { dragIdRef.current = first.id }}
+              onDragOver={e => { e.preventDefault(); dragOverIdRef.current = first.id; setDragOverId(first.id) }}
               onDragEnd={() => { setDragOverId(null); dragIdRef.current = null; dragOverIdRef.current = null }}
-              onDrop={() => { reorderEntries(dragIdRef.current, entry.id); setDragOverTab(null) }}
+              onDrop={() => { reorderEntries(dragIdRef.current, first.id); setDragOverTab(null) }}
               style={{
-                padding: '8px 14px',
-                borderTop: dragOverId === entry.id ? '2px solid rgba(100,160,255,0.6)' : index === 0 ? 'none' : '1px solid var(--border-entry)',
-                background: activeSubTab === 'today' && isActiveRunning ? 'var(--bg-entry-running)' : 'transparent',
-                opacity: entry.jiraSent ? 0.5 : 1,
+                borderTop: dragOverId === first.id ? '2px solid rgba(100,160,255,0.6)' : itemIndex === 0 ? 'none' : '1px solid var(--border-entry)',
                 cursor: 'grab',
               }}
             >
-              {/* 2-column layout */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-
-                {/* Left column: play button + entry body */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, flex: 1, minWidth: 0 }}>
-
-                  {/* Play button (today only) */}
-                  {activeSubTab === 'today' && (
-                    <button
-                      draggable={false}
-                      onMouseDown={e => e.stopPropagation()}
-                      onClick={entry.jiraSent ? undefined : () => isActiveRunning ? handlePause() : handleStart(entry.id)}
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: entry.jiraSent ? 'var(--bg-entry-running)' : isActiveRunning ? 'var(--accent-running-bg)' : 'var(--bg-btn-subtle)',
-                        border: `1px solid ${entry.jiraSent ? 'var(--accent-running-border)' : isActiveRunning ? 'var(--accent-running-border)' : 'var(--border-btn)'}`,
-                        color: entry.jiraSent || isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
-                        cursor: entry.jiraSent ? 'default' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        fontSize: 8,
-                        padding: 0,
-                        marginTop: 2,
-                      }}
-                    >
-                      {entry.jiraSent ? '✓' : isActiveRunning ? '⏸' : '▶'}
-                    </button>
-                  )}
-
-                  {/* Entry body */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-
-                    {/* Badges row */}
-                    {(entry.clientName || entry.jiraKey || entry.isMeeting || entry.gcalEventId) && (
-                      <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {entry.clientName && (() => {
-                          const color = getClientColor(entry.clientName, settings?.clientColors, theme)
-                          return (
-                            <span draggable={false} style={{
-                              fontSize: 9,
-                              fontWeight: 700,
-                              padding: '2px 7px',
-                              borderRadius: 99,
-                              background: color ? color.bg : 'var(--bg-btn-subtle)',
-                              border: `1px solid ${color ? color.border : 'var(--border-entry)'}`,
-                              color: color ? color.text : 'var(--text-secondary)',
-                              whiteSpace: 'nowrap',
-                            }}>
-                              {entry.clientName}
-                            </span>
-                          )
-                        })()}
-                        {entry.jiraKey && (
-                          <span draggable={false} style={{
-                            fontSize: 9,
-                            fontWeight: 500,
-                            color: 'var(--text-muted)',
-                            letterSpacing: '0.02em',
-                            whiteSpace: 'nowrap',
-                          }}>
-                            {entry.jiraKey}
-                          </span>
-                        )}
-                        {(entry.isMeeting || entry.gcalEventId) && (
-                          entry.gcalMeetLink ? (
-                            <button
-                              draggable={false}
-                              onMouseDown={e => e.stopPropagation()}
-                              onClick={(e) => { e.stopPropagation(); window.ltt?.openExternal(entry.gcalMeetLink!) }}
-                              style={{
-                                fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 99,
-                                background: 'transparent',
-                                border: '1px solid var(--accent-meeting-border)',
-                                color: 'var(--accent-meeting-text)',
-                                cursor: 'pointer', fontFamily: 'inherit',
-                                display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
-                              }}
-                            >
-                              ▶ Join meeting
-                            </button>
-                          ) : (
-                            <span draggable={false} style={{
-                              fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
-                              background: 'transparent',
-                              border: '1px solid var(--accent-meeting-border)',
-                              color: 'var(--accent-meeting-text)',
-                              letterSpacing: '0.02em', whiteSpace: 'nowrap',
-                            }}>
-                              Meeting
-                            </span>
-                          )
-                        )}
-                      </div>
-                    )}
-
-                    {/* Task name with pulse dot */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, overflow: 'hidden' }}>
-                      {activeSubTab === 'today' && isActiveRunning && (
-                        <div style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: 'var(--accent-pulse)',
-                          flexShrink: 0,
-                          animation: 'ltt-pulse 1.5s ease-in-out infinite',
-                        }} />
-                      )}
+              {/* Group header */}
+              <div
+                onClick={() => toggleGroup(jiraKey)}
+                style={{ padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}
+              >
+                <button
+                  draggable={false}
+                  onMouseDown={e => e.stopPropagation()}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, fontSize: 10, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                >
+                  {isCollapsed ? '▶' : '▼'}
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {first.clientName && (
                       <span style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        flex: 1,
-                        color: activeSubTab === 'today' && isActiveRunning ? 'var(--accent)' : 'var(--text-primary)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+                        background: clientColor ? clientColor.bg : 'var(--bg-btn-subtle)',
+                        border: `1px solid ${clientColor ? clientColor.border : 'var(--border-entry)'}`,
+                        color: clientColor ? clientColor.text : 'var(--text-secondary)',
                         whiteSpace: 'nowrap',
                       }}>
-                        {entry.name}
+                        {first.clientName}
                       </span>
-                    </div>
-
-                    {/* Description */}
-                    <input
-                      type="text"
-                      className="desc-field"
-                      placeholder="Add description..."
-                      draggable={false}
-                      onMouseDown={e => e.stopPropagation()}
-                      value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
-                      onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
-                      onChange={e => setLocalDesc(e.target.value)}
-                      onBlur={() => {
-                        if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
-                          updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
-                        }
-                        escapeRef.current = false
-                        setEditingDescId(null)
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
-                        if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
-                      }}
-                      style={{
-                        fontSize: 10,
-                        color: editingDescId === entry.id ? 'var(--text-secondary)' : entry.jiraDesc ? 'var(--text-muted)' : 'var(--text-muted)',
-                        outline: 'none',
-                        cursor: 'text',
-                        background: 'transparent',
-                        border: 'none',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        fontFamily: 'inherit',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        minHeight: '1.2em',
-                        padding: 0,
-                      }}
-                    />
+                    )}
+                    <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+                      {jiraKey}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {first.jiraSummary ?? first.name}
                   </div>
                 </div>
-
-                {/* Right column: time (today only) + menu */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                  {activeSubTab === 'today' && (
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: isActiveRunning ? 'var(--accent)' : 'var(--text-secondary)',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                      fontVariantNumeric: 'tabular-nums',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {(displayMs > 0 || isActive) ? formatMs(displayMs) : null}
-                    </span>
-                  )}
-                  <EntryMenu
-                    open={openMenuId === entry.id}
-                    onOpen={() => setOpenMenuId(entry.id)}
-                    onClose={() => setOpenMenuId(null)}
-                  />
-                </div>
+                {activeSubTab === 'today' && (
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                    {formatMs(groupTotalMs)}
+                  </span>
+                )}
               </div>
+              {/* Entry rows (only when expanded) */}
+              {!isCollapsed && groupEntries.map(entry => renderGroupedEntryRow(entry))}
             </div>
           )
         })}
