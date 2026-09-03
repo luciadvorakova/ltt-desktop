@@ -15,17 +15,6 @@ function formatEntry(e: TimeEntry): string {
   return desc ? `${prefix} - ${desc}` : prefix
 }
 
-function getPreviousRange(): { start: number; end: number } {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const dayOfWeek = today.getDay()
-  const start = new Date(today)
-  if (dayOfWeek === 1) {
-    start.setDate(today.getDate() - 3) // Monday → Friday
-  } else {
-    start.setDate(today.getDate() - 1) // any other day → yesterday
-  }
-  return { start: start.getTime(), end: today.getTime() }
-}
 
 function StandupCard({ text, onChange, checked, onToggle, onDragStart, onDragOver, onDrop, dragOver, autoFocus }: {
   text: string
@@ -180,8 +169,6 @@ export function StandupView({ entries, onBack }: { entries: TimeEntry[]; onBack:
   const userId = settings?.slackUserId ?? ''
 
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-  const { start: prevStart, end: prevEnd } = getPreviousRange()
-
   const prevDateStr = (() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
