@@ -322,13 +322,16 @@ test.describe.serial('LTT Desktop core flows', () => {
   // ── Grouped Jira cards ───────────────────────────────────────────────────
 
   test('two entries with same jiraKey group into one card', async () => {
-    const jiraKey = `E2E-${Date.now()}`
-    const jiraSummary = `Grouping test ${Date.now()}`
+    const runId = Date.now()
+    const jiraKey = `E2E-${runId}`
+    const jiraSummary = `Grouping test ${runId}`
+    const desc1 = `first sub-task ${runId}`
+    const desc2 = `second sub-task ${runId}`
 
-    await page.evaluate(async ({ jiraKey, jiraSummary }) => {
-      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: 'first sub-task' })
-      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: 'second sub-task' })
-    }, { jiraKey, jiraSummary })
+    await page.evaluate(async ({ jiraKey, jiraSummary, desc1, desc2 }) => {
+      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc1 })
+      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc2 })
+    }, { jiraKey, jiraSummary, desc1, desc2 })
 
     await page.evaluate(() => window.location.reload())
     await expect(page.getByText('Timer')).toBeVisible({ timeout: 15_000 })
@@ -339,17 +342,17 @@ test.describe.serial('LTT Desktop core flows', () => {
     await expect(page.getByText(jiraSummary)).toBeVisible()
 
     // Both sub-task descriptions visible (group starts expanded)
-    await expect(page.locator('.desc-field[value="first sub-task"]')).toHaveCount(1)
+    await expect(page.locator(`.desc-field[value="${desc1}"]`)).toHaveCount(1)
     await expect(page.getByText('▼')).toBeVisible()
 
     // Collapse the group
     await page.getByText(jiraSummary).click()
     await expect(page.getByText('▶')).toBeVisible({ timeout: 3_000 })
-    await expect(page.locator('input[value="first sub-task"]')).toHaveCount(0)
+    await expect(page.locator(`input[value="${desc1}"]`)).toHaveCount(0)
 
     // Expand again
     await page.getByText(jiraSummary).click()
-    await expect(page.locator('input[value="first sub-task"]')).toHaveCount(1, { timeout: 3_000 })
+    await expect(page.locator(`input[value="${desc1}"]`)).toHaveCount(1, { timeout: 3_000 })
   })
 
   // ── Drag reorder ─────────────────────────────────────────────────────────
