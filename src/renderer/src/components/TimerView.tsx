@@ -913,6 +913,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
             ))}
           </div>
           <button
+            aria-label="Add new task"
             onClick={() => setAddPanelOpen(true)}
             style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg-btn-subtle)', border: '1px solid var(--border-btn)', fontSize: 14, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, paddingBottom: 1, lineHeight: '1', fontFamily: 'inherit', flexShrink: 0 }}
           >

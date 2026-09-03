@@ -63,7 +63,7 @@ test.describe.serial('LTT Desktop core flows', () => {
   })
 
   test('add a new manual task — appears in list', async () => {
-    await page.getByRole('button', { name: '+' }).click()
+    await page.getByRole('button', { name: 'Add new task' }).click()
     await expect(page.getByText('Manual')).toBeVisible()
 
     await page.getByRole('button', { name: 'Manual' }).click()
@@ -88,7 +88,7 @@ test.describe.serial('LTT Desktop core flows', () => {
       els => els.map(el => (el as HTMLInputElement).value)
     )
 
-    await page.getByRole('button', { name: '+' }).click()
+    await page.getByRole('button', { name: 'Add new task' }).click()
     await page.getByRole('button', { name: 'Manual' }).click()
 
     const taskName = `Test Task ${Date.now()}`
@@ -286,7 +286,7 @@ test.describe.serial('LTT Desktop core flows', () => {
       els => els.map(el => (el as HTMLInputElement).value)
     )
 
-    await page.getByRole('button', { name: '+' }).click()
+    await page.getByRole('button', { name: 'Add new task' }).click()
     await expect(page.getByText('Manual')).toBeVisible()
 
     await page.getByRole('button', { name: 'Recent' }).click()
