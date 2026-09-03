@@ -328,31 +328,42 @@ test.describe.serial('LTT Desktop core flows', () => {
     const desc1 = `first sub-task ${runId}`
     const desc2 = `second sub-task ${runId}`
 
-    await page.evaluate(async ({ jiraKey, jiraSummary, desc1, desc2 }) => {
-      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc1 })
-      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc2 })
+    const ids: number[] = []
+    const results = await page.evaluate(async ({ jiraKey, jiraSummary, desc1, desc2 }) => {
+      const r1 = await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc1 })
+      const r2 = await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: desc2 })
+      return [r1, r2]
     }, { jiraKey, jiraSummary, desc1, desc2 })
+    for (const r of results) if (r?.id) ids.push(r.id)
 
     await page.evaluate(() => window.location.reload())
     await expect(page.getByText('Timer')).toBeVisible({ timeout: 15_000 })
     await page.waitForSelector('.desc-field', { timeout: 15_000 })
 
-    // Group header shows the Jira key and summary; expanded by default
     await expect(page.getByText(jiraKey)).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(jiraSummary)).toBeVisible()
 
-    // Both sub-task descriptions visible (group starts expanded)
+    // Scope everything to this group's own card
+    const groupCard = page.locator('[draggable="true"]', { hasText: jiraSummary })
+
     await expect(page.locator(`.desc-field[value="${desc1}"]`)).toHaveCount(1)
-    await expect(page.getByText('▼')).toBeVisible()
+    await expect(groupCard.getByRole('button', { name: '▼' })).toBeVisible()
 
     // Collapse the group
-    await page.getByText(jiraSummary).click()
-    await expect(page.getByText('▶')).toBeVisible({ timeout: 3_000 })
+    await groupCard.getByText(jiraSummary).click()
+    await expect(groupCard.getByRole('button', { name: '▶' })).toBeVisible({ timeout: 3_000 })
     await expect(page.locator(`input[value="${desc1}"]`)).toHaveCount(0)
 
     // Expand again
-    await page.getByText(jiraSummary).click()
+    await groupCard.getByText(jiraSummary).click()
     await expect(page.locator(`input[value="${desc1}"]`)).toHaveCount(1, { timeout: 3_000 })
+
+    // Cleanup: delete the entries this test created so they don't pollute future runs
+    await page.evaluate(async (idsToDelete) => {
+      for (const id of idsToDelete) {
+        await (window as any).ltt.deleteEntry(id)
+      }
+    }, ids)
   })
 
   // ── Drag reorder ─────────────────────────────────────────────────────────
