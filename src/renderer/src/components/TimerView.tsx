@@ -280,6 +280,15 @@ const formatMsHHMM = (ms: number): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
+function formatMeetingTime(ts: number): string {
+  const d = new Date(ts)
+  let hours = d.getHours()
+  const minutes = d.getMinutes()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12 || 12
+  return `${hours}:${String(minutes).padStart(2, '0')} ${ampm}`
+}
+
 type GroupedItem =
   | { type: 'single'; entry: TimeEntry }
   | { type: 'group'; jiraKey: string; entries: TimeEntry[] }
@@ -601,7 +610,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                           display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
                         }}
                       >
-                        ▶ Join meeting
+                        ▶ Join meeting · {formatMeetingTime(entry.ts)}
                       </button>
                     ) : (
                       <span draggable={false} style={{
@@ -718,7 +727,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
         key={entry.id}
         style={{
           padding: '8px 14px 8px 38px',
-          display: 'flex', alignItems: 'flex-start', gap: 9,
+          display: 'flex', alignItems: 'center', gap: 9,
           borderTop: '1px solid var(--border-entry)',
           background: activeSubTab === 'today' && isActiveRunning ? 'var(--bg-entry-running)' : 'transparent',
           opacity: entry.jiraSent ? 0.5 : 1,
@@ -755,7 +764,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
                     display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
                   }}
                 >
-                  ▶ Join meeting
+                  ▶ Join meeting · {formatMeetingTime(entry.ts)}
                 </button>
               ) : (
                 <span style={{
@@ -768,12 +777,34 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
               )}
             </div>
           )}
-          <span style={{
-            fontSize: 11, color: isActiveRunning ? 'var(--accent)' : 'var(--text-primary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block',
-          }}>
-            {entry.jiraDesc || entry.name}
-          </span>
+          <input
+            type="text"
+            className="desc-field"
+            placeholder="Add description..."
+            onMouseDown={e => e.stopPropagation()}
+            value={editingDescId === entry.id ? localDesc : (entry.jiraDesc ?? '')}
+            onFocus={() => { setEditingDescId(entry.id); setLocalDesc(entry.jiraDesc ?? '') }}
+            onChange={e => setLocalDesc(e.target.value)}
+            onBlur={() => {
+              if (!escapeRef.current && localDesc !== (entry.jiraDesc ?? '')) {
+                updateEntry({ ...entry, jiraDesc: localDesc, updatedAt: new Date().toISOString() })
+              }
+              escapeRef.current = false
+              setEditingDescId(null)
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur() }
+              if (e.key === 'Escape') { escapeRef.current = true; (e.currentTarget as HTMLInputElement).blur() }
+            }}
+            style={{
+              fontSize: 11,
+              color: isActiveRunning ? 'var(--accent)' : (editingDescId === entry.id ? 'var(--text-secondary)' : 'var(--text-muted)'),
+              outline: 'none', cursor: 'text', background: 'transparent', border: 'none',
+              width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              minHeight: '1.2em', padding: 0,
+            }}
+          />
         </div>
         {activeSubTab === 'today' && (
           <span style={{
