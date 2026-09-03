@@ -267,6 +267,14 @@ function RecentRow({ entry, selected, onToggle, clientColors }: { entry: TimeEnt
   )
 }
 
+function worklogStarted(entry: { lastTrackedDate?: string; ts: number }): string {
+  if (entry.lastTrackedDate) {
+    const [y, m, d] = entry.lastTrackedDate.split('-').map(Number)
+    return new Date(y, m - 1, d, 12, 0, 0).toISOString()
+  }
+  return new Date(entry.ts).toISOString()
+}
+
 const formatMs = (ms: number): string => {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -1385,7 +1393,7 @@ export function TimerView({ standupOpen: standupOpenProp, onStandupClose }: { st
           return [{ jiraKey: menuEntry.jiraKey!, jiraSummary: menuEntry.jiraSummary, clientName: menuEntry.clientName }, ...(cur ?? [])] as NonNullable<typeof settings>['jiraFavourites']
         }, `add-entry:${menuEntry.jiraKey}`) : undefined}
         onSendToJira={menuEntry?.jiraKey && menuEntry.ms > 0 ? async () => {
-          const result = await ltt.jiraLogTime(menuEntry.jiraKey!, menuEntry.ms, menuEntry.jiraDesc)
+          const result = await ltt.jiraLogTime(menuEntry.jiraKey!, menuEntry.ms, menuEntry.jiraDesc, worklogStarted(menuEntry))
           if (result.success) await updateEntry({ ...menuEntry, jiraSent: true, updatedAt: new Date().toISOString() })
           else console.error('[jira] logTime failed:', result.error)
         } : undefined}
