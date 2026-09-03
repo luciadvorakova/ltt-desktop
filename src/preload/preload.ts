@@ -53,6 +53,10 @@ contextBridge.exposeInMainWorld('ltt', {
   // ---- SHELL ----
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
+  // ---- E2E TEST HELPERS ----
+  e2eCreateJiraEntry: (payload: { jiraKey: string; jiraSummary: string; jiraDesc: string; ms?: number }) =>
+    ipcRenderer.invoke('e2e:createJiraEntry', payload),
+
   // ---- NOTIFICATION ----
   notificationClose:         (gcalEventId?: string, type?: string)     => ipcRenderer.send('notification:close', gcalEventId, type),
   notificationStartTracking: (entryId: string, gcalEventId?: string)  => ipcRenderer.send('notification:start-tracking', entryId, gcalEventId),

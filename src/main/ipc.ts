@@ -22,6 +22,29 @@ import {
 import type { TimeEntry, UserSettings } from '../types/index'
 
 export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined): void {
+  // ---- E2E TEST HELPERS ----
+
+  ipcMain.handle('e2e:createJiraEntry', async (_event, payload: { jiraKey: string; jiraSummary: string; jiraDesc: string; ms?: number }) => {
+    if (!process.env.E2E_TEST_SESSION) return { success: false, error: 'not in test mode' }
+    const entry: TimeEntry = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name: payload.jiraSummary,
+      ms: payload.ms ?? 0,
+      ts: Date.now(),
+      jiraKey: payload.jiraKey,
+      jiraSummary: payload.jiraSummary,
+      jiraDesc: payload.jiraDesc,
+      jiraSent: false,
+      untracked: false,
+      carriedOver: false,
+      removedFromTimer: false,
+      deletedFromBulk: false,
+      updatedAt: new Date().toISOString(),
+      tab: 'today',
+    }
+    await saveEntry(entry)
+    return { success: true, id: entry.id }
+  })
   // ---- AUTH ----
 
   ipcMain.handle('auth:signIn', () => {

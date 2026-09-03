@@ -319,6 +319,39 @@ test.describe.serial('LTT Desktop core flows', () => {
     }
   })
 
+  // ── Grouped Jira cards ───────────────────────────────────────────────────
+
+  test('two entries with same jiraKey group into one card', async () => {
+    const jiraKey = `E2E-${Date.now()}`
+    const jiraSummary = `Grouping test ${Date.now()}`
+
+    await page.evaluate(async ({ jiraKey, jiraSummary }) => {
+      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: 'first sub-task' })
+      await (window as any).ltt.e2eCreateJiraEntry({ jiraKey, jiraSummary, jiraDesc: 'second sub-task' })
+    }, { jiraKey, jiraSummary })
+
+    await page.evaluate(() => window.location.reload())
+    await expect(page.getByText('Timer')).toBeVisible({ timeout: 15_000 })
+    await page.waitForSelector('.desc-field', { timeout: 15_000 })
+
+    // Group header shows the Jira key and summary; expanded by default
+    await expect(page.getByText(jiraKey)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(jiraSummary)).toBeVisible()
+
+    // Both sub-task descriptions visible (group starts expanded)
+    await expect(page.locator('.desc-field[value="first sub-task"]')).toHaveCount(1)
+    await expect(page.getByText('▼')).toBeVisible()
+
+    // Collapse the group
+    await page.getByText(jiraSummary).click()
+    await expect(page.getByText('▶')).toBeVisible({ timeout: 3_000 })
+    await expect(page.locator('input[value="first sub-task"]')).toHaveCount(0)
+
+    // Expand again
+    await page.getByText(jiraSummary).click()
+    await expect(page.locator('input[value="first sub-task"]')).toHaveCount(1, { timeout: 3_000 })
+  })
+
   // ── Drag reorder ─────────────────────────────────────────────────────────
 
   test('drag reorder changes entry order', async () => {

@@ -60,6 +60,9 @@ interface LttAPI {
   // EVENTS
   on:  (channel: string, fn: (...args: unknown[]) => void) => void
   off: (channel: string, fn: (...args: unknown[]) => void) => void
+
+  // E2E TEST HELPERS
+  e2eCreateJiraEntry?: (payload: { jiraKey: string; jiraSummary: string; jiraDesc: string; ms?: number }) => Promise<{ success: boolean; id?: number; error?: string }>
 }
 
 declare global {
