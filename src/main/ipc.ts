@@ -123,8 +123,29 @@ export function registerIpcHandlers(getWindow?: () => BrowserWindow | undefined)
 
   ipcMain.handle('settings:get', () => store.get('settings') ?? null)
 
-  ipcMain.handle('settings:set', (_event, settings: UserSettings) => {
-    store.set('settings', settings)
+  ipcMain.handle('settings:set', (_event, incoming: UserSettings) => {
+    const current = store.get('settings') as UserSettings | undefined
+    if (!current) { store.set('settings', incoming); return }
+
+    const parseExp = (v: string | undefined) => v ? (isNaN(Number(v)) ? new Date(v).getTime() : Number(v)) : 0
+
+    const merged = { ...incoming }
+
+    // Never let an incoming write regress Jira tokens to an older expiry than what's already stored
+    if (parseExp(current.jiraTokenExpiry) > parseExp(incoming.jiraTokenExpiry)) {
+      merged.jiraAccessToken = current.jiraAccessToken
+      merged.jiraRefreshToken = current.jiraRefreshToken
+      merged.jiraTokenExpiry = current.jiraTokenExpiry
+    }
+
+    // Same protection for Google Calendar tokens
+    if (parseExp(current.gcalTokenExpiry) > parseExp(incoming.gcalTokenExpiry)) {
+      merged.gcalAccessToken = current.gcalAccessToken
+      merged.gcalRefreshToken = current.gcalRefreshToken
+      merged.gcalTokenExpiry = current.gcalTokenExpiry
+    }
+
+    store.set('settings', merged)
   })
 
   ipcMain.handle('settings:push', async (_event, userId: string) => {
